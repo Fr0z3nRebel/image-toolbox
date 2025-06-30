@@ -139,33 +139,33 @@ export default function FormatConverter() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Upload Section */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Upload Images
-              </h2>
+        {/* Row 1: Upload Section */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Upload Images
+          </h2>
 
-              {/* Format Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Convert to:
-                </label>
-                <select
-                  value={targetFormat}
-                  onChange={(e) => setTargetFormat(e.target.value as "jpg" | "png" | "webp")}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-                >
-                  <option value="jpg">JPG</option>
-                  <option value="png">PNG</option>
-                  <option value="webp">WebP</option>
-                </select>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Format Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Convert to:
+              </label>
+              <select
+                value={targetFormat}
+                onChange={(e) => setTargetFormat(e.target.value as "jpg" | "png" | "webp")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+              >
+                <option value="jpg">JPG</option>
+                <option value="png">PNG</option>
+                <option value="webp">WebP</option>
+              </select>
+            </div>
 
-              {/* Drop Zone */}
+            {/* Drop Zone */}
+            <div className="lg:col-span-2">
               <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer h-full flex flex-col justify-center"
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
                 onClick={() => document.getElementById("file-input")?.click()}
@@ -186,72 +186,75 @@ export default function FormatConverter() {
                   className="hidden"
                 />
               </div>
-
-              {/* File List */}
-              {files.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    Selected Files ({files.length})
-                  </h3>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {files.map((file) => (
-                      <div
-                        key={file.id}
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-                      >
-                        <ImageIcon className="h-5 w-5 text-gray-400" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => removeFile(file.id)}
-                          className="text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Convert Button */}
-              <button
-                onClick={convertImages}
-                disabled={files.length === 0 || isConverting}
-                className="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                {isConverting ? "Converting..." : "Convert Images"}
-              </button>
             </div>
           </div>
 
-          {/* Results Section */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Converted Images
-            </h2>
-
-            {convertedFiles.length === 0 ? (
-              <div className="text-center py-12">
-                <Download className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">
-                  Converted images will appear here
-                </p>
+          {/* File List */}
+          {files.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">
+                Selected Files ({files.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-40 overflow-y-auto">
+                {files.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                  >
+                    <ImageIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeFile(file.id)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <div className="space-y-4">
+            </div>
+          )}
+
+          {/* Convert Button */}
+          <button
+            onClick={convertImages}
+            disabled={files.length === 0 || isConverting}
+            className="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          >
+            {isConverting ? "Converting..." : "Convert Images"}
+          </button>
+        </div>
+
+        {/* Row 2: Converted Images */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Converted Images
+          </h2>
+
+          {convertedFiles.length === 0 ? (
+            <div className="text-center py-12">
+              <Download className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">
+                Converted images will appear here
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* File List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
                 {convertedFiles.map((file, index) => (
                   <div
                     key={index}
                     className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
                   >
-                    <ImageIcon className="h-5 w-5 text-gray-400" />
+                    <ImageIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {file.name}
@@ -260,23 +263,23 @@ export default function FormatConverter() {
                     <a
                       href={file.url}
                       download={file.name}
-                      className="text-blue-600 hover:text-blue-700 transition-colors"
+                      className="text-blue-600 hover:text-blue-700 transition-colors flex-shrink-0"
                     >
                       <Download className="h-4 w-4" />
                     </a>
                   </div>
                 ))}
-
-                <button
-                  onClick={downloadAll}
-                  disabled={isCreatingZip}
-                  className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isCreatingZip ? "Creating ZIP..." : "Download All"}
-                </button>
               </div>
-            )}
-          </div>
+
+              <button
+                onClick={downloadAll}
+                disabled={isCreatingZip}
+                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {isCreatingZip ? "Creating ZIP..." : "Download All"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
