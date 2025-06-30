@@ -1,4 +1,4 @@
-import { ImageIcon, Download, Upload } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 import Link from "next/link";
 
 interface ToolCardProps {
@@ -70,7 +70,7 @@ export default function Home() {
             More Tools Coming Soon
           </h2>
           <p className="text-gray-600">
-            We're working on adding more powerful image processing tools.
+            We&apos;re working on adding more powerful image processing tools.
           </p>
         </div>
       </div>

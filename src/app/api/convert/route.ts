@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         } else {
           // Last resort - try to convert directly
           try {
-            buffer = Buffer.from(file as any);
+            buffer = Buffer.from(file as unknown as ArrayBufferLike);
             fileName = `file_${i}`;
           } catch (e) {
             console.error("Failed to convert file to buffer:", e);
