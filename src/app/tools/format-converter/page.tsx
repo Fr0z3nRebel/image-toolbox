@@ -11,7 +11,7 @@ interface FileWithPreview extends File {
 
 export default function FormatConverter() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
-  const [targetFormat, setTargetFormat] = useState<"jpg" | "png" | "webp">("webp");
+  const [targetFormat, setTargetFormat] = useState<"jpg" | "png" | "webp">("jpg");
   const [isConverting, setIsConverting] = useState(false);
   const [convertedFiles, setConvertedFiles] = useState<{ name: string; url: string }[]>([]);
 
