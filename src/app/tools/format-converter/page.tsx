@@ -128,11 +128,11 @@ export default function FormatConverter() {
                 <select
                   value={targetFormat}
                   onChange={(e) => setTargetFormat(e.target.value as "jpg" | "png" | "webp")}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
                 >
-                  <option value="webp">WebP (Recommended)</option>
                   <option value="jpg">JPG</option>
                   <option value="png">PNG</option>
+                  <option value="webp">WebP</option>
                 </select>
               </div>
 
