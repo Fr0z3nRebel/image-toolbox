@@ -473,6 +473,7 @@ export default function ImageCompressor() {
                >
                  {/* Compressed Image (Background - Right side) */}
                  <div className="absolute inset-0">
+                   {/* eslint-disable-next-line @next/next/no-img-element */}
                    <img
                      src={compressedFiles[selectedComparisonIndex]?.url}
                      alt="Compressed"
@@ -490,6 +491,7 @@ export default function ImageCompressor() {
                    className="absolute inset-0"
                    style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
                  >
+                   {/* eslint-disable-next-line @next/next/no-img-element */}
                    <img
                      src={getOriginalFileForComparison(selectedComparisonIndex)?.preview}
                      alt="Original"

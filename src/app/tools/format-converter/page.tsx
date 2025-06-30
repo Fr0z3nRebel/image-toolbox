@@ -159,18 +159,18 @@ export default function FormatConverter() {
   };
 
   // Clean up URLs when component unmounts or files change
-  const cleanupConvertedFiles = () => {
+  const cleanupConvertedFiles = useCallback(() => {
     convertedFiles.forEach(file => {
       URL.revokeObjectURL(file.url);
     });
-  };
+  }, [convertedFiles]);
 
   // Clean up object URLs on unmount and when convertedFiles change
   useEffect(() => {
     return () => {
       cleanupConvertedFiles();
     };
-  }, [convertedFiles]);
+  }, [cleanupConvertedFiles]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
