@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { ArrowLeft, Upload, Download, ImageIcon, X, Minimize2 } from "lucide-react";
 import Link from "next/link";
+import JSZip from "jszip";
 
 interface FileWithPreview extends File {
   preview?: string;
@@ -93,6 +94,7 @@ export default function ImageCompressor() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [quality, setQuality] = useState<number>(80);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [isCreatingZip, setIsCreatingZip] = useState(false);
   const [compressedFiles, setCompressedFiles] = useState<CompressedFile[]>([]);
   const [selectedComparisonIndex, setSelectedComparisonIndex] = useState<number>(0);
   const [sliderPosition, setSliderPosition] = useState<number>(50);
@@ -159,15 +161,37 @@ export default function ImageCompressor() {
     }
   };
 
-  const downloadAll = () => {
-    compressedFiles.forEach((file) => {
+  const downloadAll = async () => {
+    if (compressedFiles.length === 0) return;
+
+    setIsCreatingZip(true);
+    try {
+      const zip = new JSZip();
+      
+      // Add each file to the zip using the blob directly
+      compressedFiles.forEach((file) => {
+        zip.file(file.name, file.blob);
+      });
+      
+      // Generate the zip file
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      
+      // Create download link for the zip
+      const zipUrl = URL.createObjectURL(zipBlob);
       const link = document.createElement("a");
-      link.href = file.url;
-      link.download = file.name;
+      link.href = zipUrl;
+      link.download = `compressed-images-${quality}%.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    });
+      
+      // Clean up the URL object
+      URL.revokeObjectURL(zipUrl);
+    } catch (error) {
+      console.error("Error creating zip file:", error);
+    } finally {
+      setIsCreatingZip(false);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -234,7 +258,7 @@ export default function ImageCompressor() {
             Image Compressor
           </h1>
           <p className="text-gray-600">
-            Reduce file sizes while maintaining image quality (client-side, no file size limits)
+            Reduce file sizes while maintaining image quality
           </p>
         </div>
 
@@ -419,9 +443,10 @@ export default function ImageCompressor() {
 
               <button
                 onClick={downloadAll}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                disabled={isCreatingZip}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                Download All
+                {isCreatingZip ? "Creating ZIP..." : "Download All"}
               </button>
             </div>
           )}
