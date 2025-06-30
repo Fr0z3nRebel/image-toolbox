@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { ArrowLeft, Upload, Download, ImageIcon, X } from "lucide-react";
 import Link from "next/link";
+import JSZip from "jszip";
 
 interface FileWithPreview extends File {
   preview?: string;
@@ -13,6 +14,7 @@ export default function FormatConverter() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [targetFormat, setTargetFormat] = useState<"jpg" | "png" | "webp">("jpg");
   const [isConverting, setIsConverting] = useState(false);
+  const [isCreatingZip, setIsCreatingZip] = useState(false);
   const [convertedFiles, setConvertedFiles] = useState<{ name: string; url: string }[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -81,15 +83,40 @@ export default function FormatConverter() {
     }
   };
 
-  const downloadAll = () => {
-    convertedFiles.forEach((file) => {
+  const downloadAll = async () => {
+    if (convertedFiles.length === 0) return;
+
+    setIsCreatingZip(true);
+    try {
+      const zip = new JSZip();
+      
+      // Add each file to the zip
+      for (const file of convertedFiles) {
+        // Convert data URL to binary data
+        const response = await fetch(file.url);
+        const blob = await response.blob();
+        zip.file(file.name, blob);
+      }
+      
+      // Generate the zip file
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      
+      // Create download link for the zip
+      const zipUrl = URL.createObjectURL(zipBlob);
       const link = document.createElement("a");
-      link.href = file.url;
-      link.download = file.name;
+      link.href = zipUrl;
+      link.download = `converted-images-${targetFormat}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    });
+      
+      // Clean up the URL object
+      URL.revokeObjectURL(zipUrl);
+    } catch (error) {
+      console.error("Error creating zip file:", error);
+    } finally {
+      setIsCreatingZip(false);
+    }
   };
 
   return (
@@ -242,9 +269,10 @@ export default function FormatConverter() {
 
                 <button
                   onClick={downloadAll}
-                  className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                  disabled={isCreatingZip}
+                  className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                 >
-                  Download All
+                  {isCreatingZip ? "Creating ZIP..." : "Download All"}
                 </button>
               </div>
             )}
