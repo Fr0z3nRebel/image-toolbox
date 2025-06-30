@@ -83,10 +83,10 @@ export default function Home() {
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Hero Section */}
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Image Toolbox
+            Professional Image Processing Tools
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Professional image tools. Convert formats, 
