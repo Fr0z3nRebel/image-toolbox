@@ -16,7 +16,78 @@ interface CompressedFile {
   originalSize: number;
   compressedSize: number;
   compressionRatio: number;
+  blob: Blob;
 }
+
+// Client-side image compression function
+const compressImage = (file: File, quality: number): Promise<CompressedFile> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Could not get canvas context'));
+        return;
+      }
+
+      // Set canvas dimensions to match image
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      // Draw image to canvas
+      ctx.drawImage(img, 0, 0);
+
+      // Determine output format based on original file type
+      const originalFormat = file.type.toLowerCase();
+      let outputFormat = 'image/jpeg'; // Default to JPEG for compression
+      let fileExtension = 'jpg';
+      
+      // Keep PNG format if it's PNG, otherwise convert to JPEG for better compression
+      if (originalFormat.includes('png')) {
+        outputFormat = 'image/png';
+        fileExtension = 'png';
+      } else if (originalFormat.includes('webp')) {
+        outputFormat = 'image/webp';
+        fileExtension = 'webp';
+      }
+
+      // Convert quality percentage to decimal (Canvas API expects 0.0 to 1.0)
+      const canvasQuality = Math.max(0.1, Math.min(1.0, quality / 100));
+      
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('Failed to compress image'));
+          return;
+        }
+
+        const originalSize = file.size;
+        const compressedSize = blob.size;
+        const compressionRatio = ((originalSize - compressedSize) / originalSize) * 100;
+        
+        // Generate filename
+        const baseName = file.name.replace(/\.[^/.]+$/, "");
+        const fileName = `${baseName}_compressed.${fileExtension}`;
+        const url = URL.createObjectURL(blob);
+
+        resolve({
+          name: fileName,
+          url: url,
+          originalSize: originalSize,
+          compressedSize: compressedSize,
+          compressionRatio: Math.max(0, compressionRatio),
+          blob: blob
+        });
+      }, outputFormat, canvasQuality);
+    };
+
+    img.onerror = () => reject(new Error('Failed to load image'));
+    
+    // Load the image
+    img.src = URL.createObjectURL(file);
+  });
+};
 
 export default function ImageCompressor() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
@@ -66,26 +137,21 @@ export default function ImageCompressor() {
     if (files.length === 0) return;
 
     setIsCompressing(true);
-    const formData = new FormData();
     
-    files.forEach((file) => {
-      const cleanFile = new File([file], file.name, { type: file.type });
-      formData.append("files", cleanFile);
-    });
-    formData.append("quality", quality.toString());
-
     try {
-      const response = await fetch("/api/compress", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setCompressedFiles(result.files);
-      } else {
-        console.error("Compression failed");
+      const compressed: CompressedFile[] = [];
+      
+      // Compress each file client-side
+      for (const file of files) {
+        try {
+          const result = await compressImage(file, quality);
+          compressed.push(result);
+        } catch (error) {
+          console.error(`Failed to compress ${file.name}:`, error);
+        }
       }
+      
+      setCompressedFiles(compressed);
     } catch (error) {
       console.error("Error compressing images:", error);
     } finally {
@@ -168,7 +234,7 @@ export default function ImageCompressor() {
             Image Compressor
           </h1>
           <p className="text-gray-600">
-            Reduce file sizes while maintaining image quality
+            Reduce file sizes while maintaining image quality (client-side, no file size limits)
           </p>
         </div>
 
@@ -212,7 +278,7 @@ export default function ImageCompressor() {
                   Drop images here or click to select
                 </p>
                 <p className="text-sm text-gray-500">
-                  Supports JPG, PNG, WebP, and more
+                  Supports JPG, PNG, WebP, and more • No file size limits
                 </p>
                 <input
                   id="file-input"
@@ -308,7 +374,7 @@ export default function ImageCompressor() {
                  </div>
               </div>
 
-                             {/* File List */}
+              {/* File List */}
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
                  {compressedFiles.map((file, index) => (
                    <div
@@ -371,7 +437,7 @@ export default function ImageCompressor() {
               Comparing: {compressedFiles[selectedComparisonIndex]?.name}
             </p>
 
-                         <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-0">
+            <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-0">
                <div 
                  className="relative overflow-hidden rounded-lg border border-gray-300 bg-gray-100 select-none h-64 sm:h-96"
                  style={{ aspectRatio: "16/9" }}
@@ -422,7 +488,7 @@ export default function ImageCompressor() {
                  </div>
                </div>
 
-                             {/* Slider Instructions */}
+               {/* Slider Instructions */}
                <div className="mt-4 text-center text-sm text-gray-600">
                  <p>Click and drag the slider or click anywhere on the image to compare original vs compressed</p>
                  <div className="flex justify-center gap-8 mt-2">
