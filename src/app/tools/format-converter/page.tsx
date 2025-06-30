@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ArrowLeft, Upload, Download, ImageIcon, X } from "lucide-react";
 import Link from "next/link";
 import JSZip from "jszip";
@@ -10,12 +10,59 @@ interface FileWithPreview extends File {
   id: string;
 }
 
+// Client-side image conversion function
+const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name: string; url: string; blob: Blob }> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Could not get canvas context'));
+        return;
+      }
+
+      // Set canvas dimensions to match image
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      // Draw image to canvas
+      ctx.drawImage(img, 0, 0);
+
+      // Convert to target format
+      const mimeType = `image/${targetFormat === 'jpg' ? 'jpeg' : targetFormat}`;
+      
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('Failed to convert image'));
+          return;
+        }
+
+        const fileName = file.name.replace(/\.[^/.]+$/, "") + `.${targetFormat}`;
+        const url = URL.createObjectURL(blob);
+
+        resolve({
+          name: fileName,
+          url: url,
+          blob: blob
+        });
+      }, mimeType, 1.0); // Quality 1.0 = no compression
+    };
+
+    img.onerror = () => reject(new Error('Failed to load image'));
+    
+    // Load the image
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 export default function FormatConverter() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [targetFormat, setTargetFormat] = useState<"jpg" | "png" | "webp">("jpg");
   const [isConverting, setIsConverting] = useState(false);
   const [isCreatingZip, setIsCreatingZip] = useState(false);
-  const [convertedFiles, setConvertedFiles] = useState<{ name: string; url: string }[]>([]);
+  const [convertedFiles, setConvertedFiles] = useState<{ name: string; url: string; blob: Blob }[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map((file) => {
@@ -56,26 +103,21 @@ export default function FormatConverter() {
     if (files.length === 0) return;
 
     setIsConverting(true);
-    const formData = new FormData();
     
-    files.forEach((file) => {
-      const cleanFile = new File([file], file.name, { type: file.type });
-      formData.append("files", cleanFile);
-    });
-    formData.append("targetFormat", targetFormat);
-
     try {
-      const response = await fetch("/api/convert", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setConvertedFiles(result.files);
-      } else {
-        console.error("Conversion failed");
+      const converted: { name: string; url: string; blob: Blob }[] = [];
+      
+      // Convert each file client-side
+      for (const file of files) {
+        try {
+          const result = await convertImageToFormat(file, targetFormat);
+          converted.push(result);
+        } catch (error) {
+          console.error(`Failed to convert ${file.name}:`, error);
+        }
       }
+      
+      setConvertedFiles(converted);
     } catch (error) {
       console.error("Error converting images:", error);
     } finally {
@@ -90,13 +132,10 @@ export default function FormatConverter() {
     try {
       const zip = new JSZip();
       
-      // Add each file to the zip
-      for (const file of convertedFiles) {
-        // Convert data URL to binary data
-        const response = await fetch(file.url);
-        const blob = await response.blob();
-        zip.file(file.name, blob);
-      }
+      // Add each file to the zip using the blob directly
+      convertedFiles.forEach((file) => {
+        zip.file(file.name, file.blob);
+      });
       
       // Generate the zip file
       const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -118,6 +157,20 @@ export default function FormatConverter() {
       setIsCreatingZip(false);
     }
   };
+
+  // Clean up URLs when component unmounts or files change
+  const cleanupConvertedFiles = () => {
+    convertedFiles.forEach(file => {
+      URL.revokeObjectURL(file.url);
+    });
+  };
+
+  // Clean up object URLs on unmount and when convertedFiles change
+  useEffect(() => {
+    return () => {
+      cleanupConvertedFiles();
+    };
+  }, [convertedFiles]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -175,7 +228,7 @@ export default function FormatConverter() {
                   Drop images here or click to select
                 </p>
                 <p className="text-sm text-gray-500">
-                  Supports JPG, PNG, WebP, GIF, and more
+                  Supports JPG, PNG, WebP, GIF, and more • No file size limits
                 </p>
                 <input
                   id="file-input"
