@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { GoogleAnalytics } from "./components/GoogleAnalytics";
+import { Footer } from "./components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,9 +16,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Image Toolbox - Convert and Process Images Online",
-  description: "Professional image tools for format conversion, optimization, and processing. Convert between JPG, PNG, WebP and more formats quickly and efficiently.",
-  keywords: "image converter, format converter, image tools, JPG to PNG, PNG to WebP, image optimization",
-  authors: [{ name: "Image Toolbox" }],
+  description: "Professional image tools by Lefty Studios for format conversion and processing. Most tools work client-side for maximum privacy and speed. Convert between JPG, PNG, WebP and more.",
+  keywords: "image converter, format converter, image tools, JPG to PNG, PNG to WebP, image compression, client-side processing",
+  authors: [{ name: "Lefty Studios" }],
 };
 
 export const viewport: Viewport = {
@@ -35,7 +36,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <div className="min-h-screen flex flex-col">
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </div>
         <GoogleAnalytics />
       </body>
     </html>
