@@ -40,6 +40,13 @@ export default function Home() {
       href: "/tools/format-converter",
       color: "hover:border-blue-200"
     },
+    {
+      title: "Image Compressor",
+      description: "Reduce file sizes while maintaining image quality",
+      icon: <ImageIcon className="h-6 w-6 text-green-600" />,
+      href: "/tools/image-compressor",
+      color: "hover:border-green-200"
+    },
     // More tools can be added here in the future
   ];
 
