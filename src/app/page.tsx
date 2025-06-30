@@ -7,28 +7,55 @@ interface ToolCardProps {
   icon: React.ReactNode;
   href: string;
   color: string;
+  badge?: string;
+  disabled?: boolean;
 }
 
-function ToolCard({ title, description, icon, href, color }: ToolCardProps) {
-  return (
-    <Link href={href}>
-      <div className={`group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.02] ${color}`}>
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
-            {icon}
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
-              {title}
-            </h3>
-            <p className="text-sm text-gray-600 group-hover:text-gray-500 transition-colors">
-              {description}
-            </p>
-          </div>
+function ToolCard({ title, description, icon, href, color, badge, disabled = false }: ToolCardProps) {
+  const cardContent = (
+    <div className={`group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 ${
+      disabled 
+        ? 'opacity-60 cursor-not-allowed' 
+        : `hover:shadow-lg hover:scale-[1.02] cursor-pointer ${color}`
+    }`}>
+      {/* Badge */}
+      {badge && (
+        <div className={`absolute top-3 right-3 px-2 py-1 text-xs font-medium rounded-full ${
+          badge === 'New' 
+            ? 'bg-blue-100 text-blue-800' 
+            : 'bg-orange-100 text-orange-800'
+        }`}>
+          {badge}
+        </div>
+      )}
+      
+      <div className="flex items-center gap-4">
+        <div className={`flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 transition-colors ${
+          !disabled && 'group-hover:bg-gray-200'
+        }`}>
+          {icon}
+        </div>
+        <div className="flex-1">
+          <h3 className={`font-semibold text-gray-900 transition-colors ${
+            !disabled && 'group-hover:text-gray-700'
+          }`}>
+            {title}
+          </h3>
+          <p className={`text-sm text-gray-600 transition-colors ${
+            !disabled && 'group-hover:text-gray-500'
+          }`}>
+            {description}
+          </p>
         </div>
       </div>
-    </Link>
+    </div>
   );
+
+  if (disabled) {
+    return cardContent;
+  }
+
+  return <Link href={href}>{cardContent}</Link>;
 }
 
 export default function Home() {
@@ -38,20 +65,23 @@ export default function Home() {
       description: "Convert images between JPG, PNG, and WebP formats",
       icon: <ImageIcon className="h-6 w-6 text-blue-600" />,
       href: "/tools/format-converter",
-      color: "hover:border-blue-200"
+      color: "hover:border-blue-200",
+      badge: "New"
     },
     {
       title: "Image Compressor",
       description: "Reduce file sizes while maintaining image quality",
       icon: <ImageIcon className="h-6 w-6 text-green-600" />,
       href: "/tools/image-compressor",
-      color: "hover:border-green-200"
+      color: "hover:border-green-200",
+      badge: "Coming Soon",
+      disabled: true
     },
     // More tools can be added here in the future
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-12 text-center">
@@ -59,8 +89,9 @@ export default function Home() {
             Image Toolbox
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            A collection of powerful tools to help you work with images. 
-            Convert formats, resize, compress, and more.
+            Professional image tools. Convert formats, 
+            compress images, and more. Most tools work client-side for 
+            maximum privacy and speed.
           </p>
         </div>
 
