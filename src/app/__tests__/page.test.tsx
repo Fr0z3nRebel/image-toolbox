@@ -1,48 +1,67 @@
 import { render, screen } from "@testing-library/react";
-import Home from "../app/page";
+import Home from "../page";
 
-// Mock Next.js Image component
-jest.mock("next/image", () => ({
+// Mock Next.js Link component
+jest.mock("next/link", () => ({
   __esModule: true,
-  default: ({ src, alt, ...props }: React.ComponentProps<'img'>) => {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={alt} {...props} />;
+  default: ({ children, href, ...props }: React.ComponentProps<'a'>) => {
+    return <a href={href} {...props}>{children}</a>;
   },
 }));
 
+// Mock lucide-react icons
+jest.mock("lucide-react", () => ({
+  ImageIcon: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="image-icon" />
+  ),
+  Download: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="download-icon" />
+  ),
+  Upload: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="upload-icon" />
+  ),
+}));
+
 describe("Home", () => {
-  it("renders the Next.js logo", () => {
+  it("renders the Image Toolbox title", () => {
     render(<Home />);
-    const logo = screen.getByAltText("Next.js logo");
-    expect(logo).toBeInTheDocument();
+    const title = screen.getByText("Image Toolbox");
+    expect(title).toBeInTheDocument();
   });
 
-  it('renders the "Get started by editing" text', () => {
+  it('renders the description text', () => {
     render(<Home />);
-    const text = screen.getByText(/Get started by editing/i);
-    expect(text).toBeInTheDocument();
+    const description = screen.getByText(/A collection of powerful tools to help you work with images/);
+    expect(description).toBeInTheDocument();
   });
 
-  it('renders the "Deploy now" button', () => {
+  it('renders the Format Converter tool card', () => {
     render(<Home />);
-    const deployButton = screen.getByText("Deploy now");
-    expect(deployButton).toBeInTheDocument();
+    const formatConverter = screen.getByText("Format Converter");
+    expect(formatConverter).toBeInTheDocument();
   });
 
-  it('renders the "Read our docs" button', () => {
+  it('renders the format converter description', () => {
     render(<Home />);
-    const docsButton = screen.getByText("Read our docs");
-    expect(docsButton).toBeInTheDocument();
+    const description = screen.getByText(/Convert images between JPG, PNG, and WebP formats/);
+    expect(description).toBeInTheDocument();
   });
 
-  it("renders footer links", () => {
+  it('renders the "More Tools Coming Soon" section', () => {
     render(<Home />);
-    const learnLink = screen.getByText("Learn");
-    const examplesLink = screen.getByText("Examples");
-    const nextjsLink = screen.getByText(/Go to nextjs\.org/i);
+    const comingSoon = screen.getByText("More Tools Coming Soon");
+    expect(comingSoon).toBeInTheDocument();
+  });
 
-    expect(learnLink).toBeInTheDocument();
-    expect(examplesLink).toBeInTheDocument();
-    expect(nextjsLink).toBeInTheDocument();
+  it('renders the coming soon description', () => {
+    render(<Home />);
+    const description = screen.getByText(/We're working on adding more powerful image processing tools/);
+    expect(description).toBeInTheDocument();
+  });
+
+  it('renders the format converter tool link', () => {
+    render(<Home />);
+    const link = screen.getByRole('link', { name: /Format Converter/i });
+    expect(link).toHaveAttribute('href', '/tools/format-converter');
   });
 });

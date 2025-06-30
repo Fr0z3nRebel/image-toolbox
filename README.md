@@ -1,30 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with
-[`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Image Toolbox
+
+A modern web application built with Next.js that provides a collection of powerful image processing tools. The app features a clean, responsive interface with a grid layout of tool cards.
+
+## Features
+
+### 🎨 Image Format Converter
+- Convert images between JPG, PNG, and WebP formats
+- Support for single and bulk image conversion
+- Drag-and-drop file upload interface
+- High-quality conversion with configurable settings
+- Instant download of converted files
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **Image Processing**: Sharp
+- **Deployment**: Vercel-ready
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd image-toolbox
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the
-result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page
-auto-updates as you edit the file.
+3. Run the development server:
+```bash
+npm run dev
+```
 
-This project uses
-[`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts)
-to automatically optimize and load [Geist](https://vercel.com/font), a new font
-family for Vercel.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   └── convert/
+│   │       └── route.ts          # Image conversion API
+│   │   └── tools/
+│   │       └── format-converter/
+│   │           └── page.tsx          # Format converter tool page
+│   ├── globals.css               # Global styles
+│   ├── layout.tsx                # Root layout
+│   └── page.tsx                  # Home page with tool grid
+├── components/                   # Reusable components (future)
+└── lib/                         # Utility functions (future)
+```
+
+## API Endpoints
+
+### POST /api/convert
+Converts uploaded images to the specified format.
+
+**Request:**
+- `files`: Array of image files (multipart/form-data)
+- `targetFormat`: Target format ("jpg", "png", or "webp")
+
+**Response:**
+```json
+{
+  "success": true,
+  "files": [
+    {
+      "name": "converted-image.webp",
+      "url": "blob:..."
+    }
+  ]
+}
+```
+
+## Deployment
+
+This application is optimized for deployment on Vercel:
+
+1. Push your code to a Git repository
+2. Connect your repository to Vercel
+3. Deploy automatically
+
+The app includes:
+- Optimized image processing with Sharp
+- Proper API route configuration
+- Responsive design for all devices
+
+## Future Features
+
+- Image resizing and cropping
+- Image compression and optimization
+- Batch processing capabilities
+- Advanced filters and effects
+- Background removal
+- Color correction tools
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details.
 
 ## Learn More
 
