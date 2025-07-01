@@ -40,7 +40,7 @@ const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name:
     if (targetFormat === 'avif') {
       const isSupported = await checkFormatSupport('avif');
       if (!isSupported) {
-        reject(new Error('AVIF encoding is not supported in your browser. Please try using Chrome 85+, Firefox 93+, or Safari 16+.'));
+        reject(new Error('AVIF encoding is not supported in your browser. Chrome 85+ and Safari 16+ support AVIF encoding. Firefox currently only supports viewing AVIF files, not creating them.'));
         return;
       }
     }
@@ -280,7 +280,7 @@ export default function FormatConverter() {
                 <p className="text-sm text-gray-500">
                   Supports JPG, PNG, WebP, AVIF, GIF, and more • No file size limits
                   <br />
-                  <span className="text-xs">Note: AVIF encoding requires a modern browser with AVIF support</span>
+                  <span className="text-xs">Note: AVIF encoding works in Chrome 85+ and Safari 16+. Firefox can view AVIF but not create them yet.</span>
                 </p>
                 <input
                   id="file-input"
