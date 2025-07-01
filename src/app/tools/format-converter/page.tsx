@@ -124,6 +124,16 @@ export default function FormatConverter() {
     }
   };
 
+  const downloadSingleFile = (file: { name: string; url: string; blob: Blob }) => {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(file.blob);
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
+
   const downloadAll = async () => {
     if (convertedFiles.length === 0) return;
 
@@ -229,7 +239,7 @@ export default function FormatConverter() {
                   id="file-input"
                   type="file"
                   multiple
-                  accept="image/*"
+                  accept="image/*,.avif,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tiff,.svg"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -308,13 +318,13 @@ export default function FormatConverter() {
                         {file.name}
                       </p>
                     </div>
-                    <a
-                      href={file.url}
-                      download={file.name}
+                    <button
+                      onClick={() => downloadSingleFile(file)}
                       className="text-blue-600 hover:text-blue-700 transition-colors flex-shrink-0"
+                      title="Download this file"
                     >
                       <Download className="h-4 w-4" />
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>
