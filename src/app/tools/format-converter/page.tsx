@@ -31,6 +31,7 @@ const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name:
 
       // Convert to target format
       const mimeType = `image/${targetFormat === 'jpg' ? 'jpeg' : targetFormat}`;
+      console.log('Converting to MIME type:', mimeType, 'for format:', targetFormat);
       
       canvas.toBlob((blob) => {
         if (!blob) {
@@ -125,13 +126,23 @@ export default function FormatConverter() {
   };
 
   const downloadSingleFile = (file: { name: string; url: string; blob: Blob }) => {
+    // Debug: Log the blob type and filename
+    console.log('Downloading file:', file.name, 'Blob type:', file.blob.type, 'Blob size:', file.blob.size);
+    
+    // Create a fresh blob URL to ensure proper download
+    const blobUrl = URL.createObjectURL(file.blob);
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(file.blob);
+    link.href = blobUrl;
     link.download = file.name;
+    link.style.display = "none";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
+    
+    // Clean up the blob URL after a short delay
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+    }, 100);
   };
 
   const downloadAll = async () => {
