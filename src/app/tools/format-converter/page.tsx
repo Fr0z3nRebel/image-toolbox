@@ -9,9 +9,42 @@ interface FileWithPreview extends File {
   id: string;
 }
 
+// Function to check if browser supports encoding to a specific format
+const checkFormatSupport = (format: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      resolve(false);
+      return;
+    }
+    
+    const mimeType = `image/${format === 'jpg' ? 'jpeg' : format}`;
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        resolve(false);
+        return;
+      }
+      // Check if the blob type matches what we requested
+      resolve(blob.type === mimeType);
+    }, mimeType, 1.0);
+  });
+};
+
 // Client-side image conversion function
 const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name: string; url: string; blob: Blob }> => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    // Check if the target format is supported
+    if (targetFormat === 'avif') {
+      const isSupported = await checkFormatSupport('avif');
+      if (!isSupported) {
+        reject(new Error('AVIF encoding is not supported in your browser. Please try using Chrome 85+, Firefox 93+, or Safari 16+.'));
+        return;
+      }
+    }
+
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
@@ -31,11 +64,17 @@ const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name:
 
       // Convert to target format
       const mimeType = `image/${targetFormat === 'jpg' ? 'jpeg' : targetFormat}`;
-      console.log('Converting to MIME type:', mimeType, 'for format:', targetFormat);
       
       canvas.toBlob((blob) => {
         if (!blob) {
           reject(new Error(`Failed to convert image to ${targetFormat.toUpperCase()}. Your browser may not support encoding to this format.`));
+          return;
+        }
+
+        // Double-check that we got the right format
+        const expectedMimeType = `image/${targetFormat === 'jpg' ? 'jpeg' : targetFormat}`;
+        if (blob.type !== expectedMimeType) {
+          reject(new Error(`Conversion failed: Expected ${expectedMimeType} but got ${blob.type}. Your browser may not support ${targetFormat.toUpperCase()} encoding.`));
           return;
         }
 
@@ -126,9 +165,6 @@ export default function FormatConverter() {
   };
 
   const downloadSingleFile = (file: { name: string; url: string; blob: Blob }) => {
-    // Debug: Log the blob type and filename
-    console.log('Downloading file:', file.name, 'Blob type:', file.blob.type, 'Blob size:', file.blob.size);
-    
     // Create a fresh blob URL to ensure proper download
     const blobUrl = URL.createObjectURL(file.blob);
     const link = document.createElement("a");
