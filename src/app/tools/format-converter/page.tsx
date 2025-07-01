@@ -9,42 +9,13 @@ interface FileWithPreview extends File {
   id: string;
 }
 
-// Function to check if browser supports encoding to a specific format
-const checkFormatSupport = (format: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      resolve(false);
-      return;
-    }
-    
-    const mimeType = `image/${format === 'jpg' ? 'jpeg' : format}`;
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        resolve(false);
-        return;
-      }
-      // Check if the blob type matches what we requested
-      resolve(blob.type === mimeType);
-    }, mimeType, 1.0);
-  });
-};
-
-// Client-side image conversion function
-const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name: string; url: string; blob: Blob }> => {
-  return new Promise(async (resolve, reject) => {
-    // Check if the target format is supported
-    if (targetFormat === 'avif') {
-      const isSupported = await checkFormatSupport('avif');
-      if (!isSupported) {
-        reject(new Error('AVIF encoding is not supported in your browser. Chrome 85+ and Safari 16+ support AVIF encoding. Firefox currently only supports viewing AVIF files, not creating them.'));
-        return;
-      }
-    }
-
+/**
+ * Standard Canvas-based image conversion for JPG, PNG, WebP
+ * 
+ * These formats are natively supported by all modern browsers via canvas.toBlob().
+ */
+const convertImageToStandardFormat = (file: File, targetFormat: string): Promise<{ name: string; url: string; blob: Blob }> => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
@@ -62,19 +33,12 @@ const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name:
       // Draw image to canvas
       ctx.drawImage(img, 0, 0);
 
-      // Convert to target format
+      // Convert to target format using native browser support
       const mimeType = `image/${targetFormat === 'jpg' ? 'jpeg' : targetFormat}`;
       
       canvas.toBlob((blob) => {
         if (!blob) {
-          reject(new Error(`Failed to convert image to ${targetFormat.toUpperCase()}. Your browser may not support encoding to this format.`));
-          return;
-        }
-
-        // Double-check that we got the right format
-        const expectedMimeType = `image/${targetFormat === 'jpg' ? 'jpeg' : targetFormat}`;
-        if (blob.type !== expectedMimeType) {
-          reject(new Error(`Conversion failed: Expected ${expectedMimeType} but got ${blob.type}. Your browser may not support ${targetFormat.toUpperCase()} encoding.`));
+          reject(new Error(`Failed to convert image to ${targetFormat.toUpperCase()}.`));
           return;
         }
 
@@ -94,6 +58,22 @@ const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name:
     // Load the image
     img.src = URL.createObjectURL(file);
   });
+};
+
+/**
+ * Main image conversion function that routes to appropriate converter
+ * 
+ * Note: AVIF encoding is currently disabled pending proper WebAssembly library integration.
+ * No browser currently supports native AVIF encoding via canvas.toBlob().
+ */
+const convertImageToFormat = async (file: File, targetFormat: string): Promise<{ name: string; url: string; blob: Blob }> => {
+  if (targetFormat === 'avif') {
+    // AVIF encoding is not yet implemented - would require WebAssembly library
+    return Promise.reject(new Error('AVIF encoding is temporarily disabled. Use Chrome/Safari for AVIF support, or convert to WebP as an alternative modern format.'));
+  } else {
+    // Use standard canvas conversion for JPG, PNG, WebP
+    return convertImageToStandardFormat(file, targetFormat);
+  }
 };
 
 export default function FormatConverter() {
@@ -280,7 +260,7 @@ export default function FormatConverter() {
                 <p className="text-sm text-gray-500">
                   Supports JPG, PNG, WebP, AVIF, GIF, and more • No file size limits
                   <br />
-                  <span className="text-xs">Note: AVIF encoding works in Chrome 85+ and Safari 16+. Firefox can view AVIF but not create them yet.</span>
+                  <span className="text-xs">Note: AVIF encoding is temporarily disabled pending WebAssembly library integration. Use WebP as a modern alternative.</span>
                 </p>
                 <input
                   id="file-input"
@@ -301,7 +281,7 @@ export default function FormatConverter() {
                 Selected Files ({files.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-40 overflow-y-auto">
-                {files.map((file) => (
+                {files.map((file: FileWithPreview) => (
                   <div
                     key={file.id}
                     className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
@@ -354,7 +334,7 @@ export default function FormatConverter() {
             <div className="space-y-4">
               {/* File List */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
-                {convertedFiles.map((file, index) => (
+                {convertedFiles.map((file: { name: string; url: string; blob: Blob }, index: number) => (
                   <div
                     key={index}
                     className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
