@@ -61,75 +61,48 @@ const convertImageToStandardFormat = (file: File, targetFormat: string): Promise
 };
 
 /**
- * AVIF encoding using libavif WebAssembly library
+ * Check if browser supports AVIF encoding via canvas.toBlob()
  * 
- * Uses @jsquash/avif which provides the mature libavif encoder compiled to WebAssembly.
- * This is the same high-quality encoder used by tools like cavif.
- * Works in all modern browsers including Firefox, Chrome, and Safari.
+ * Note: Most browsers can decode/display AVIF but very few can encode it natively.
+ * This function tests actual encoding capability, not just format support.
  */
-const convertToAVIF = async (imageData: ImageData): Promise<Blob> => {
-  const { encode } = await import('@jsquash/avif');
-  
-  // Encode using libavif with default settings (good quality/performance balance)
-  const avifArrayBuffer = await encode(imageData);
-  
-  return new Blob([avifArrayBuffer], { type: 'image/avif' });
+const checkAVIFEncodingSupport = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      resolve(false);
+      return;
+    }
+    
+    // Try to encode a simple image as AVIF
+    canvas.toBlob((blob) => {
+      // If blob exists and has correct type, browser supports AVIF encoding
+      resolve(blob !== null && blob.type === 'image/avif');
+    }, 'image/avif', 1.0);
+  });
 };
 
 /**
  * Main image conversion function that routes to appropriate converter
  * 
- * Uses native canvas.toBlob() for JPG/PNG/WebP and libavif WebAssembly for AVIF.
- * AVIF encoding now works in all modern browsers via WebAssembly.
+ * Uses native canvas.toBlob() for all formats.
+ * AVIF encoding depends on browser support - available in some Chrome/Safari versions.
  */
 const convertImageToFormat = async (file: File, targetFormat: string): Promise<{ name: string; url: string; blob: Blob }> => {
   if (targetFormat === 'avif') {
-    // AVIF encoding using libavif WebAssembly
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = async () => {
-        try {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          if (!ctx) {
-            reject(new Error('Could not get canvas context'));
-            return;
-          }
-
-          // Set canvas dimensions to match image
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-
-          // Draw image to canvas
-          ctx.drawImage(img, 0, 0);
-
-          // Get image data for AVIF encoder
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          
-          // Convert to AVIF using libavif WebAssembly
-          const blob = await convertToAVIF(imageData);
-          
-          const fileName = file.name.replace(/\.[^/.]+$/, "") + `.avif`;
-          const url = URL.createObjectURL(blob);
-
-          resolve({
-            name: fileName,
-            url: url,
-            blob: blob
-          });
-        } catch (error) {
-          reject(new Error(`Failed to convert to AVIF: ${error}`));
-        }
-      };
-
-      img.onerror = () => reject(new Error('Failed to load image'));
-      img.src = URL.createObjectURL(file);
-    });
-  } else {
-    // Use standard canvas conversion for JPG, PNG, WebP
-    return convertImageToStandardFormat(file, targetFormat);
+    // Check if browser supports AVIF encoding
+    const supportsAVIF = await checkAVIFEncodingSupport();
+    if (!supportsAVIF) {
+      throw new Error('AVIF encoding is not supported in your browser. Please use a recent version of Chrome or Safari, or convert to WebP as a modern alternative format.');
+    }
   }
+  
+  // Use standard canvas conversion for all formats (including AVIF where supported)
+  return convertImageToStandardFormat(file, targetFormat);
 };
 
 export default function FormatConverter() {
@@ -316,7 +289,7 @@ export default function FormatConverter() {
                 <p className="text-sm text-gray-500">
                   Supports JPG, PNG, WebP, AVIF, GIF, and more • No file size limits
                   <br />
-                  <span className="text-xs">Note: AVIF encoding uses libavif WebAssembly and works in all modern browsers including Firefox!</span>
+                  <span className="text-xs">Note: AVIF encoding is available in recent Chrome and Safari versions. Firefox can view AVIF but not encode them yet.</span>
                 </p>
                 <input
                   id="file-input"
