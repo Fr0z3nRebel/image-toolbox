@@ -16,11 +16,7 @@ export default function PrivacyPolicy() {
         <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-4xl mx-auto">
           <div className="prose prose-gray max-w-none">
             <p className="text-lg text-gray-700 mb-6">
-              Last updated: {new Date().toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
+              Last updated: June 30, 2025
             </p>
 
             <section className="mb-8">
