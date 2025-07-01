@@ -172,7 +172,7 @@ export default function FormatConverter() {
   }, [cleanupConvertedFiles]);
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 flex-1">
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-8 text-center">

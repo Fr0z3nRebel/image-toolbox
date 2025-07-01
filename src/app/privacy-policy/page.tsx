@@ -1,19 +1,9 @@
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
-
 export default function PrivacyPolicy() {
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 flex-1">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Toolbox
-          </Link>
+        {/* Page Header */}
+        <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Privacy Policy
           </h1>

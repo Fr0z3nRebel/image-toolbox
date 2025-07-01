@@ -81,7 +81,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 flex-1">
       <div className="container mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="mb-12 text-center">
