@@ -1,13 +1,19 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Upload, Download, ImageIcon, X } from "lucide-react";
+import { Upload, Download, ImageIcon, X, AlertTriangle } from "lucide-react";
 import JSZip from "jszip";
 
 interface FileWithPreview extends File {
   preview?: string;
   id: string;
 }
+
+// Browser detection utility
+const isFirefox = () => {
+  if (typeof navigator === 'undefined') return false;
+  return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+};
 
 // Client-side image conversion function
 const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name: string; url: string; blob: Blob }> => {
@@ -32,9 +38,17 @@ const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name:
       // Convert to target format
       const mimeType = `image/${targetFormat === 'jpg' ? 'jpeg' : targetFormat}`;
       
+      // Add timeout for AVIF conversion as it can be slow
+      const timeoutMs = targetFormat === 'avif' ? 15000 : 10000;
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`Conversion timeout - ${targetFormat.toUpperCase()} encoding took too long`));
+      }, timeoutMs);
+      
       canvas.toBlob((blob) => {
+        clearTimeout(timeoutId);
+        
         if (!blob) {
-          reject(new Error('Failed to convert image'));
+          reject(new Error(`Failed to convert image to ${targetFormat.toUpperCase()} - format may not be supported by this browser`));
           return;
         }
 
@@ -58,10 +72,16 @@ const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name:
 
 export default function FormatConverter() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
-  const [targetFormat, setTargetFormat] = useState<"jpg" | "png" | "webp">("jpg");
+  const [targetFormat, setTargetFormat] = useState<"jpg" | "png" | "webp" | "avif">("jpg");
   const [isConverting, setIsConverting] = useState(false);
   const [isCreatingZip, setIsCreatingZip] = useState(false);
   const [convertedFiles, setConvertedFiles] = useState<{ name: string; url: string; blob: Blob }[]>([]);
+  const [userIsFirefox, setUserIsFirefox] = useState(false);
+
+  // Check if user is on Firefox
+  useEffect(() => {
+    setUserIsFirefox(isFirefox());
+  }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map((file) => {
@@ -171,6 +191,9 @@ export default function FormatConverter() {
     };
   }, [cleanupConvertedFiles]);
 
+  // Check if individual downloads should be disabled
+  const shouldDisableIndividualDownload = userIsFirefox && targetFormat === 'avif';
+
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 flex-1">
       <div className="container mx-auto px-4 py-8">
@@ -180,9 +203,24 @@ export default function FormatConverter() {
             Image Format Converter
           </h1>
           <p className="text-gray-600">
-            Convert your images between JPG, PNG, and WebP formats
+            Convert your images between JPG, PNG, WebP, and AVIF formats
           </p>
         </div>
+
+        {/* Firefox AVIF Warning */}
+        {userIsFirefox && targetFormat === 'avif' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-amber-800">Firefox AVIF Download Limitation</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  Firefox doesn&apos;t support saving individual AVIF files directly. You can still download all converted images as a ZIP file.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Row 1: Upload Section */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
@@ -191,19 +229,20 @@ export default function FormatConverter() {
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Format Selection */}
+            {/* Format Selection - Updated with AVIF support */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Convert to:
               </label>
               <select
                 value={targetFormat}
-                onChange={(e) => setTargetFormat(e.target.value as "jpg" | "png" | "webp")}
+                onChange={(e) => setTargetFormat(e.target.value as "jpg" | "png" | "webp" | "avif")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
               >
                 <option value="jpg">JPG</option>
                 <option value="png">PNG</option>
                 <option value="webp">WebP</option>
+                <option value="avif">AVIF</option>
               </select>
             </div>
 
@@ -220,7 +259,7 @@ export default function FormatConverter() {
                   Drop images here or click to select
                 </p>
                 <p className="text-sm text-gray-500">
-                  Supports JPG, PNG, WebP, GIF, and more • No file size limits
+                  Supports JPG, PNG, WebP, AVIF, GIF, and more • No file size limits
                 </p>
                 <input
                   id="file-input"
@@ -305,13 +344,19 @@ export default function FormatConverter() {
                         {file.name}
                       </p>
                     </div>
-                    <a
-                      href={file.url}
-                      download={file.name}
-                      className="text-blue-600 hover:text-blue-700 transition-colors flex-shrink-0"
-                    >
-                      <Download className="h-4 w-4" />
-                    </a>
+                    {!shouldDisableIndividualDownload ? (
+                      <a
+                        href={file.url}
+                        download={file.name}
+                        className="text-blue-600 hover:text-blue-700 transition-colors flex-shrink-0"
+                      >
+                        <Download className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <div className="text-gray-400 flex-shrink-0" title="Individual download not supported for AVIF files in Firefox">
+                        <Download className="h-4 w-4" />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

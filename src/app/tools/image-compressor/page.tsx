@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { ArrowLeft, Upload, Download, ImageIcon, X, Minimize2 } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { ArrowLeft, Upload, Download, ImageIcon, X, Minimize2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import JSZip from "jszip";
+
+// Browser detection utility
+const isFirefox = () => {
+  if (typeof navigator === 'undefined') return false;
+  return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+};
 
 interface FileWithPreview extends File {
   preview?: string;
@@ -45,13 +51,16 @@ const compressImage = (file: File, quality: number): Promise<CompressedFile> => 
       let outputFormat = 'image/jpeg'; // Default to JPEG for compression
       let fileExtension = 'jpg';
       
-      // Keep PNG format if it's PNG, otherwise convert to JPEG for better compression
+      // Keep original format for better quality preservation
       if (originalFormat.includes('png')) {
         outputFormat = 'image/png';
         fileExtension = 'png';
       } else if (originalFormat.includes('webp')) {
         outputFormat = 'image/webp';
         fileExtension = 'webp';
+      } else if (originalFormat.includes('avif')) {
+        outputFormat = 'image/avif';
+        fileExtension = 'avif';
       }
 
       // Convert quality percentage to decimal (Canvas API expects 0.0 to 1.0)
@@ -98,6 +107,12 @@ export default function ImageCompressor() {
   const [compressedFiles, setCompressedFiles] = useState<CompressedFile[]>([]);
   const [selectedComparisonIndex, setSelectedComparisonIndex] = useState<number>(0);
   const [sliderPosition, setSliderPosition] = useState<number>(50);
+  const [userIsFirefox, setUserIsFirefox] = useState(false);
+
+  // Check if user is on Firefox
+  useEffect(() => {
+    setUserIsFirefox(isFirefox());
+  }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map((file) => {
@@ -242,6 +257,11 @@ export default function ImageCompressor() {
     handleSliderDrag(event);
   };
 
+  // Check if individual downloads should be disabled
+  const shouldDisableIndividualDownload = (fileName: string) => {
+    return userIsFirefox && fileName.toLowerCase().includes('.avif');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
@@ -261,6 +281,21 @@ export default function ImageCompressor() {
             Reduce file sizes while maintaining image quality
           </p>
         </div>
+
+        {/* Firefox AVIF Warning */}
+        {userIsFirefox && compressedFiles.some(file => file.name.toLowerCase().includes('.avif')) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-amber-800">Firefox AVIF Download Limitation</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  Firefox doesn&apos;t support saving individual AVIF files directly. You can still download all compressed images as a ZIP file.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Row 1: Upload Section */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
@@ -302,7 +337,7 @@ export default function ImageCompressor() {
                   Drop images here or click to select
                 </p>
                 <p className="text-sm text-gray-500">
-                  Supports JPG, PNG, WebP, and more • No file size limits
+                  Supports JPG, PNG, WebP, AVIF, and more • No file size limits
                 </p>
                 <input
                   id="file-input"
@@ -428,14 +463,20 @@ export default function ImageCompressor() {
                            Comparing
                          </div>
                        )}
-                       <a
-                         href={file.url}
-                         download={file.name}
-                         className="text-blue-600 hover:text-blue-700 transition-colors"
-                         onClick={(e) => e.stopPropagation()}
-                       >
-                         <Download className="h-4 w-4" />
-                       </a>
+                       {!shouldDisableIndividualDownload(file.name) ? (
+                         <a
+                           href={file.url}
+                           download={file.name}
+                           className="text-blue-600 hover:text-blue-700 transition-colors"
+                           onClick={(e) => e.stopPropagation()}
+                         >
+                           <Download className="h-4 w-4" />
+                         </a>
+                       ) : (
+                         <div className="text-gray-400" title="Individual download not supported for AVIF files in Firefox" onClick={(e) => e.stopPropagation()}>
+                           <Download className="h-4 w-4" />
+                         </div>
+                       )}
                      </div>
                    </div>
                  ))}
