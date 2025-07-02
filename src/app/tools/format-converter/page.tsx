@@ -1,22 +1,15 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { Upload, Download, ImageIcon, X, AlertTriangle } from "lucide-react";
-import JSZip from "jszip";
-
-interface FileWithPreview extends File {
-  preview?: string;
-  id: string;
-}
-
-// Browser detection utility
-const isFirefox = () => {
-  if (typeof navigator === 'undefined') return false;
-  return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-};
+import { useState, useEffect } from "react";
+import ToolPageLayout from "../../components/ToolPageLayout";
+import FileUploadZone, { FileWithPreview } from "../../components/FileUploadZone";
+import ProcessedFilesDisplay, { ProcessedFile } from "../../components/ProcessedFilesDisplay";
+import FirefoxWarning from "../../components/FirefoxWarning";
+import { isFirefox } from "../../components/utils/browserUtils";
+import { createAndDownloadZip } from "../../components/utils/zipUtils";
 
 // Client-side image conversion function
-const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name: string; url: string; blob: Blob }> => {
+const convertImageToFormat = (file: File, targetFormat: string): Promise<ProcessedFile> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -58,7 +51,9 @@ const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name:
         resolve({
           name: fileName,
           url: url,
-          blob: blob
+          blob: blob,
+          originalSize: file.size,
+          processedSize: blob.size
         });
       }, mimeType, 1.0); // Quality 1.0 = no compression
     };
@@ -75,7 +70,7 @@ export default function FormatConverter() {
   const [targetFormat, setTargetFormat] = useState<"avif" | "jpeg" | "png" | "webp">("jpeg");
   const [isConverting, setIsConverting] = useState(false);
   const [isCreatingZip, setIsCreatingZip] = useState(false);
-  const [convertedFiles, setConvertedFiles] = useState<{ name: string; url: string; blob: Blob }[]>([]);
+  const [convertedFiles, setConvertedFiles] = useState<ProcessedFile[]>([]);
   const [userIsFirefox, setUserIsFirefox] = useState(false);
 
   // Check if user is on Firefox
@@ -83,48 +78,13 @@ export default function FormatConverter() {
     setUserIsFirefox(isFirefox());
   }, []);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles = acceptedFiles.map((file) => {
-      const fileWithPreview = file as FileWithPreview;
-      fileWithPreview.id = Math.random().toString(36).substr(2, 9);
-      fileWithPreview.preview = URL.createObjectURL(file);
-      return fileWithPreview;
-    });
-    setFiles((prev) => [...prev, ...newFiles]);
-  }, []);
-
-  const removeFile = (id: string) => {
-    setFiles((prev) => {
-      const fileToRemove = prev.find((f) => f.id === id);
-      if (fileToRemove?.preview) {
-        URL.revokeObjectURL(fileToRemove.preview);
-      }
-      return prev.filter((f) => f.id !== id);
-    });
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(event.target.files || []);
-    onDrop(selectedFiles);
-  };
-
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault();
-  };
-
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault();
-    const droppedFiles = Array.from(event.dataTransfer.files);
-    onDrop(droppedFiles);
-  };
-
   const convertImages = async () => {
     if (files.length === 0) return;
 
     setIsConverting(true);
     
     try {
-      const converted: { name: string; url: string; blob: Blob }[] = [];
+      const converted: ProcessedFile[] = [];
       
       // Convert each file client-side
       for (const file of files) {
@@ -149,27 +109,10 @@ export default function FormatConverter() {
 
     setIsCreatingZip(true);
     try {
-      const zip = new JSZip();
-      
-      // Add each file to the zip using the blob directly
-      convertedFiles.forEach((file) => {
-        zip.file(file.name, file.blob);
-      });
-      
-      // Generate the zip file
-      const zipBlob = await zip.generateAsync({ type: "blob" });
-      
-      // Create download link for the zip
-      const zipUrl = URL.createObjectURL(zipBlob);
-      const link = document.createElement("a");
-      link.href = zipUrl;
-      link.download = `converted-images-${targetFormat}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Clean up the URL object
-      URL.revokeObjectURL(zipUrl);
+      await createAndDownloadZip(
+        convertedFiles.map(file => ({ name: file.name, blob: file.blob })),
+        `converted-images-${targetFormat}.zip`
+      );
     } catch (error) {
       console.error("Error creating zip file:", error);
     } finally {
@@ -177,200 +120,71 @@ export default function FormatConverter() {
     }
   };
 
-  // Clean up URLs when component unmounts or files change
-  const cleanupConvertedFiles = useCallback(() => {
-    convertedFiles.forEach(file => {
-      URL.revokeObjectURL(file.url);
-    });
-  }, [convertedFiles]);
-
-  // Clean up object URLs on unmount and when convertedFiles change
-  useEffect(() => {
-    return () => {
-      cleanupConvertedFiles();
-    };
-  }, [cleanupConvertedFiles]);
-
   // Check if individual downloads should be disabled
-  const shouldDisableIndividualDownload = userIsFirefox && targetFormat === 'avif';
+  const shouldDisableIndividualDownload = () => {
+    return userIsFirefox && targetFormat === 'avif';
+  };
+
+  const formatSelectionControl = (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Convert to:
+      </label>
+      <select
+        value={targetFormat}
+        onChange={(e) => setTargetFormat(e.target.value as "avif" | "jpeg" | "png" | "webp")}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+      >
+        <option value="avif">AVIF</option>
+        <option value="jpeg">JPEG</option>
+        <option value="png">PNG</option>
+        <option value="webp">WebP</option>
+      </select>
+    </div>
+  );
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 flex-1">
-      <div className="container mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Image Format Converter
-          </h1>
-          <p className="text-gray-600">
-            Convert your images between AVIF, JPEG, PNG, and WebP formats
-          </p>
-        </div>
+    <ToolPageLayout
+      title="Image Format Converter"
+      description="Convert your images between AVIF, JPEG, PNG, and WebP formats"
+    >
+      {/* Firefox AVIF Warning */}
+      {userIsFirefox && targetFormat === 'avif' && (
+        <FirefoxWarning variant="avif-conversion" />
+      )}
 
-        {/* Firefox AVIF Warning */}
-        {userIsFirefox && targetFormat === 'avif' && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm text-amber-700 mt-1">
-                  Firefox doesn&apos;t support saving individual AVIF files directly. You can still download all converted images as a ZIP file.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Row 1: Upload Section */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Upload Images
-          </h2>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Format Selection - Updated with AVIF support */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Convert to:
-              </label>
-              <select
-                value={targetFormat}
-                onChange={(e) => setTargetFormat(e.target.value as "avif" | "jpeg" | "png" | "webp")}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-              >
-                <option value="avif">AVIF</option>
-                <option value="jpeg">JPEG</option>
-                <option value="png">PNG</option>
-                <option value="webp">WebP</option>
-              </select>
-            </div>
-
-            {/* Drop Zone */}
-            <div className="lg:col-span-2">
-              <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer h-full flex flex-col justify-center"
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onClick={() => document.getElementById("file-input")?.click()}
-              >
-                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-2">
-                  Drop images here or click to select
-                </p>
-                <p className="text-sm text-gray-500">
-                  Supports AVIF, JPEG, PNG, and WEBP images
-                </p>
-                <input
-                  id="file-input"
-                  type="file"
-                  multiple
-                  accept="image/*,.avif"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* File List */}
-          {files.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">
-                Selected Files ({files.length})
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-40 overflow-y-auto">
-                {files.map((file) => (
-                  <div
-                    key={file.id}
-                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-                  >
-                    <ImageIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => removeFile(file.id)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Convert Button */}
-          <button
-            onClick={convertImages}
-            disabled={files.length === 0 || isConverting}
-            className="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {isConverting ? "Converting..." : "Convert Images"}
-          </button>
-        </div>
-
-        {/* Row 2: Converted Images */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Converted Images
-          </h2>
-
-          {convertedFiles.length === 0 ? (
-            <div className="text-center py-12">
-              <Download className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">
-                Converted images will appear here
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* File List */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
-                {convertedFiles.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-                  >
-                    <ImageIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {file.name}
-                      </p>
-                    </div>
-                    {!shouldDisableIndividualDownload ? (
-                      <a
-                        href={file.url}
-                        download={file.name}
-                        className="text-blue-600 hover:text-blue-700 transition-colors flex-shrink-0"
-                      >
-                        <Download className="h-4 w-4" />
-                      </a>
-                    ) : (
-                      <div className="text-gray-400 flex-shrink-0" title="Individual download not supported for AVIF files in Firefox">
-                        <Download className="h-4 w-4" />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={downloadAll}
-                disabled={isCreatingZip}
-                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                {isCreatingZip ? "Creating ZIP..." : "Download All"}
-              </button>
-            </div>
-          )}
-        </div>
+      {/* Upload Section */}
+      <div className="mb-8">
+        <FileUploadZone
+          files={files}
+          onFilesChange={setFiles}
+          disabled={isConverting}
+        >
+          {formatSelectionControl}
+        </FileUploadZone>
       </div>
-    </div>
+
+      {/* Convert Button */}
+      <div className="mb-8">
+        <button
+          onClick={convertImages}
+          disabled={files.length === 0 || isConverting}
+          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+        >
+          {isConverting ? "Converting..." : "Convert Images"}
+        </button>
+      </div>
+
+      {/* Converted Images Display */}
+      <ProcessedFilesDisplay
+        title="Converted Images"
+        emptyStateMessage="Converted images will appear here"
+        files={convertedFiles}
+        onDownloadAll={downloadAll}
+        isCreatingZip={isCreatingZip}
+        downloadAllButtonText="Download All"
+        shouldDisableIndividualDownload={shouldDisableIndividualDownload}
+      />
+    </ToolPageLayout>
   );
 } 

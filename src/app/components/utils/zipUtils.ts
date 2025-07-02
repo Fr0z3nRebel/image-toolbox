@@ -20,12 +20,13 @@ export const createAndDownloadZip = async (
   // Generate the zip file
   const zipBlob = await zip.generateAsync({ 
     type: "blob",
-    ...(onProgress && {
-      streamFiles: true,
-      compression: "DEFLATE",
-      compressionOptions: { level: 6 }
-    })
-  }, onProgress);
+    compression: "DEFLATE",
+    compressionOptions: { level: 6 }
+  }, onProgress ? (metadata) => {
+    // Convert JSZip metadata to simple progress percentage
+    const progress = metadata.percent || 0;
+    onProgress(progress);
+  } : undefined);
   
   // Create download link for the zip
   const zipUrl = URL.createObjectURL(zipBlob);

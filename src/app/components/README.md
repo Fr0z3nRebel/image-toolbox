@@ -155,4 +155,4 @@ To migrate existing tools to use these components:
 5. Use utility functions from `browserUtils` and `zipUtils`
 6. For tools with comparison features, use `ImageComparison`
 
-See `page-refactored-example.tsx` in the format-converter directory for a complete example of how the format converter could be refactored. 
+The format-converter tool (`src/app/tools/format-converter/page.tsx`) has been refactored to use these components as a reference implementation. 
