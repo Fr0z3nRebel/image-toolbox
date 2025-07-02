@@ -7,63 +7,7 @@ import ProcessedFilesDisplay, { ProcessedFile } from "../../components/Processed
 import FirefoxWarning from "../../components/FirefoxWarning";
 import { isFirefox } from "../../components/utils/browserUtils";
 import { createAndDownloadZip } from "../../components/utils/zipUtils";
-
-// Client-side image conversion function
-const convertImageToFormat = (file: File, targetFormat: string): Promise<ProcessedFile> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        reject(new Error('Could not get canvas context'));
-        return;
-      }
-
-      // Set canvas dimensions to match image
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-
-      // Draw image to canvas
-      ctx.drawImage(img, 0, 0);
-
-      // Convert to target format
-      const mimeType = `image/${targetFormat}`;
-      
-      // Add timeout for AVIF conversion as it can be slow
-      const timeoutMs = targetFormat === 'avif' ? 15000 : 10000;
-      const timeoutId = setTimeout(() => {
-        reject(new Error(`Conversion timeout - ${targetFormat.toUpperCase()} encoding took too long`));
-      }, timeoutMs);
-      
-      canvas.toBlob((blob) => {
-        clearTimeout(timeoutId);
-        
-        if (!blob) {
-          reject(new Error(`Failed to convert image to ${targetFormat.toUpperCase()} - format may not be supported by this browser`));
-          return;
-        }
-
-        const fileName = file.name.replace(/\.[^/.]+$/, "") + `.${targetFormat}`;
-        const url = URL.createObjectURL(blob);
-
-        resolve({
-          name: fileName,
-          url: url,
-          blob: blob,
-          originalSize: file.size,
-          processedSize: blob.size
-        });
-      }, mimeType, 1.0); // Quality 1.0 = no compression
-    };
-
-    img.onerror = () => reject(new Error('Failed to load image'));
-    
-    // Load the image
-    img.src = URL.createObjectURL(file);
-  });
-};
+import { convertImages, shouldDisableIndividualDownload } from "./functions";
 
 export default function FormatConverter() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
@@ -78,25 +22,14 @@ export default function FormatConverter() {
     setUserIsFirefox(isFirefox());
   }, []);
 
-  const convertImages = async () => {
+  const handleConvertImages = async () => {
     if (files.length === 0) return;
 
     setIsConverting(true);
     
     try {
-      const converted: ProcessedFile[] = [];
-      
-      // Convert each file client-side
-      for (const file of files) {
-        try {
-          const result = await convertImageToFormat(file, targetFormat);
-          converted.push(result);
-        } catch (error) {
-          console.error(`Failed to convert ${file.name}:`, error);
-        }
-      }
-      
-      setConvertedFiles(converted);
+      const results = await convertImages(files, targetFormat);
+      setConvertedFiles(results);
     } catch (error) {
       console.error("Error converting images:", error);
     } finally {
@@ -120,11 +53,6 @@ export default function FormatConverter() {
     }
   };
 
-  // Check if individual downloads should be disabled
-  const shouldDisableIndividualDownload = () => {
-    return userIsFirefox && targetFormat === 'avif';
-  };
-
   const formatSelectionControl = (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -145,7 +73,7 @@ export default function FormatConverter() {
 
   const convertButton = (
     <button
-      onClick={convertImages}
+      onClick={handleConvertImages}
       disabled={files.length === 0 || isConverting}
       className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
     >
@@ -183,7 +111,7 @@ export default function FormatConverter() {
         onDownloadAll={downloadAll}
         isCreatingZip={isCreatingZip}
         downloadAllButtonText="Download All"
-        shouldDisableIndividualDownload={shouldDisableIndividualDownload}
+        shouldDisableIndividualDownload={() => shouldDisableIndividualDownload(targetFormat, userIsFirefox)}
       />
     </ToolPageLayout>
   );

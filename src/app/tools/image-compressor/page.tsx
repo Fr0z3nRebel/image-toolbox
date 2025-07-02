@@ -9,79 +9,13 @@ import FirefoxWarning from "../../components/FirefoxWarning";
 import ImageComparison from "../../components/ImageComparison";
 import { isFirefox, formatFileSize } from "../../components/utils/browserUtils";
 import { createAndDownloadZip } from "../../components/utils/zipUtils";
+import { 
+  compressImages, 
+  shouldDisableIndividualDownload, 
+  getOriginalFileForComparison 
+} from "./functions";
 
-// Client-side image compression function
-const compressImage = (file: File, quality: number): Promise<ProcessedFile> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        reject(new Error('Could not get canvas context'));
-        return;
-      }
 
-      // Set canvas dimensions to match image
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-
-      // Draw image to canvas
-      ctx.drawImage(img, 0, 0);
-
-      // Determine output format based on original file type
-      const originalFormat = file.type.toLowerCase();
-      let outputFormat = 'image/jpeg'; // Default to JPEG for compression
-      let fileExtension = 'jpg';
-      
-      // Keep original format for better quality preservation
-      if (originalFormat.includes('png')) {
-        outputFormat = 'image/png';
-        fileExtension = 'png';
-      } else if (originalFormat.includes('webp')) {
-        outputFormat = 'image/webp';
-        fileExtension = 'webp';
-      } else if (originalFormat.includes('avif')) {
-        outputFormat = 'image/avif';
-        fileExtension = 'avif';
-      }
-
-      // Convert quality percentage to decimal (Canvas API expects 0.0 to 1.0)
-      const canvasQuality = Math.max(0.1, Math.min(1.0, quality / 100));
-      
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          reject(new Error('Failed to compress image'));
-          return;
-        }
-
-        const originalSize = file.size;
-        const compressedSize = blob.size;
-        const compressionRatio = ((originalSize - compressedSize) / originalSize) * 100;
-        
-        // Generate filename
-        const baseName = file.name.replace(/\.[^/.]+$/, "");
-        const fileName = `${baseName}_compressed.${fileExtension}`;
-        const url = URL.createObjectURL(blob);
-
-        resolve({
-          name: fileName,
-          url: url,
-          originalSize: originalSize,
-          processedSize: compressedSize,
-          compressionRatio: Math.max(0, compressionRatio),
-          blob: blob
-        });
-      }, outputFormat, canvasQuality);
-    };
-
-    img.onerror = () => reject(new Error('Failed to load image'));
-    
-    // Load the image
-    img.src = URL.createObjectURL(file);
-  });
-};
 
 export default function ImageCompressor() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
@@ -97,25 +31,14 @@ export default function ImageCompressor() {
     setUserIsFirefox(isFirefox());
   }, []);
 
-  const compressImages = async () => {
+  const handleCompressImages = async () => {
     if (files.length === 0) return;
 
     setIsCompressing(true);
     
     try {
-      const compressed: ProcessedFile[] = [];
-      
-      // Compress each file client-side
-      for (const file of files) {
-        try {
-          const result = await compressImage(file, quality);
-          compressed.push(result);
-        } catch (error) {
-          console.error(`Failed to compress ${file.name}:`, error);
-        }
-      }
-      
-      setCompressedFiles(compressed);
+      const results = await compressImages(files, quality);
+      setCompressedFiles(results);
     } catch (error) {
       console.error("Error compressing images:", error);
     } finally {
@@ -137,18 +60,6 @@ export default function ImageCompressor() {
     } finally {
       setIsCreatingZip(false);
     }
-  };
-
-  // Check if individual downloads should be disabled
-  const shouldDisableIndividualDownload = (fileName: string) => {
-    return userIsFirefox && fileName.toLowerCase().includes('.avif');
-  };
-
-  const getOriginalFileForComparison = (index: number) => {
-    if (index >= 0 && index < files.length && index < compressedFiles.length) {
-      return files[index];
-    }
-    return null;
   };
 
   const qualityControl = (
@@ -174,13 +85,19 @@ export default function ImageCompressor() {
 
   const compressButton = (
     <button
-      onClick={compressImages}
+      onClick={handleCompressImages}
       disabled={files.length === 0 || isCompressing}
       className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
     >
       <Minimize2 className="h-4 w-4" />
       {isCompressing ? "Compressing..." : "Compress Images"}
     </button>
+  );
+
+  const originalFileForComparison = getOriginalFileForComparison(
+    selectedComparisonIndex, 
+    files, 
+    compressedFiles
   );
 
   return (
@@ -220,15 +137,15 @@ export default function ImageCompressor() {
           showStats={true}
           onFileSelect={setSelectedComparisonIndex}
           selectedIndex={selectedComparisonIndex}
-          shouldDisableIndividualDownload={shouldDisableIndividualDownload}
+          shouldDisableIndividualDownload={(fileName) => shouldDisableIndividualDownload(fileName, userIsFirefox)}
           formatFileSize={formatFileSize}
         />
       </div>
 
       {/* Before/After Comparison */}
-      {compressedFiles.length > 0 && getOriginalFileForComparison(selectedComparisonIndex) && (
+      {compressedFiles.length > 0 && originalFileForComparison && (
         <ImageComparison
-          originalImageUrl={getOriginalFileForComparison(selectedComparisonIndex)?.preview || ''}
+          originalImageUrl={originalFileForComparison.preview || ''}
           processedImageUrl={compressedFiles[selectedComparisonIndex]?.url || ''}
           originalSize={compressedFiles[selectedComparisonIndex]?.originalSize || 0}
           processedSize={compressedFiles[selectedComparisonIndex]?.processedSize || 0}
