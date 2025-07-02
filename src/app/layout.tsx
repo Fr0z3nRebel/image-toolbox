@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Image Toolbox - Convert and Process Images Online",
-  description: "Professional image tools by Lefty Studios for format conversion and processing. Most tools work client-side for maximum privacy and speed. Convert between JPG, PNG, WebP and more.",
-  keywords: "image converter, format converter, image tools, JPG to PNG, PNG to WebP, image compression, client-side processing",
+  description: "Professional image tools by Lefty Studios for format conversion and processing. Most tools work client-side for maximum privacy and speed. Convert between AVIF, JPEG, PNG, and WebP.",
+  keywords: "image converter, format converter, image tools, JPEG to PNG, PNG to WebP, image compression, client-side processing",
   authors: [{ name: "Lefty Studios" }],
 };
 

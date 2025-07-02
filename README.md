@@ -5,7 +5,7 @@ A modern web application built with Next.js that provides a collection of powerf
 ## Features
 
 ### 🎨 Image Format Converter
-- Convert images between JPG, PNG, and WebP formats
+- Convert images between AVIG, JPEG, PNG, and WebP formats
 - Support for single and bulk image conversion
 - Drag-and-drop file upload interface
 - High-quality conversion with configurable settings
@@ -72,7 +72,7 @@ Converts uploaded images to the specified format.
 
 **Request:**
 - `files`: Array of image files (multipart/form-data)
-- `targetFormat`: Target format ("jpg", "png", or "webp")
+- `targetFormat`: Target format ("avif", "jpeg", "png", or "webp")
 
 **Response:**
 ```json

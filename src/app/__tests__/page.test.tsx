@@ -43,7 +43,7 @@ describe("Home", () => {
 
   it('renders the format converter description', () => {
     render(<Home />);
-    const description = screen.getByText(/Convert images between JPG, PNG, and WebP formats/);
+    const description = screen.getByText(/Convert images between AVIF, JPEG, PNG, and WebP formats/);
     expect(description).toBeInTheDocument();
   });
 

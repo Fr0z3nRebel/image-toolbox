@@ -36,7 +36,7 @@ const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name:
       ctx.drawImage(img, 0, 0);
 
       // Convert to target format
-      const mimeType = `image/${targetFormat === 'jpg' ? 'jpeg' : targetFormat}`;
+      const mimeType = `image/${targetFormat}`;
       
       // Add timeout for AVIF conversion as it can be slow
       const timeoutMs = targetFormat === 'avif' ? 15000 : 10000;
@@ -72,7 +72,7 @@ const convertImageToFormat = (file: File, targetFormat: string): Promise<{ name:
 
 export default function FormatConverter() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
-  const [targetFormat, setTargetFormat] = useState<"jpg" | "png" | "webp" | "avif">("jpg");
+  const [targetFormat, setTargetFormat] = useState<"avif" | "jpeg" | "png" | "webp">("jpeg");
   const [isConverting, setIsConverting] = useState(false);
   const [isCreatingZip, setIsCreatingZip] = useState(false);
   const [convertedFiles, setConvertedFiles] = useState<{ name: string; url: string; blob: Blob }[]>([]);
@@ -203,7 +203,7 @@ export default function FormatConverter() {
             Image Format Converter
           </h1>
           <p className="text-gray-600">
-            Convert your images between JPG, PNG, WebP, and AVIF formats
+            Convert your images between AVIF, JPEG, PNG, and WebP formats
           </p>
         </div>
 
@@ -235,13 +235,13 @@ export default function FormatConverter() {
               </label>
               <select
                 value={targetFormat}
-                onChange={(e) => setTargetFormat(e.target.value as "jpg" | "png" | "webp" | "avif")}
+                onChange={(e) => setTargetFormat(e.target.value as "avif" | "jpeg" | "png" | "webp")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
               >
-                <option value="jpg">JPG</option>
+                <option value="avif">AVIF</option>
+                <option value="jpeg">JPEG</option>
                 <option value="png">PNG</option>
                 <option value="webp">WebP</option>
-                <option value="avif">AVIF</option>
               </select>
             </div>
 
@@ -258,13 +258,13 @@ export default function FormatConverter() {
                   Drop images here or click to select
                 </p>
                 <p className="text-sm text-gray-500">
-                  Supports JPG, PNG, WebP, AVIF, GIF, and more • No file size limits
+                  Supports AVIF, JPEG, PNG, and WEBP images
                 </p>
                 <input
                   id="file-input"
                   type="file"
                   multiple
-                  accept="image/*"
+                  accept="image/*,.avif"
                   onChange={handleFileSelect}
                   className="hidden"
                 />

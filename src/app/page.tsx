@@ -62,7 +62,7 @@ export default function Home() {
   const tools = [
     {
       title: "Format Converter",
-      description: "Convert images between JPG, PNG, and WebP formats",
+      description: "Convert images between AVIF, JPEG, PNG, and WebP formats",
       icon: <ImageIcon className="h-6 w-6 text-blue-600" />,
       href: "/tools/format-converter",
       color: "hover:border-blue-200",

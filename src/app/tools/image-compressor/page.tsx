@@ -337,7 +337,7 @@ export default function ImageCompressor() {
                   Drop images here or click to select
                 </p>
                 <p className="text-sm text-gray-500">
-                  Supports JPG, PNG, WebP, AVIF, and more • No file size limits
+                  Supports AVIF, JPEG, PNG, and WebP images
                 </p>
                 <input
                   id="file-input"
