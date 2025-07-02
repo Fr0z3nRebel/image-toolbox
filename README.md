@@ -111,6 +111,7 @@ A unified file upload component with drag-and-drop functionality.
 - Click-to-select file functionality  
 - File list display with thumbnails and metadata
 - Custom control slots for tool-specific options
+- Required action button for processing files
 - File size calculation and display
 - Remove individual files functionality
 - Disabled state during processing
@@ -125,6 +126,11 @@ import FileUploadZone, { FileWithPreview } from './components/FileUploadZone';
   disabled={isProcessing}
   acceptedFileTypes="image/*,.avif"
   supportedFormatsText="Supports AVIF, JPEG, PNG, and WebP images"
+  actionButton={
+    <button onClick={processImages} disabled={files.length === 0}>
+      Process Images
+    </button>
+  }
 >
   {/* Custom controls like format selection or quality slider */}
   <FormatSelector value={format} onChange={setFormat} />

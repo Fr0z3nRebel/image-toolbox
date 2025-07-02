@@ -143,6 +143,16 @@ export default function FormatConverter() {
     </div>
   );
 
+  const convertButton = (
+    <button
+      onClick={convertImages}
+      disabled={files.length === 0 || isConverting}
+      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+    >
+      {isConverting ? "Converting..." : "Convert Images"}
+    </button>
+  );
+
   return (
     <ToolPageLayout
       title="Image Format Converter"
@@ -159,20 +169,10 @@ export default function FormatConverter() {
           files={files}
           onFilesChange={setFiles}
           disabled={isConverting}
+          actionButton={convertButton}
         >
           {formatSelectionControl}
         </FileUploadZone>
-      </div>
-
-      {/* Convert Button */}
-      <div className="mb-8">
-        <button
-          onClick={convertImages}
-          disabled={files.length === 0 || isConverting}
-          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-        >
-          {isConverting ? "Converting..." : "Convert Images"}
-        </button>
       </div>
 
       {/* Converted Images Display */}

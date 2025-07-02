@@ -18,6 +18,7 @@ interface FileUploadZoneProps {
   maxDisplayHeight?: string;
   disabled?: boolean;
   children?: React.ReactNode; // For additional controls like format selection or quality slider
+  actionButton: React.ReactNode; // For action buttons like Convert, Compress, etc.
 }
 
 export default function FileUploadZone({
@@ -28,7 +29,8 @@ export default function FileUploadZone({
   showFileSize = true,
   maxDisplayHeight = "max-h-40",
   disabled = false,
-  children
+  children,
+  actionButton
 }: FileUploadZoneProps) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map((file) => {
@@ -161,6 +163,11 @@ export default function FileUploadZone({
           </div>
         </div>
       )}
+
+      {/* Action Button */}
+      <div className="mt-6">
+        {actionButton}
+      </div>
     </div>
   );
 } 

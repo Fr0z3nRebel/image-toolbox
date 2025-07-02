@@ -12,6 +12,7 @@ A reusable file upload component with drag-and-drop functionality.
 - File selection via click
 - File list display with remove functionality
 - Support for custom controls (format selection, quality slider, etc.)
+- Required action button (Convert, Compress, etc.) at the bottom
 - File size display and total size calculation
 - Customizable file type acceptance
 - Disabled state support
@@ -24,6 +25,11 @@ import FileUploadZone, { FileWithPreview } from './components/FileUploadZone';
   files={files}
   onFilesChange={setFiles}
   disabled={isProcessing}
+  actionButton={
+    <button onClick={processFiles} disabled={files.length === 0}>
+      Process Images
+    </button>
+  }
 >
   {/* Custom controls like format selection */}
   <div>
