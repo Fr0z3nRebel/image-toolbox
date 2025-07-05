@@ -164,9 +164,6 @@ export default function ImageUpscaler() {
           originalSize={upscaledFiles[selectedComparisonIndex]?.originalSize || 0}
           processedSize={upscaledFiles[selectedComparisonIndex]?.processedSize || 0}
           fileName={upscaledFiles[selectedComparisonIndex]?.name || ''}
-          title="Before / After Comparison"
-          originalLabel="Original"
-          processedLabel="Upscaled"
         />
       )}
     </ToolPageLayout>
