@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Scissors, Brush, Eraser, RotateCcw } from "lucide-react";
 import ToolPageLayout from "../../components/ToolPageLayout";
 import FileUploadZone, { FileWithPreview } from "../../components/FileUploadZone";
@@ -12,6 +12,7 @@ import {
   processBackgroundRemovalBatch, 
   shouldDisableIndividualDownload, 
   getOriginalFileForComparison,
+  generateRealtimePreview,
   BackgroundRemovalSettings,
   BackgroundRemovalMode
 } from "./functions";
@@ -29,13 +30,15 @@ export default function BackgroundRemover() {
   const [processedFiles, setProcessedFiles] = useState<ProcessedFile[]>([]);
   const [selectedComparisonIndex, setSelectedComparisonIndex] = useState<number>(0);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
-  const [maskCanvas, setMaskCanvas] = useState<HTMLCanvasElement | null>(null);
-  const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
+  const [foregroundCanvas, setForegroundCanvas] = useState<HTMLCanvasElement | null>(null);
+  const [tool, setTool] = useState<'foreground' | 'background'>('foreground');
   const [isDrawing, setIsDrawing] = useState(false);
   
   // Canvas refs for drawing mode
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const maskCanvasRef = useRef<HTMLCanvasElement>(null);
+  const imageCanvasRef = useRef<HTMLCanvasElement>(null);
+  const foregroundHintsRef = useRef<HTMLCanvasElement>(null);
+  const backgroundHintsRef = useRef<HTMLCanvasElement>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Load image for drawing mode
   useEffect(() => {
@@ -46,32 +49,75 @@ export default function BackgroundRemover() {
 
   // Setup canvas for drawing mode
   useEffect(() => {
-    if (mode === 'drawing' && currentFile && canvasRef.current && maskCanvasRef.current) {
-      const canvas = canvasRef.current;
-      const maskCanvas = maskCanvasRef.current;
-      const ctx = canvas.getContext('2d');
-      const maskCtx = maskCanvas.getContext('2d');
+    if (mode === 'drawing' && currentFile && imageCanvasRef.current && foregroundHintsRef.current && backgroundHintsRef.current) {
+      const imageCanvas = imageCanvasRef.current;
+      const fgHints = foregroundHintsRef.current;
+      const bgHints = backgroundHintsRef.current;
+      const imageCtx = imageCanvas.getContext('2d');
+      const fgCtx = fgHints.getContext('2d');
+      const bgCtx = bgHints.getContext('2d');
 
-      if (!ctx || !maskCtx) return;
+      if (!imageCtx || !fgCtx || !bgCtx) return;
 
       const img = new Image();
       img.onload = () => {
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        maskCanvas.width = img.naturalWidth;
-        maskCanvas.height = img.naturalHeight;
-
-        ctx.drawImage(img, 0, 0);
-        maskCtx.fillStyle = 'white';
-        maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+        const { naturalWidth, naturalHeight } = img;
         
-        setMaskCanvas(maskCanvas);
+        // Set all canvases to the same size
+        imageCanvas.width = naturalWidth;
+        imageCanvas.height = naturalHeight;
+        fgHints.width = naturalWidth;
+        fgHints.height = naturalHeight;
+        bgHints.width = naturalWidth;
+        bgHints.height = naturalHeight;
+
+        // Draw original image
+        imageCtx.drawImage(img, 0, 0);
+        
+        // Initialize hint canvases (transparent)
+        fgCtx.clearRect(0, 0, naturalWidth, naturalHeight);
+        bgCtx.clearRect(0, 0, naturalWidth, naturalHeight);
+        
+        setForegroundCanvas(fgHints);
+        
+        // Generate initial preview
+        updatePreview();
       };
 
       img.src = URL.createObjectURL(currentFile);
       return () => URL.revokeObjectURL(img.src);
     }
   }, [mode, currentFile]);
+
+  // Update preview in real-time
+  const updatePreview = useCallback(() => {
+    if (!imageCanvasRef.current || !foregroundHintsRef.current || !backgroundHintsRef.current) return;
+    
+    const settings: BackgroundRemovalSettings = {
+      mode: 'drawing',
+      tolerance,
+      edgeSmooth,
+      useTransparent,
+      backgroundColor
+    };
+
+    const preview = generateRealtimePreview(
+      imageCanvasRef.current,
+      foregroundHintsRef.current,
+      backgroundHintsRef.current,
+      settings
+    );
+
+    if (preview && previewCanvasRef.current) {
+      const previewCanvas = previewCanvasRef.current;
+      previewCanvas.width = preview.width;
+      previewCanvas.height = preview.height;
+      const ctx = previewCanvas.getContext('2d');
+      if (ctx) {
+        ctx.putImageData(preview, 0, 0);
+      }
+    }
+  }, [tolerance, edgeSmooth, useTransparent, backgroundColor]);
 
   const handleProcessImages = async () => {
     if (files.length === 0) return;
@@ -90,7 +136,7 @@ export default function BackgroundRemover() {
       const results = await processBackgroundRemovalBatch(
         files, 
         settings, 
-        mode === 'drawing' && maskCanvas ? maskCanvas : undefined
+        mode === 'drawing' && foregroundCanvas ? foregroundCanvas : undefined
       );
       setProcessedFiles(results);
     } catch (error) {
@@ -118,7 +164,7 @@ export default function BackgroundRemover() {
 
   // Drawing functions
   const getMousePos = (e: MouseEvent | React.MouseEvent) => {
-    const canvas = canvasRef.current;
+    const canvas = imageCanvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
@@ -132,17 +178,20 @@ export default function BackgroundRemover() {
   };
 
   const draw = (x: number, y: number) => {
-    const canvas = maskCanvasRef.current;
-    if (!canvas) return;
+    const targetCanvas = tool === 'foreground' ? foregroundHintsRef.current : backgroundHintsRef.current;
+    if (!targetCanvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = targetCanvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.globalCompositeOperation = tool === 'brush' ? 'source-over' : 'destination-out';
-    ctx.fillStyle = tool === 'brush' ? 'black' : 'white';
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = tool === 'foreground' ? 'green' : 'red';
     ctx.beginPath();
     ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Update preview in real-time
+    updatePreview();
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -163,15 +212,17 @@ export default function BackgroundRemover() {
     setIsDrawing(false);
   };
 
-  const clearMask = () => {
-    const canvas = maskCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const clearHints = () => {
+    if (foregroundHintsRef.current && backgroundHintsRef.current) {
+      const fgCtx = foregroundHintsRef.current.getContext('2d');
+      const bgCtx = backgroundHintsRef.current.getContext('2d');
+      
+      if (fgCtx && bgCtx) {
+        fgCtx.clearRect(0, 0, foregroundHintsRef.current.width, foregroundHintsRef.current.height);
+        bgCtx.clearRect(0, 0, backgroundHintsRef.current.width, backgroundHintsRef.current.height);
+        updatePreview();
+      }
+    }
   };
 
   // Control components
@@ -318,30 +369,30 @@ export default function BackgroundRemover() {
             
             {/* Drawing Tools */}
             <div className="flex flex-wrap items-center gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setTool('brush')}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                    tool === 'brush'
-                      ? 'bg-red-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <Brush className="h-4 w-4" />
-                  Remove
-                </button>
-                <button
-                  onClick={() => setTool('eraser')}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                    tool === 'eraser'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <Eraser className="h-4 w-4" />
-                  Keep
-                </button>
-              </div>
+                           <div className="flex items-center gap-2">
+               <button
+                 onClick={() => setTool('foreground')}
+                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                   tool === 'foreground'
+                     ? 'bg-green-600 text-white'
+                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                 }`}
+               >
+                 <Brush className="h-4 w-4" />
+                 Keep (Subject)
+               </button>
+               <button
+                 onClick={() => setTool('background')}
+                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                   tool === 'background'
+                     ? 'bg-red-600 text-white'
+                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                 }`}
+               >
+                 <Eraser className="h-4 w-4" />
+                 Remove (Background)
+               </button>
+             </div>
               
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-700">Size:</span>
@@ -357,39 +408,63 @@ export default function BackgroundRemover() {
               </div>
               
               <button
-                onClick={clearMask}
+                onClick={clearHints}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
               >
                 <RotateCcw className="h-4 w-4" />
-                Clear
+                Clear All
               </button>
             </div>
 
-            {/* Canvas */}
-            <div className="relative bg-gray-50 rounded-lg p-4">
-              <div className="relative inline-block">
-                <canvas
-                  ref={canvasRef}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  className="max-w-full max-h-96 border border-gray-300 rounded cursor-crosshair"
-                />
-                <canvas
-                  ref={maskCanvasRef}
-                  className="absolute top-0 left-0 max-w-full max-h-96 opacity-30 pointer-events-none"
-                  style={{ mixBlendMode: 'multiply' }}
-                />
-              </div>
-            </div>
+                         {/* Canvas Interface */}
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+               {/* Drawing Area */}
+               <div className="relative bg-gray-50 rounded-lg p-4">
+                 <h4 className="text-sm font-medium text-gray-700 mb-2">Drawing Area</h4>
+                 <div className="relative inline-block">
+                   {/* Original image canvas */}
+                   <canvas
+                     ref={imageCanvasRef}
+                     onMouseDown={handleMouseDown}
+                     onMouseMove={handleMouseMove}
+                     onMouseUp={handleMouseUp}
+                     onMouseLeave={handleMouseUp}
+                     className="max-w-full max-h-80 border border-gray-300 rounded cursor-crosshair"
+                   />
+                   {/* Foreground hints overlay */}
+                   <canvas
+                     ref={foregroundHintsRef}
+                     className="absolute top-0 left-0 max-w-full max-h-80 opacity-60 pointer-events-none"
+                     style={{ mixBlendMode: 'multiply' }}
+                   />
+                   {/* Background hints overlay */}
+                   <canvas
+                     ref={backgroundHintsRef}
+                     className="absolute top-0 left-0 max-w-full max-h-80 opacity-60 pointer-events-none"
+                     style={{ mixBlendMode: 'multiply' }}
+                   />
+                 </div>
+               </div>
 
-            <div className="mt-4 text-sm text-gray-600">
-              <p>
-                <strong>Red areas</strong> will be removed from the background.
-                <strong> Blue areas</strong> will be preserved.
-              </p>
-            </div>
+               {/* Preview Area */}
+               <div className="relative bg-gray-50 rounded-lg p-4">
+                 <h4 className="text-sm font-medium text-gray-700 mb-2">Live Preview</h4>
+                 <div className="relative inline-block">
+                   <canvas
+                     ref={previewCanvasRef}
+                     className="max-w-full max-h-80 border border-gray-300 rounded"
+                   />
+                 </div>
+               </div>
+             </div>
+
+             <div className="mt-4 text-sm text-gray-600">
+               <p>
+                 <strong>Green strokes</strong> mark areas to keep (subject).
+                 <strong> Red strokes</strong> mark areas to remove (background).
+                 The preview updates in real-time as you draw.
+               </p>
+             </div>
           </div>
         </div>
       )}
@@ -411,16 +486,16 @@ export default function BackgroundRemover() {
         />
       </div>
 
-      {/* Before/After Comparison */}
-      {processedFiles.length > 0 && originalFileForComparison && (
-        <ImageComparison
-          originalImageUrl={originalFileForComparison.preview || ''}
-          processedImageUrl={processedFiles[selectedComparisonIndex]?.url || ''}
-          originalSize={processedFiles[selectedComparisonIndex]?.originalSize || 0}
-          processedSize={processedFiles[selectedComparisonIndex]?.processedSize || 0}
-          fileName={processedFiles[selectedComparisonIndex]?.name || ''}
-        />
-      )}
+             {/* Before/After Comparison */}
+       {processedFiles.length > 0 && originalFileForComparison && (
+         <ImageComparison
+           originalImageUrl={URL.createObjectURL(originalFileForComparison)}
+           processedImageUrl={processedFiles[selectedComparisonIndex]?.url || ''}
+           originalSize={processedFiles[selectedComparisonIndex]?.originalSize || 0}
+           processedSize={processedFiles[selectedComparisonIndex]?.processedSize || 0}
+           fileName={processedFiles[selectedComparisonIndex]?.name || ''}
+         />
+       )}
     </ToolPageLayout>
   );
 }

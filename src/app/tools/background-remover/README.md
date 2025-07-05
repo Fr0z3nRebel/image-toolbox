@@ -4,18 +4,20 @@ A powerful client-side background removal tool with both automatic and manual mo
 
 ## Features
 
-### Automatic Background Removal
-- **Color-based detection**: Automatically identifies and removes backgrounds using color similarity
-- **Adjustable tolerance**: Fine-tune sensitivity to catch more or fewer similar colors
-- **Edge smoothing**: Configurable edge smoothing for cleaner results
-- **Corner sampling**: Intelligently samples corner colors to determine background
+### 🎯 Intelligent Auto Mode
+- **Saliency Detection**: AI identifies main subjects using advanced computer vision
+- **Edge-Based Segmentation**: Preserves fine details and complex boundaries
+- **Multi-Factor Analysis**: Combines center bias, contrast, and color uniqueness
+- **Region Growing**: Intelligently expands from high-confidence areas
+- **Morphological Processing**: Professional cleanup with erosion/dilation
 
-### Manual Drawing Mode
-- **Brush tool**: Paint areas to mark for removal
-- **Eraser tool**: Correct mistakes by marking areas to keep
+### 🎨 Interactive Drawing Mode with Real-Time Preview
+- **Dual Brush System**: Green brush (keep subject) and Red brush (remove background)
+- **Live Preview**: See results instantly as you draw - no waiting!
+- **Smart Guidance**: Your hints guide the AI algorithm for perfect precision
 - **Adjustable brush size**: Control precision with brush size from 5-50 pixels
-- **Visual feedback**: Real-time preview of selected areas
-- **Clear function**: Reset selection mask to start over
+- **Visual feedback**: Real-time preview shows exactly what will be kept vs removed
+- **Clear function**: Reset all hints to start over
 
 ### Output Options
 - **Transparent background**: Create PNG files with transparent backgrounds
