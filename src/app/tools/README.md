@@ -53,6 +53,27 @@ tool-name/
 - `shouldDisableIndividualDownload()` - Firefox AVIF compatibility check
 - `getOriginalFileForComparison()` - Helper for before/after comparisons
 
+### Image Upscaler (`image-upscaler/`)
+
+**Files:**
+- `page.tsx` (158 lines) - UI components and state management
+- `functions.ts` (268 lines) - High-quality image upscaling logic
+
+**Key Functions:**
+- `upscaleImage()` - Upscale single file with quality preservation
+- `upscaleImages()` - Process multiple files with progress tracking
+- `performLanczosUpscaling()` - Lanczos resampling for moderate scaling (up to 2x)
+- `performBicubicUpscaling()` - Step-by-step bicubic scaling for larger factors
+- `lanczosKernel()` - Lanczos-3 kernel function for high-quality resampling
+- `getOriginalFileForComparison()` - Helper for before/after comparisons
+
+**Features:**
+- Uses Lanczos resampling for scale factors up to 2x (highest quality)
+- Uses advanced bicubic interpolation for larger scale factors
+- Prevents quality degradation through sophisticated algorithms
+- Supports scale factors from 1.1x to 5.0x
+- Preserves image format when possible, converts JPEG to PNG to avoid quality loss
+
 ## Benefits of This Architecture
 
 ### 1. Maintainability
