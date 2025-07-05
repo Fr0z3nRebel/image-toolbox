@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Scissors, Wand2, Brush, Eraser, RotateCcw } from "lucide-react";
+import { Scissors, Brush, Eraser, RotateCcw } from "lucide-react";
 import ToolPageLayout from "../../components/ToolPageLayout";
 import FileUploadZone, { FileWithPreview } from "../../components/FileUploadZone";
 import ProcessedFilesDisplay, { ProcessedFile } from "../../components/ProcessedFilesDisplay";
@@ -90,7 +90,7 @@ export default function BackgroundRemover() {
       const results = await processBackgroundRemovalBatch(
         files, 
         settings, 
-        mode === 'drawing' ? maskCanvas : undefined
+        mode === 'drawing' && maskCanvas ? maskCanvas : undefined
       );
       setProcessedFiles(results);
     } catch (error) {
@@ -117,7 +117,7 @@ export default function BackgroundRemover() {
   };
 
   // Drawing functions
-  const getMousePos = (e: any) => {
+  const getMousePos = (e: MouseEvent | React.MouseEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
@@ -145,14 +145,14 @@ export default function BackgroundRemover() {
     ctx.fill();
   };
 
-  const handleMouseDown = (e: any) => {
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     const pos = getMousePos(e);
     setIsDrawing(true);
     draw(pos.x, pos.y);
   };
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
     e.preventDefault();
     const pos = getMousePos(e);
