@@ -74,8 +74,7 @@ export default function Home() {
       icon: <ImageIcon className="h-6 w-6 text-green-600" />,
       href: "/tools/image-compressor",
       color: "hover:border-green-200",
-      badge: "Coming Soon",
-      disabled: true
+      badge: "New"
     },
     // More tools can be added here in the future
   ];
