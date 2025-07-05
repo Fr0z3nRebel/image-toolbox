@@ -53,6 +53,26 @@ tool-name/
 - `shouldDisableIndividualDownload()` - Firefox AVIF compatibility check
 - `getOriginalFileForComparison()` - Helper for before/after comparisons
 
+### Background Remover (`background-remover/`)
+
+**Files:**
+- `page.tsx` (400+ lines) - UI components and state management with canvas drawing interface
+- `functions.ts` (300+ lines) - Background removal logic with auto and manual modes
+
+**Key Functions:**
+- `removeBackgroundAuto()` - Automatic background removal using color similarity
+- `removeBackgroundDrawing()` - Manual background removal using drawn masks
+- `processBackgroundRemoval()` - Process single file with specified settings
+- `processBackgroundRemovalBatch()` - Process multiple files with progress tracking
+- `smoothEdges()` - Edge smoothing utility function
+
+**Features:**
+- **Auto Mode**: Automatically detects and removes backgrounds using color similarity algorithms
+- **Drawing Mode**: Manual selection with brush and eraser tools for precise background removal
+- **Customizable settings**: Tolerance, edge smoothing, transparent or colored backgrounds
+- **Canvas-based drawing interface**: Interactive drawing tools with brush size control
+- **Before/after comparison**: Visual comparison of original vs processed images
+
 ## Benefits of This Architecture
 
 ### 1. Maintainability

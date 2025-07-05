@@ -65,17 +65,22 @@ export default function Home() {
       description: "Convert images between AVIF, JPEG, PNG, and WebP formats",
       icon: <ImageIcon className="h-6 w-6 text-blue-600" />,
       href: "/tools/format-converter",
-      color: "hover:border-blue-200",
-      badge: "New"
+      color: "hover:border-blue-200"
     },
     {
       title: "Image Compressor",
       description: "Reduce file sizes while maintaining image quality",
       icon: <ImageIcon className="h-6 w-6 text-green-600" />,
       href: "/tools/image-compressor",
-      color: "hover:border-green-200",
-      badge: "Coming Soon",
-      disabled: true
+      color: "hover:border-green-200"
+    },
+    {
+      title: "Background Remover",
+      description: "Remove backgrounds automatically or with manual precision tools",
+      icon: <ImageIcon className="h-6 w-6 text-purple-600" />,
+      href: "/tools/background-remover",
+      color: "hover:border-purple-200",
+      badge: "New"
     },
     // More tools can be added here in the future
   ];
