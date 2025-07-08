@@ -65,8 +65,7 @@ export default function Home() {
       description: "Convert images between AVIF, JPEG, PNG, and WebP formats",
       icon: <ImageIcon className="h-6 w-6 text-blue-600" />,
       href: "/tools/format-converter",
-      color: "hover:border-blue-200",
-      badge: "New"
+      color: "hover:border-blue-200"
     },
     {
       title: "Image Compressor",
@@ -74,8 +73,7 @@ export default function Home() {
       icon: <ImageIcon className="h-6 w-6 text-green-600" />,
       href: "/tools/image-compressor",
       color: "hover:border-green-200",
-      badge: "Coming Soon",
-      disabled: true
+      badge: "New"
     },
     // More tools can be added here in the future
   ];

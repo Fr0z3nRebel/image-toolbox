@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import Home from "../page";
 
 // Mock Next.js Link component
@@ -23,15 +24,15 @@ jest.mock("lucide-react", () => ({
 }));
 
 describe("Home", () => {
-  it("renders the Image Toolbox title", () => {
+  it("renders the Professional Image Processing Tools title", () => {
     render(<Home />);
-    const title = screen.getByText("Image Toolbox");
+    const title = screen.getByText("Professional Image Processing Tools");
     expect(title).toBeInTheDocument();
   });
 
   it('renders the description text', () => {
     render(<Home />);
-    const description = screen.getByText(/A collection of powerful tools to help you work with images/);
+    const description = screen.getByText(/Professional image tools. Convert formats, compress images, and more. Most tools work client-side for maximum privacy and speed./);
     expect(description).toBeInTheDocument();
   });
 
@@ -63,5 +64,51 @@ describe("Home", () => {
     render(<Home />);
     const link = screen.getByRole('link', { name: /Format Converter/i });
     expect(link).toHaveAttribute('href', '/tools/format-converter');
+  });
+
+  it('renders the Image Compressor tool card', () => {
+    render(<Home />);
+    const imageCompressor = screen.getByText("Image Compressor");
+    expect(imageCompressor).toBeInTheDocument();
+  });
+
+  it('renders the image compressor description', () => {
+    render(<Home />);
+    const description = screen.getByText(/Reduce file sizes while maintaining image quality/);
+    expect(description).toBeInTheDocument();
+  });
+
+  it('renders the image compressor tool link', () => {
+    render(<Home />);
+    const link = screen.getByRole('link', { name: /Image Compressor/i });
+    expect(link).toHaveAttribute('href', '/tools/image-compressor');
+  });
+
+  it('does not show "New" badge on format converter tool', () => {
+    render(<Home />);
+    const formatConverterCard = screen.getByText("Format Converter").closest('div');
+    const newBadge = formatConverterCard?.querySelector('[class*="bg-blue-100"]');
+    expect(newBadge).not.toBeInTheDocument();
+  });
+
+  it('shows "New" badge on image compressor tool', () => {
+    render(<Home />);
+    const newBadge = screen.getByText('New');
+    expect(newBadge).toBeInTheDocument();
+    expect(newBadge).toHaveClass('bg-blue-100');
+  });
+
+  it('image compressor tool is not disabled', () => {
+    render(<Home />);
+    const imageCompressorCard = screen.getByText("Image Compressor").closest('div');
+    expect(imageCompressorCard).not.toHaveClass('opacity-60');
+    expect(imageCompressorCard).not.toHaveClass('cursor-not-allowed');
+  });
+
+  it('format converter tool is not disabled', () => {
+    render(<Home />);
+    const formatConverterCard = screen.getByText("Format Converter").closest('div');
+    expect(formatConverterCard).not.toHaveClass('opacity-60');
+    expect(formatConverterCard).not.toHaveClass('cursor-not-allowed');
   });
 });
