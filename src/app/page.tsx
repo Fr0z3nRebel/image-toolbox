@@ -1,4 +1,4 @@
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, Ruler } from "lucide-react";
 import Link from "next/link";
 
 interface ToolCardProps {
@@ -72,7 +72,14 @@ export default function Home() {
       description: "Reduce file sizes while maintaining image quality",
       icon: <ImageIcon className="h-6 w-6 text-green-600" />,
       href: "/tools/image-compressor",
-      color: "hover:border-green-200",
+      color: "hover:border-green-200"
+    },
+    {
+      title: "Resolution Changer",
+      description: "Set your images to 300 DPI for high-quality printing",
+      icon: <Ruler className="h-6 w-6 text-purple-600" />,
+      href: "/tools/resolution-changer",
+      color: "hover:border-purple-200",
       badge: "New"
     },
     // More tools can be added here in the future
