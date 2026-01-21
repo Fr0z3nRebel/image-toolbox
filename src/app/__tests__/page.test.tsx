@@ -21,6 +21,9 @@ jest.mock("lucide-react", () => ({
   Upload: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="upload-icon" />
   ),
+  Ruler: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="ruler-icon" />
+  ),
 }));
 
 describe("Home", () => {

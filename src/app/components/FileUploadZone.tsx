@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { Upload, ImageIcon, X } from "lucide-react";
 
 export interface FileWithPreview extends File {
@@ -10,28 +10,54 @@ export interface FileWithPreview extends File {
 }
 
 interface FileUploadZoneProps {
+  title?: string;
+  variant?: "card" | "subtle" | "subtleWhite";
   files: FileWithPreview[];
   onFilesChange: (files: FileWithPreview[]) => void;
   acceptedFileTypes?: string;
   supportedFormatsText?: string;
+  dropPromptText?: string;
   showFileSize?: boolean;
   maxDisplayHeight?: string;
+  showThumbnails?: boolean;
+  fileListColumns?: 2 | 3;
   disabled?: boolean;
+  multiple?: boolean;
+  maxFiles?: number;
+  compactDropZone?: boolean;
+  belowDropZone?: React.ReactNode;
   children?: React.ReactNode; // For additional controls like format selection or quality slider
   actionButton: React.ReactNode; // For action buttons like Convert, Compress, etc.
 }
 
 export default function FileUploadZone({
+  title = "Upload Images",
+  variant = "card",
   files,
   onFilesChange,
   acceptedFileTypes = "image/*,.avif",
   supportedFormatsText = "Supports AVIF, JPEG, PNG, and WebP images",
+  dropPromptText = "Drop images here or click to select",
   showFileSize = true,
   maxDisplayHeight = "max-h-40",
+  showThumbnails = false,
+  fileListColumns,
   disabled = false,
+  multiple = true,
+  maxFiles,
+  compactDropZone = false,
+  belowDropZone,
   children,
   actionButton
 }: FileUploadZoneProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const revokeAllPreviews = (toRevoke: FileWithPreview[]) => {
+    toRevoke.forEach((f) => {
+      if (f.preview) URL.revokeObjectURL(f.preview);
+    });
+  };
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map((file) => {
       const fileWithPreview = file as FileWithPreview;
@@ -40,8 +66,18 @@ export default function FileUploadZone({
       fileWithPreview.originalSize = file.size;
       return fileWithPreview;
     });
-    onFilesChange([...files, ...newFiles]);
-  }, [files, onFilesChange]);
+
+    // Single-file mode: replace existing file(s)
+    if (!multiple || maxFiles === 1) {
+      revokeAllPreviews(files);
+      onFilesChange(newFiles.slice(-1));
+      return;
+    }
+
+    const combined = [...files, ...newFiles];
+    const limited = typeof maxFiles === "number" ? combined.slice(0, Math.max(0, maxFiles)) : combined;
+    onFilesChange(limited);
+  }, [files, maxFiles, multiple, onFilesChange]);
 
   const removeFile = (id: string) => {
     const fileToRemove = files.find((f) => f.id === id);
@@ -77,11 +113,26 @@ export default function FileUploadZone({
 
   const totalSize = files.reduce((sum, file) => sum + (file.originalSize || file.size), 0);
 
+  const outerClassName =
+    variant === "subtle"
+      ? "w-full"
+      : variant === "subtleWhite"
+        ? "w-full"
+        : "bg-white rounded-xl border border-gray-200 p-6";
+
+  const titleClassName =
+    variant === "subtle" || variant === "subtleWhite"
+      ? "text-sm font-semibold text-gray-900 mb-3"
+      : "text-xl font-semibold text-gray-900 mb-4";
+
+  const dropZonePadding = compactDropZone ? "p-4" : "p-8";
+  const dropZoneIconClass = compactDropZone ? "h-8 w-8" : "h-12 w-12";
+  const dropZoneTextClass = compactDropZone ? "text-sm" : "text-base";
+  const dropZoneHeightClass = compactDropZone ? "" : "h-full";
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
-        Upload Images
-      </h2>
+    <div className={outerClassName}>
+      <h2 className={titleClassName}>{title}</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Additional Controls (format selection, quality slider, etc.) */}
@@ -89,34 +140,40 @@ export default function FileUploadZone({
 
         {/* Drop Zone */}
         <div className={children ? "lg:col-span-2" : "lg:col-span-3"}>
-          <div
-            className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer h-full flex flex-col justify-center ${
-              disabled ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onClick={() => {
-              if (!disabled) {
-                document.getElementById("file-input")?.click();
-              }
-            }}
-          >
-            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-2">
-              Drop images here or click to select
-            </p>
-            <p className="text-sm text-gray-500">
-              {supportedFormatsText}
-            </p>
-            <input
-              id="file-input"
-              type="file"
-              multiple
-              accept={acceptedFileTypes}
-              onChange={handleFileSelect}
-              className="hidden"
-              disabled={disabled}
-            />
+          <div className="space-y-4">
+            <div
+              className={`border-2 border-dashed border-gray-300 rounded-lg ${dropZonePadding} text-center hover:border-gray-400 transition-colors cursor-pointer ${dropZoneHeightClass} flex flex-col justify-center ${
+                disabled ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onClick={() => {
+                if (!disabled) {
+                  fileInputRef.current?.click();
+                }
+              }}
+            >
+              <Upload className={`${dropZoneIconClass} text-gray-400 mx-auto mb-3`} />
+              <p className={`${dropZoneTextClass} text-gray-600 mb-1`}>
+                {dropPromptText}
+              </p>
+              {supportedFormatsText ? (
+                <p className="text-xs text-gray-500">
+                  {supportedFormatsText}
+                </p>
+              ) : null}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple={multiple}
+                accept={acceptedFileTypes}
+                onChange={handleFileSelect}
+                className="hidden"
+                disabled={disabled}
+              />
+            </div>
+
+            {belowDropZone ? <div>{belowDropZone}</div> : null}
           </div>
         </div>
       </div>
@@ -134,13 +191,30 @@ export default function FileUploadZone({
               </div>
             )}
           </div>
-          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${maxDisplayHeight} overflow-y-auto`}>
+          <div
+            className={`grid gap-2 ${maxDisplayHeight} overflow-y-auto ${
+              fileListColumns === 2
+                ? "grid-cols-2"
+                : fileListColumns === 3
+                  ? "grid-cols-3"
+                  : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            }`}
+          >
             {files.map((file) => (
               <div
                 key={file.id}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
               >
-                <ImageIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                {showThumbnails && file.preview ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- blob URL from File API, next/image doesn't support object URLs
+                  <img
+                    src={file.preview}
+                    alt=""
+                    className="h-14 w-14 flex-shrink-0 rounded object-cover bg-gray-200"
+                  />
+                ) : (
+                  <ImageIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {file.name}
@@ -165,9 +239,7 @@ export default function FileUploadZone({
       )}
 
       {/* Action Button */}
-      <div className="mt-6">
-        {actionButton}
-      </div>
+      {actionButton ? <div className="mt-6">{actionButton}</div> : null}
     </div>
   );
 } 

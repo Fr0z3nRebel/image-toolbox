@@ -1,4 +1,4 @@
-import { ImageIcon, Ruler } from "lucide-react";
+import { ImageIcon, Ruler, LayoutGrid } from "lucide-react";
 import Link from "next/link";
 
 interface ToolCardProps {
@@ -80,6 +80,14 @@ export default function Home() {
       icon: <Ruler className="h-6 w-6 text-purple-600" />,
       href: "/tools/resolution-changer",
       color: "hover:border-purple-200",
+      badge: "New"
+    },
+    {
+      title: "Bundle Builder",
+      description: "Combine multiple images into one bundle-ready cover image",
+      icon: <LayoutGrid className="h-6 w-6 text-amber-600" />,
+      href: "/tools/bundle-builder",
+      color: "hover:border-amber-200",
       badge: "New"
     },
     // More tools can be added here in the future
