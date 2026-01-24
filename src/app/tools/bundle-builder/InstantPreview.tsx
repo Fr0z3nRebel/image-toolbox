@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { AspectRatio, LayoutStyle } from "./types";
 import type { FileWithPreview } from "../../components/FileUploadZone";
 import { getCanvasDimensions } from "./canvas";
@@ -19,6 +19,8 @@ export interface InstantPreviewProps {
   imagesPerRow?: number;
   centerScale?: number;
   centerRotation?: number;
+  centerXOffset?: number;
+  centerYOffset?: number;
   aspectRatio: AspectRatio;
   className?: string;
 }
@@ -38,6 +40,8 @@ export default function InstantPreview({
   imagesPerRow,
   centerScale = 1,
   centerRotation = 0,
+  centerXOffset = 0,
+  centerYOffset = 0,
   aspectRatio,
   className = ""
 }: InstantPreviewProps) {
@@ -46,8 +50,6 @@ export default function InstantPreview({
   const frames = computeImageFrames(layoutStyle, w, h, files.length, textSafeRect, imagesPerRow);
 
   const [contentCropped, setContentCropped] = useState<Record<string, string>>({});
-  const [centerCropped, setCenterCropped] = useState<string | null>(null);
-  const lastCenterIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     setContentCropped((prev) => {
@@ -57,11 +59,6 @@ export default function InstantPreview({
       }
       return next;
     });
-    const centerId = centerFiles[0]?.id ?? null;
-    if (centerId !== lastCenterIdRef.current) {
-      lastCenterIdRef.current = centerId;
-      setCenterCropped(null);
-    }
 
     files.forEach((file) => {
       if (!file.preview) return;
@@ -69,12 +66,7 @@ export default function InstantPreview({
         .then((url) => setContentCropped((prev) => ({ ...prev, [file.id]: url })))
         .catch(() => {});
     });
-    if (centerFiles[0]?.preview) {
-      getContentCroppedDataUrlFromUrl(centerFiles[0].preview)
-        .then((url) => setCenterCropped(url))
-        .catch(() => {});
-    }
-  }, [files, centerFiles]);
+  }, [files]);
 
   const bgStyle: React.CSSProperties =
     backgroundMode === "transparent"
@@ -90,9 +82,7 @@ export default function InstantPreview({
 
   const framePaddingPercent = layoutStyle === "grid" ? 92 : 90;
 
-  const isProcessing =
-    files.some((f) => f.preview && !contentCropped[f.id]) ||
-    (layoutStyle !== "grid" && !!centerFiles[0]?.preview && !centerCropped);
+  const isProcessing = files.some((f) => f.preview && !contentCropped[f.id]);
 
   return (
     <div
@@ -136,16 +126,17 @@ export default function InstantPreview({
         <div
           className="absolute z-10 flex items-center justify-center"
           style={{
-            left: `${(textSafeRect.x / w) * 100}%`,
-            top: `${(textSafeRect.y / h) * 100}%`,
-            width: `${(textSafeRect.width / w) * 100}%`,
-            height: `${(textSafeRect.height / h) * 100}%`
+            left: `calc(50% + ${centerXOffset}%)`,
+            top: `calc(50% + ${centerYOffset}%)`,
+            transform: "translate(-50%, -50%)",
+            width: `${(Math.max(w, h) / w) * 100}%`,
+            height: `${(Math.max(w, h) / h) * 100}%`
           }}
         >
-          {centerCropped ? (
-            // eslint-disable-next-line @next/next/no-img-element -- data URL from content crop, next/image doesn't support object/data URLs
+          {centerFiles[0]?.preview ? (
+            // eslint-disable-next-line @next/next/no-img-element -- preview URL, next/image doesn't support object URLs
             <img
-              src={centerCropped}
+              src={centerFiles[0].preview}
               alt=""
               className="max-w-full max-h-full object-contain"
               style={{ transform: `scale(${centerScale}) rotate(${centerRotation}deg)` }}

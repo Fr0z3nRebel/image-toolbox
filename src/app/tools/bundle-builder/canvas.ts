@@ -8,6 +8,10 @@ export const getCanvasDimensions = (aspectRatio: AspectRatio): CanvasDimensions 
     // 4:3 aspect ratio: 2667px wide by 2000px tall
     return { width: 2667, height: 2000 };
   }
+  if (aspectRatio === "1:1") {
+    // 1:1 aspect ratio: 2048px wide by 2048px tall
+    return { width: 2048, height: 2048 };
+  }
   // Default to 4:3
   return { width: 2667, height: 2000 };
 };

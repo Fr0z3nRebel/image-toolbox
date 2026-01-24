@@ -14,7 +14,10 @@ import {
 } from "./index";
 import InstantPreview from "./InstantPreview";
 
-const ASPECT_RATIO: AspectRatio = "4:3";
+const ASPECT_RATIOS: { value: AspectRatio; label: string }[] = [
+  { value: "4:3", label: "4:3" },
+  { value: "1:1", label: "1:1" }
+];
 const LAYOUT_STYLES: { value: LayoutStyle; label: string }[] = [
   { value: "grid", label: "Grid" },
   { value: "dividedGrid", label: "Divided Grid" },
@@ -31,6 +34,7 @@ export default function BundleBuilderTool() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [backgroundFiles, setBackgroundFiles] = useState<FileWithPreview[]>([]);
   const [centerFiles, setCenterFiles] = useState<FileWithPreview[]>([]);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("1:1");
   const [layoutStyle, setLayoutStyle] = useState<LayoutStyle>("dividedGrid");
   const [backgroundMode, setBackgroundMode] = useState<"transparent" | "backgroundImage" | "color">("transparent");
   const [backgroundColor, setBackgroundColor] = useState<string>("#ffffff");
@@ -39,6 +43,8 @@ export default function BundleBuilderTool() {
   const [imagesPerRow, setImagesPerRow] = useState<number | undefined>(undefined);
   const [centerScale, setCenterScale] = useState<number>(1);
   const [centerRotation, setCenterRotation] = useState<number>(0);
+  const [centerXOffset, setCenterXOffset] = useState<number>(0);
+  const [centerYOffset, setCenterYOffset] = useState<number>(0);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -51,7 +57,7 @@ export default function BundleBuilderTool() {
     let contentUrl: string | null = null;
     try {
       const content = await composeListingImage(files as File[], {
-        aspectRatio: ASPECT_RATIO,
+        aspectRatio,
         layoutStyle,
         background: "transparent",
         exportFormat: "png",
@@ -70,6 +76,8 @@ export default function BundleBuilderTool() {
         textSafeAreaPercent,
         centerScale,
         centerRotation,
+        centerXOffset,
+        centerYOffset,
         backgroundMode,
         backgroundColor: backgroundMode === "color" ? backgroundColor : undefined,
         backgroundImageFile: backgroundMode === "backgroundImage" ? (backgroundFiles[0] as File | undefined) : undefined,
@@ -78,7 +86,7 @@ export default function BundleBuilderTool() {
       if (contentUrl) URL.revokeObjectURL(contentUrl);
       const link = document.createElement("a");
       link.href = final.url;
-      link.download = `bundle-builder-4x3-${layoutStyle}-${final.canvas.width}x${final.canvas.height}.${format === "webp" ? "webp" : "png"}`;
+      link.download = `bundle-builder-${aspectRatio.replace(":", "x")}-${layoutStyle}-${final.canvas.width}x${final.canvas.height}.${format === "webp" ? "webp" : "png"}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -98,6 +106,7 @@ export default function BundleBuilderTool() {
     setBackgroundFiles([]);
     setCenterFiles([]);
     // Reset to default settings
+    setAspectRatio("1:1");
     setLayoutStyle("dividedGrid");
     setBackgroundMode("transparent");
     setBackgroundColor("#ffffff");
@@ -106,6 +115,8 @@ export default function BundleBuilderTool() {
         setImagesPerRow(undefined);
         setCenterScale(1);
         setCenterRotation(0);
+        setCenterXOffset(0);
+        setCenterYOffset(0);
         setError(null);
         setShowPreviewModal(false);
         setShowColorPickerModal(false);
@@ -132,7 +143,7 @@ export default function BundleBuilderTool() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const { width: previewWidth, height: previewHeight } = getCanvasDimensions(ASPECT_RATIO);
+  const { width: previewWidth, height: previewHeight } = getCanvasDimensions(aspectRatio);
 
   const aspectRatioStyle =
     previewWidth && previewHeight
@@ -140,7 +151,7 @@ export default function BundleBuilderTool() {
       : {};
 
   const backgroundLabel = backgroundMode === "transparent" ? "Transparent" : backgroundMode === "backgroundImage" ? "Background image" : backgroundColor;
-  const settingsSummary = `Aspect ratio: ${ASPECT_RATIO} · Layout: ${
+  const settingsSummary = `Aspect ratio: ${aspectRatio} · Layout: ${
     LAYOUT_STYLES.find((l) => l.value === layoutStyle)?.label ?? layoutStyle
   } · Background: ${backgroundLabel} · Text area: ${textSafeAreaPercent}%`;
 
@@ -157,7 +168,7 @@ export default function BundleBuilderTool() {
   ) : null;
 
   const controls = (
-    <div className="space-y-4 min-h-0 lg:max-h-[65vh] lg:overflow-y-auto lg:pr-1">
+    <div className="space-y-4 flex-1 min-h-0 overflow-y-auto lg:pr-1">
       {/* Bundle Images */}
       <FileUploadZone
         title="Bundle Images"
@@ -174,6 +185,24 @@ export default function BundleBuilderTool() {
         fileListColumns={2}
         compactDropZone={true}
       />
+
+      {/* Aspect ratio */}
+      <div>
+        <label className="block text-sm font-bold text-gray-700 mb-2">
+          Aspect ratio
+        </label>
+        <select
+          value={aspectRatio}
+          onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+        >
+          {ASPECT_RATIOS.map((ratio) => (
+            <option key={ratio.value} value={ratio.value}>
+              {ratio.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Layout style */}
       <div>
@@ -270,7 +299,7 @@ export default function BundleBuilderTool() {
                 type="range"
                 min="50"
                 max="150"
-                step="5"
+                step="1"
                 value={Math.round(centerScale * 100)}
                 onChange={(e) => setCenterScale(Number(e.target.value) / 100)}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
@@ -282,9 +311,33 @@ export default function BundleBuilderTool() {
                 type="range"
                 min="-180"
                 max="180"
-                step="5"
+                step="1"
                 value={centerRotation}
                 onChange={(e) => setCenterRotation(Number(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Center position (left/right): {centerXOffset}%</label>
+              <input
+                type="range"
+                min="-50"
+                max="50"
+                step="1"
+                value={centerXOffset}
+                onChange={(e) => setCenterXOffset(Number(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Center position (up/down): {centerYOffset}%</label>
+              <input
+                type="range"
+                min="-50"
+                max="50"
+                step="1"
+                value={centerYOffset}
+                onChange={(e) => setCenterYOffset(Number(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
               />
             </div>
@@ -302,15 +355,17 @@ export default function BundleBuilderTool() {
     >
       {/* Uploads + controls */}
       <div className="mb-8 bg-white rounded-xl border border-gray-200 p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
           {/* Controls */}
-          {controls}
+          <div className="flex flex-col min-h-0">
+            {controls}
+          </div>
 
           {/* Bundle Image Preview (right column) */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 flex flex-col min-h-0">
             <h2 className="text-lg font-semibold text-gray-900">Bundle Image Preview</h2>
 
-            <div className="relative w-full">
+            <div className="relative w-full flex-shrink-0">
               <div
                 className={`relative w-full rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm ${files.length >= 2 ? "cursor-pointer hover:opacity-90 transition-opacity" : ""}`}
                 style={aspectRatioStyle}
@@ -332,7 +387,9 @@ export default function BundleBuilderTool() {
                     imagesPerRow={imagesPerRow}
                     centerScale={centerScale}
                     centerRotation={centerRotation}
-                    aspectRatio={ASPECT_RATIO}
+                    centerXOffset={centerXOffset}
+                    centerYOffset={centerYOffset}
+                    aspectRatio={aspectRatio}
                     className="absolute inset-0"
                   />
                 ) : (
@@ -436,7 +493,7 @@ export default function BundleBuilderTool() {
               imagesPerRow={imagesPerRow}
               centerScale={centerScale}
               centerRotation={centerRotation}
-              aspectRatio={ASPECT_RATIO}
+              aspectRatio={aspectRatio}
               className="w-full h-full relative"
             />
           </div>

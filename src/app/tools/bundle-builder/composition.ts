@@ -63,24 +63,23 @@ export const composeListingImage = async (
   // Optional center image (only for divided grid layouts)
   if (centerImageFile && layoutStyle !== "grid") {
     try {
-      const [centerImg] = await loadFilesAsImages([centerImageFile]);
+      const [centerImg] = await loadFilesAsImages([centerImageFile], { cropToContent: false });
       if (centerImg) {
-        const bounds = getContentBoundingBoxIgnoringWhite(centerImg);
-        const srcX = bounds?.x ?? 0;
-        const srcY = bounds?.y ?? 0;
-        const srcW = bounds?.width ?? centerImg.naturalWidth;
-        const srcH = bounds?.height ?? centerImg.naturalHeight;
+        // Use full image dimensions for center image (not content bounding box)
+        const srcW = centerImg.naturalWidth;
+        const srcH = centerImg.naturalHeight;
 
-        const availableW = textSafeRect.width;
-        const availableH = textSafeRect.height;
+        // Scale to fill 100% of the larger canvas dimension (width or height)
+        const targetSize = Math.max(width, height);
+        const imageMaxDimension = Math.max(srcW, srcH);
+        const scale = targetSize / imageMaxDimension;
+        const drawW = Math.round(srcW * scale);
+        const drawH = Math.round(srcH * scale);
+        // Center on canvas - round to ensure exact pixel alignment
+        const drawX = Math.round((width - drawW) / 2);
+        const drawY = Math.round((height - drawH) / 2);
 
-        const scale = Math.min(availableW / srcW, availableH / srcH);
-        const drawW = srcW * scale;
-        const drawH = srcH * scale;
-        const drawX = textSafeRect.x + (textSafeRect.width - drawW) / 2;
-        const drawY = textSafeRect.y + (textSafeRect.height - drawH) / 2;
-
-        ctx.drawImage(centerImg, srcX, srcY, srcW, srcH, drawX, drawY, drawW, drawH);
+        ctx.drawImage(centerImg, 0, 0, srcW, srcH, drawX, drawY, drawW, drawH);
       }
     } catch (err) {
       // Non-fatal: if center image fails, still generate the rest
@@ -208,6 +207,8 @@ export const compositeLayers = async (params: {
   textSafeAreaPercent?: number;
   centerScale?: number;
   centerRotation?: number;
+  centerXOffset?: number;
+  centerYOffset?: number;
   backgroundMode: "transparent" | "backgroundImage" | "color";
   backgroundColor?: string;
   backgroundImageFile?: File;
@@ -222,6 +223,8 @@ export const compositeLayers = async (params: {
     textSafeAreaPercent = 20,
     centerScale = 1,
     centerRotation = 0,
+    centerXOffset = 0,
+    centerYOffset = 0,
     backgroundMode,
     backgroundColor,
     backgroundImageFile,
@@ -272,19 +275,22 @@ export const compositeLayers = async (params: {
   // Optional center image (only for divided grid layouts), drawn on top of content
   if (centerImageFile && layoutStyle && layoutStyle !== "grid") {
     try {
-      const [centerImg] = await loadFilesAsImages([centerImageFile]);
+      const [centerImg] = await loadFilesAsImages([centerImageFile], { cropToContent: false });
       if (centerImg) {
-        const bounds = getContentBoundingBoxIgnoringWhite(centerImg);
-        const srcX = bounds?.x ?? 0;
-        const srcY = bounds?.y ?? 0;
-        const srcW = bounds?.width ?? centerImg.naturalWidth;
-        const srcH = bounds?.height ?? centerImg.naturalHeight;
-        const textSafeRect = getTextSafeRect(contentWidth, contentHeight, textSafeAreaPercent);
-        const baseScale = Math.min(textSafeRect.width / srcW, textSafeRect.height / srcH);
-        const drawW = srcW * baseScale * centerScale;
-        const drawH = srcH * baseScale * centerScale;
-        const drawX = textSafeRect.x + (textSafeRect.width - drawW) / 2;
-        const drawY = textSafeRect.y + (textSafeRect.height - drawH) / 2;
+        // Use full image dimensions for center image (not content bounding box)
+        const srcW = centerImg.naturalWidth;
+        const srcH = centerImg.naturalHeight;
+        // Scale to fill 100% of the larger canvas dimension (width or height)
+        const targetSize = Math.max(contentWidth, contentHeight);
+        const imageMaxDimension = Math.max(srcW, srcH);
+        const baseScale = targetSize / imageMaxDimension;
+        const drawW = Math.round(srcW * baseScale * centerScale);
+        const drawH = Math.round(srcH * baseScale * centerScale);
+        // Center on canvas, then apply offset (offset is percentage of canvas dimension)
+        const offsetX = (contentWidth * centerXOffset) / 100;
+        const offsetY = (contentHeight * centerYOffset) / 100;
+        const drawX = Math.round((contentWidth - drawW) / 2 + offsetX);
+        const drawY = Math.round((contentHeight - drawH) / 2 + offsetY);
         const cx = drawX + drawW / 2;
         const cy = drawY + drawH / 2;
         const rad = (centerRotation * Math.PI) / 180;
@@ -292,7 +298,7 @@ export const compositeLayers = async (params: {
         ctx.translate(cx, cy);
         ctx.rotate(rad);
         ctx.translate(-drawW / 2, -drawH / 2);
-        ctx.drawImage(centerImg, srcX, srcY, srcW, srcH, 0, 0, drawW, drawH);
+        ctx.drawImage(centerImg, 0, 0, srcW, srcH, 0, 0, drawW, drawH);
         ctx.restore();
       }
     } catch (err) {

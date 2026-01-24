@@ -1,6 +1,6 @@
 export type LayoutStyle = "dividedGrid" | "dividedGrid2" | "grid";
 
-export type AspectRatio = "4:3";
+export type AspectRatio = "4:3" | "1:1";
 
 // "transparent" leaves the canvas clear; any other string is treated as a CSS color (e.g. "#ffffff").
 export type Background = "transparent" | string;
