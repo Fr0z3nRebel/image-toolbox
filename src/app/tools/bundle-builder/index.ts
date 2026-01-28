@@ -8,8 +8,12 @@ export type {
   TextSafeRect,
   ImageFrame,
   ComposeOptions,
-  ComposeResult
+  ComposeResult,
+  CenterMode,
+  CenterShapeId
 } from "./types";
+
+export { CENTER_TEXT_FONT_SIZE_MIN, CENTER_TEXT_FONT_SIZE_MAX } from "./types";
 
 // Export canvas utilities
 export { getCanvasDimensions, createBaseCanvas } from "./canvas";

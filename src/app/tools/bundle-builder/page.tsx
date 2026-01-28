@@ -6,6 +6,10 @@ import ToolPageLayout from "../../components/ToolPageLayout";
 import FileUploadZone, { FileWithPreview } from "../../components/FileUploadZone";
 import {
   AspectRatio,
+  CenterMode,
+  CenterShapeId,
+  CENTER_TEXT_FONT_SIZE_MIN,
+  CENTER_TEXT_FONT_SIZE_MAX,
   ExportFormat,
   LayoutStyle,
   composeListingImage,
@@ -13,6 +17,9 @@ import {
   getCanvasDimensions
 } from "./index";
 import InstantPreview from "./InstantPreview";
+import ColorPickerModal from "./ColorPickerModal";
+import { CENTER_SHAPES } from "./center-shapes";
+import { CENTER_TEXT_FONTS, loadFont } from "./fonts";
 
 const ASPECT_RATIOS: { value: AspectRatio; label: string }[] = [
   { value: "4:3", label: "4:3" },
@@ -23,6 +30,8 @@ const LAYOUT_STYLES: { value: LayoutStyle; label: string }[] = [
   { value: "dividedGrid", label: "Divided Grid" },
   { value: "dividedGrid2", label: "Divided Grid 2" }
 ];
+
+const FONT_SIZE_PRESETS: number[] = [24, 32, 40, 48, 56, 64, 72, 96, 120];
 
 const WIZARD_STEPS = [
   { num: 1, label: "Setup" },
@@ -96,6 +105,22 @@ export default function BundleBuilderTool() {
   const [presetNameInput, setPresetNameInput] = useState<string>("");
   const [showSavePresetModal, setShowSavePresetModal] = useState(false);
 
+  const [centerMode, setCenterMode] = useState<CenterMode>("image");
+  const [centerShape, setCenterShape] = useState<CenterShapeId>("roundedRect");
+  const [titleText, setTitleText] = useState<string>("");
+  const [subtitleText, setSubtitleText] = useState<string>("");
+  const [titleFont, setTitleFont] = useState<string>(CENTER_TEXT_FONTS[0]?.id ?? "Open Sans");
+  const [subtitleFont, setSubtitleFont] = useState<string>(CENTER_TEXT_FONTS[0]?.id ?? "Open Sans");
+  const [titleFontSize, setTitleFontSize] = useState<number>(48);
+  const [subtitleFontSize, setSubtitleFontSize] = useState<number>(28);
+  const [titleFontSizeAuto, setTitleFontSizeAuto] = useState<boolean>(false);
+  const [subtitleFontSizeAuto, setSubtitleFontSizeAuto] = useState<boolean>(false);
+  const [shapeColor, setShapeColor] = useState<string>("#fef3c7");
+  const [titleColor, setTitleColor] = useState<string>("#1f2937");
+  const [subtitleColor, setSubtitleColor] = useState<string>("#4b5563");
+  const [centerColorPicker, setCenterColorPicker] = useState<"shape" | "title" | "subtitle" | null>(null);
+  const [wrapText, setWrapText] = useState<boolean>(true);
+
   const handleDownload = async (format: ExportFormat) => {
     if (files.length < 2) return;
     setIsExporting(true);
@@ -117,7 +142,21 @@ export default function BundleBuilderTool() {
         contentUrl: content.url,
         contentWidth: content.canvas.width,
         contentHeight: content.canvas.height,
-        centerImageFile: layoutStyle !== "grid" && centerFiles[0] ? (centerFiles[0] as File) : undefined,
+        centerImageFile: layoutStyle !== "grid" && centerMode === "image" && centerFiles[0] ? (centerFiles[0] as File) : undefined,
+        centerMode: layoutStyle !== "grid" ? centerMode : undefined,
+        centerShape: centerMode === "text" ? centerShape : undefined,
+        titleText: centerMode === "text" ? titleText : undefined,
+        subtitleText: centerMode === "text" ? subtitleText : undefined,
+        titleFont: centerMode === "text" ? titleFont : undefined,
+        subtitleFont: centerMode === "text" ? subtitleFont : undefined,
+        titleFontSizeAuto: centerMode === "text" ? titleFontSizeAuto : undefined,
+        subtitleFontSizeAuto: centerMode === "text" ? subtitleFontSizeAuto : undefined,
+        titleFontSize: centerMode === "text" ? titleFontSize : undefined,
+        subtitleFontSize: centerMode === "text" ? subtitleFontSize : undefined,
+        wrapText: centerMode === "text" ? wrapText : undefined,
+        shapeColor: centerMode === "text" ? shapeColor : undefined,
+        titleColor: centerMode === "text" ? titleColor : undefined,
+        subtitleColor: centerMode === "text" ? subtitleColor : undefined,
         layoutStyle,
         textSafeAreaPercent,
         centerScale,
@@ -159,13 +198,27 @@ export default function BundleBuilderTool() {
     setBackgroundColor("#ffffff");
     setHexInput("#ffffff");
     setTextSafeAreaPercent(20);
-        setImagesPerRow(undefined);
-        setCenterScale(1);
-        setCenterRotation(0);
-        setCenterXOffset(0);
-        setCenterYOffset(0);
-        setError(null);
-        setShowColorPickerModal(false);
+    setImagesPerRow(undefined);
+    setCenterScale(1);
+    setCenterRotation(0);
+    setCenterXOffset(0);
+    setCenterYOffset(0);
+    setError(null);
+    setShowColorPickerModal(false);
+    setCenterMode("image");
+    setCenterShape("roundedRect");
+    setTitleText("");
+    setSubtitleText("");
+    setTitleFont(CENTER_TEXT_FONTS[0]?.id ?? "Open Sans");
+    setSubtitleFont(CENTER_TEXT_FONTS[0]?.id ?? "Open Sans");
+    setTitleFontSize(48);
+    setSubtitleFontSize(28);
+    setTitleFontSizeAuto(false);
+    setSubtitleFontSizeAuto(false);
+    setShapeColor("#fef3c7");
+    setTitleColor("#1f2937");
+    setSubtitleColor("#4b5563");
+    setCenterColorPicker(null);
     // Revoke object URLs to free memory
     files.forEach((file) => {
       if (file.preview) URL.revokeObjectURL(file.preview);
@@ -183,11 +236,19 @@ export default function BundleBuilderTool() {
     setPresets(loadPresets());
   }, []);
 
+  // Load center text fonts when in text mode
+  useEffect(() => {
+    if (centerMode !== "text") return;
+    loadFont(titleFont).catch(() => {});
+    loadFont(subtitleFont).catch(() => {});
+  }, [centerMode, titleFont, subtitleFont]);
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setShowColorPickerModal(false);
         setShowSavePresetModal(false);
+        setCenterColorPicker(null);
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -440,22 +501,194 @@ export default function BundleBuilderTool() {
           <p className="text-sm text-gray-600">Center options are for divided layouts only. Use Back to change the layout style, or continue to the next step.</p>
         ) : (
           <>
-            <FileUploadZone
-              title="Center image"
-              variant="subtle"
-              dropPromptText="Drop a center image or click to select"
-              files={centerFiles}
-              onFilesChange={setCenterFiles}
-              disabled={isExporting}
-              actionButton={null}
-              acceptedFileTypes="image/*"
-              supportedFormatsText=""
-              maxDisplayHeight="max-h-24"
-              multiple={false}
-              maxFiles={1}
-              showFileSize={false}
-              compactDropZone={true}
-            />
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Center content</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCenterMode("image")}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${centerMode === "image" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
+                >
+                  Image
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCenterMode("text")}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${centerMode === "text" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
+                >
+                  Text
+                </button>
+              </div>
+            </div>
+            {centerMode === "image" ? (
+              <FileUploadZone
+                title="Center image"
+                variant="subtle"
+                dropPromptText="Drop a center image or click to select"
+                files={centerFiles}
+                onFilesChange={setCenterFiles}
+                disabled={isExporting}
+                actionButton={null}
+                acceptedFileTypes="image/*"
+                supportedFormatsText=""
+                maxDisplayHeight="max-h-24"
+                multiple={false}
+                maxFiles={1}
+                showFileSize={false}
+                compactDropZone={true}
+              />
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Shape</label>
+                  <div className="flex gap-3 items-center">
+                    <select
+                      value={centerShape}
+                      onChange={(e) => setCenterShape(e.target.value as CenterShapeId)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                    >
+                      {CENTER_SHAPES.map((s) => (
+                        <option key={s.id} value={s.id}>{s.label}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setCenterColorPicker("shape")}
+                      className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+                    >
+                      <span
+                        className="inline-block h-4 w-4 rounded border border-gray-300"
+                        style={{ backgroundColor: shapeColor }}
+                        aria-hidden
+                      />
+                      <span>Shape color</span>
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Title</label>
+                  <input
+                    type="text"
+                    value={titleText}
+                    onChange={(e) => setTitleText(e.target.value)}
+                    placeholder="Title"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <select
+                      value={titleFont}
+                      onChange={(e) => setTitleFont(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                    >
+                      {CENTER_TEXT_FONTS.map((f) => (
+                        <option key={f.id} value={f.id}>{f.label}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={titleFontSizeAuto ? "auto" : String(titleFontSize)}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === "auto") {
+                          setTitleFontSizeAuto(true);
+                          return;
+                        }
+                        setTitleFontSizeAuto(false);
+                        const size = Number(v);
+                        if (!Number.isNaN(size)) {
+                          const clamped = Math.min(
+                            CENTER_TEXT_FONT_SIZE_MAX,
+                            Math.max(CENTER_TEXT_FONT_SIZE_MIN, size)
+                          );
+                          setTitleFontSize(clamped);
+                        }
+                      }}
+                      className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white"
+                      aria-label="Title font size"
+                    >
+                      <option value="auto">Auto</option>
+                      {FONT_SIZE_PRESETS.map((size) => (
+                        <option key={size} value={size}>{size}px</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCenterColorPicker("title")}
+                    className="mt-1 flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    <span className="inline-block h-4 w-4 rounded border border-gray-300" style={{ backgroundColor: titleColor }} aria-hidden />
+                    Title color
+                  </button>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Subtitle</label>
+                  <input
+                    type="text"
+                    value={subtitleText}
+                    onChange={(e) => setSubtitleText(e.target.value)}
+                    placeholder="Subtitle"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <select
+                      value={subtitleFont}
+                      onChange={(e) => setSubtitleFont(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                    >
+                      {CENTER_TEXT_FONTS.map((f) => (
+                        <option key={f.id} value={f.id}>{f.label}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={subtitleFontSizeAuto ? "auto" : String(subtitleFontSize)}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === "auto") {
+                          setSubtitleFontSizeAuto(true);
+                          return;
+                        }
+                        setSubtitleFontSizeAuto(false);
+                        const size = Number(v);
+                        if (!Number.isNaN(size)) {
+                          const clamped = Math.min(
+                            CENTER_TEXT_FONT_SIZE_MAX,
+                            Math.max(CENTER_TEXT_FONT_SIZE_MIN, size)
+                          );
+                          setSubtitleFontSize(clamped);
+                        }
+                      }}
+                      className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white"
+                      aria-label="Subtitle font size"
+                    >
+                      <option value="auto">Auto</option>
+                      {FONT_SIZE_PRESETS.map((size) => (
+                        <option key={size} value={size}>{size}px</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCenterColorPicker("subtitle")}
+                    className="mt-1 flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    <span className="inline-block h-4 w-4 rounded border border-gray-300" style={{ backgroundColor: subtitleColor }} aria-hidden />
+                    Subtitle color
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    id="bundle-builder-wrap-text"
+                    type="checkbox"
+                    checked={wrapText}
+                    onChange={(e) => setWrapText(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="bundle-builder-wrap-text" className="text-sm text-gray-700">
+                    Wrap text
+                  </label>
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Central text area size: {textSafeAreaPercent}%</label>
               <input
@@ -588,6 +821,20 @@ export default function BundleBuilderTool() {
                   <InstantPreview
                     files={files}
                     centerFiles={centerFiles}
+                    centerMode={centerMode}
+                    centerShape={centerShape}
+                    titleText={titleText}
+                    subtitleText={subtitleText}
+                    titleFont={titleFont}
+                    subtitleFont={subtitleFont}
+                    titleFontSize={titleFontSize}
+                    subtitleFontSize={subtitleFontSize}
+                    titleFontSizeAuto={titleFontSizeAuto}
+                    subtitleFontSizeAuto={subtitleFontSizeAuto}
+                    shapeColor={shapeColor}
+                    titleColor={titleColor}
+                    subtitleColor={subtitleColor}
+                    wrapText={wrapText}
                     backgroundFiles={backgroundFiles}
                     backgroundMode={backgroundMode}
                     backgroundColor={backgroundColor}
@@ -683,6 +930,38 @@ export default function BundleBuilderTool() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Center text color picker modal (shape / title / subtitle) */}
+      {centerColorPicker === "shape" && (
+        <ColorPickerModal
+          open={true}
+          onClose={() => setCenterColorPicker(null)}
+          value={shapeColor}
+          onChange={setShapeColor}
+          title="Shape color"
+          showPickFromPreview
+        />
+      )}
+      {centerColorPicker === "title" && (
+        <ColorPickerModal
+          open={true}
+          onClose={() => setCenterColorPicker(null)}
+          value={titleColor}
+          onChange={setTitleColor}
+          title="Title color"
+          showPickFromPreview
+        />
+      )}
+      {centerColorPicker === "subtitle" && (
+        <ColorPickerModal
+          open={true}
+          onClose={() => setCenterColorPicker(null)}
+          value={subtitleColor}
+          onChange={setSubtitleColor}
+          title="Subtitle color"
+          showPickFromPreview
+        />
       )}
 
       {/* Save preset modal */}

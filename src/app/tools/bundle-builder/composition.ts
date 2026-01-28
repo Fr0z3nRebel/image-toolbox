@@ -4,6 +4,10 @@ import { createBaseCanvas } from "./canvas";
 import { loadFilesAsImages, getContentBoundingBoxIgnoringWhite } from "./image-processing";
 import { getTextSafeRect } from "./text-safe-area";
 import { computeImageFrames } from "./layouts";
+import { drawCenterShape } from "./center-shapes";
+import type { CenterShapeId } from "./types";
+import { loadFonts } from "./fonts";
+import { layoutCenterText } from "./center-text-layout";
 
 /**
  * Compose a listing image from multiple images with specified layout and options
@@ -203,6 +207,20 @@ export const compositeLayers = async (params: {
   contentWidth: number;
   contentHeight: number;
   centerImageFile?: File;
+  centerMode?: "image" | "text";
+  centerShape?: CenterShapeId;
+  titleText?: string;
+  subtitleText?: string;
+  titleFont?: string;
+  subtitleFont?: string;
+  titleFontSizeAuto?: boolean;
+  subtitleFontSizeAuto?: boolean;
+  titleFontSize?: number;
+  subtitleFontSize?: number;
+  shapeColor?: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  wrapText?: boolean;
   layoutStyle?: LayoutStyle;
   textSafeAreaPercent?: number;
   centerScale?: number;
@@ -219,6 +237,20 @@ export const compositeLayers = async (params: {
     contentWidth,
     contentHeight,
     centerImageFile,
+    centerMode,
+    centerShape = "roundedRect",
+    titleText = "",
+    subtitleText = "",
+    titleFont = "Open Sans",
+    subtitleFont = "Open Sans",
+    titleFontSizeAuto = false,
+    subtitleFontSizeAuto = false,
+    titleFontSize = 48,
+    subtitleFontSize = 28,
+    shapeColor = "#fef3c7",
+    titleColor = "#1f2937",
+    subtitleColor = "#4b5563",
+    wrapText = true,
     layoutStyle,
     textSafeAreaPercent = 20,
     centerScale = 1,
@@ -230,8 +262,6 @@ export const compositeLayers = async (params: {
     backgroundImageFile,
     exportFormat
   } = params;
-  // Currently unused but kept for potential future center-image text-safe behavior
-  void textSafeAreaPercent;
   const canvas = document.createElement("canvas");
   canvas.width = contentWidth;
   canvas.height = contentHeight;
@@ -275,7 +305,7 @@ export const compositeLayers = async (params: {
   });
 
   // Optional center image (only for divided grid layouts), drawn on top of content
-  if (centerImageFile && layoutStyle && layoutStyle !== "grid") {
+  if (centerImageFile && layoutStyle && layoutStyle !== "grid" && centerMode !== "text") {
     try {
       const [centerImg] = await loadFilesAsImages([centerImageFile], { cropToContent: false });
       if (centerImg) {
@@ -306,6 +336,60 @@ export const compositeLayers = async (params: {
     } catch (err) {
       console.warn("Failed to draw center image in composite:", err);
     }
+  }
+
+  // Center text (shape + title/subtitle) for divided grid layouts
+  if (centerMode === "text" && layoutStyle && layoutStyle !== "grid") {
+    await loadFonts([titleFont, subtitleFont]);
+    const layout = layoutCenterText(
+      {
+        canvasWidth: contentWidth,
+        canvasHeight: contentHeight,
+        textSafeAreaPercent,
+        centerScale,
+        centerXOffset,
+        centerYOffset,
+        titleText,
+        subtitleText,
+        titleFont,
+        subtitleFont,
+        titleFontSize,
+        subtitleFontSize,
+        titleFontSizeAuto,
+        subtitleFontSizeAuto,
+        wrapText
+      },
+      ctx
+    );
+
+    const { shapeRect, title, subtitle } = layout;
+    const cx = shapeRect.x + shapeRect.width / 2;
+    const cy = shapeRect.y + shapeRect.height / 2;
+    const rad = (centerRotation * Math.PI) / 180;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rad);
+    ctx.translate(-cx, -cy);
+
+    drawCenterShape(ctx, centerShape, shapeRect, shapeColor);
+
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+
+    title.lines.forEach((line) => {
+      ctx.font = `600 ${line.fontSize}px "${line.fontFamily}", sans-serif`;
+      ctx.fillStyle = titleColor;
+      ctx.fillText(line.text, line.x, line.y);
+    });
+
+    subtitle.lines.forEach((line) => {
+      ctx.font = `400 ${line.fontSize}px "${line.fontFamily}", sans-serif`;
+      ctx.fillStyle = subtitleColor;
+      ctx.fillText(line.text, line.x, line.y);
+    });
+
+    ctx.restore();
   }
 
   const mimeType = exportFormat === "webp" ? "image/webp" : "image/png";

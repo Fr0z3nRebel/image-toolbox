@@ -1,16 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { AspectRatio, LayoutStyle } from "./types";
+import type { CenterShapeId } from "./types";
 import type { FileWithPreview } from "../../components/FileUploadZone";
 import { getCanvasDimensions } from "./canvas";
 import { getTextSafeRect } from "./text-safe-area";
 import { computeImageFrames } from "./layouts";
 import { getContentCroppedDataUrlFromUrl } from "./image-processing";
+import { layoutCenterText } from "./center-text-layout";
+import type { CenterTextLayout } from "./center-text-layout";
 
 export interface InstantPreviewProps {
   files: FileWithPreview[];
   centerFiles: FileWithPreview[];
+  centerMode?: "image" | "text";
+  centerShape?: CenterShapeId;
+  titleText?: string;
+  subtitleText?: string;
+  titleFont?: string;
+  subtitleFont?: string;
+  titleFontSize?: number;
+  subtitleFontSize?: number;
+  shapeColor?: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  titleFontSizeAuto?: boolean;
+  subtitleFontSizeAuto?: boolean;
+  wrapText?: boolean;
   backgroundFiles: FileWithPreview[];
   backgroundMode: "transparent" | "backgroundImage" | "color";
   backgroundColor: string;
@@ -29,9 +46,32 @@ export interface InstantPreviewProps {
  * DOM-based instant preview. Uses file preview URLs and layout math only—
  * no canvas or image loading. Matches the export layout; composition runs only on export.
  */
+const SHAPE_BORDER_RADIUS: Record<CenterShapeId, string> = {
+  rectangle: "0",
+  roundedRect: "12%",
+  pill: "999px",
+  badge: "8%",
+  banner: "0",
+  bannerRibbon: "4%"
+};
+
 export default function InstantPreview({
   files,
   centerFiles,
+  centerMode = "image",
+  centerShape = "roundedRect",
+  titleText = "",
+  subtitleText = "",
+  titleFont = "Open Sans",
+  subtitleFont = "Open Sans",
+  titleFontSize = 48,
+  subtitleFontSize = 28,
+  shapeColor = "#fef3c7",
+  titleColor = "#1f2937",
+  subtitleColor = "#4b5563",
+  titleFontSizeAuto = false,
+  subtitleFontSizeAuto = false,
+  wrapText = true,
   backgroundFiles,
   backgroundMode,
   backgroundColor,
@@ -49,7 +89,13 @@ export default function InstantPreview({
   const textSafeRect = getTextSafeRect(w, h, textSafeAreaPercent);
   const frames = computeImageFrames(layoutStyle, w, h, files.length, textSafeRect, imagesPerRow);
 
+  const drawW = textSafeRect.width * centerScale;
+  const drawH = textSafeRect.height * centerScale;
+
   const [contentCropped, setContentCropped] = useState<Record<string, string>>({});
+  const [centerLayout, setCenterLayout] = useState<CenterTextLayout | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
 
   useEffect(() => {
     setContentCropped((prev) => {
@@ -67,6 +113,76 @@ export default function InstantPreview({
         .catch(() => {});
     });
   }, [files]);
+
+  useLayoutEffect(() => {
+    const updateScale = () => {
+      const el = containerRef.current;
+      if (!el || w === 0) return;
+      const width = el.clientWidth;
+      setScale(width / w);
+    };
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, [w]);
+
+  useEffect(() => {
+    if (centerMode !== "text" || layoutStyle === "grid") {
+      setCenterLayout(null);
+      return;
+    }
+    if (typeof document === "undefined") {
+      setCenterLayout(null);
+      return;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      setCenterLayout(null);
+      return;
+    }
+    const layout = layoutCenterText(
+      {
+        canvasWidth: w,
+        canvasHeight: h,
+        textSafeAreaPercent,
+        centerScale,
+        centerXOffset,
+        centerYOffset,
+        titleText,
+        subtitleText,
+        titleFont,
+        subtitleFont,
+        titleFontSize,
+        subtitleFontSize,
+        titleFontSizeAuto,
+        subtitleFontSizeAuto,
+        wrapText
+      },
+      ctx
+    );
+    setCenterLayout(layout);
+  }, [
+    centerMode,
+    layoutStyle,
+    w,
+    h,
+    textSafeAreaPercent,
+    centerScale,
+    centerXOffset,
+    centerYOffset,
+    titleText,
+    subtitleText,
+    titleFont,
+    subtitleFont,
+    titleFontSize,
+    subtitleFontSize,
+    titleFontSizeAuto,
+    subtitleFontSizeAuto,
+    wrapText
+  ]);
 
   const bgStyle: React.CSSProperties =
     backgroundMode === "transparent"
@@ -86,6 +202,7 @@ export default function InstantPreview({
 
   return (
     <div
+      ref={containerRef}
       className={`relative w-full h-full overflow-hidden ${className}`.trim()}
       style={bgStyle}
     >
@@ -122,7 +239,7 @@ export default function InstantPreview({
           </div>
         );
       })}
-      {layoutStyle !== "grid" && (
+      {layoutStyle !== "grid" && centerMode === "image" && (
         <div
           className="absolute z-10 flex items-center justify-center"
           style={{
@@ -142,6 +259,66 @@ export default function InstantPreview({
               style={{ transform: `scale(${centerScale}) rotate(${centerRotation}deg)` }}
             />
           ) : null}
+        </div>
+      )}
+      {layoutStyle !== "grid" && centerMode === "text" && centerLayout && (
+        <div
+          className="absolute z-10"
+          style={{
+            left: `${(centerLayout.shapeRect.x / w) * 100}%`,
+            top: `${(centerLayout.shapeRect.y / h) * 100}%`,
+            width: `${(centerLayout.shapeRect.width / w) * 100}%`,
+            height: `${(centerLayout.shapeRect.height / h) * 100}%`,
+            transformOrigin: "50% 50%",
+            transform: `rotate(${centerRotation}deg)`
+          }}
+        >
+          <div
+            className="relative w-full h-full"
+            style={{
+              backgroundColor: shapeColor,
+              borderRadius: SHAPE_BORDER_RADIUS[centerShape]
+            }}
+          >
+            {centerLayout.title.lines.map((line, idx) => (
+              <span
+                key={`title-${idx}`}
+                style={{
+                  position: "absolute",
+                  left: `${((line.x - centerLayout.shapeRect.x) / centerLayout.shapeRect.width) * 100}%`,
+                  top: `${((line.y - centerLayout.shapeRect.y) / centerLayout.shapeRect.height) * 100}%`,
+                  transform: "translate(-50%, -50%)",
+                  fontFamily: `"${line.fontFamily}", sans-serif`,
+                  fontWeight: line.fontWeight,
+                  fontSize: `${line.fontSize * scale}px`,
+                  color: titleColor,
+                  whiteSpace: "nowrap",
+                  lineHeight: 1.2
+                }}
+              >
+                {line.text}
+              </span>
+            ))}
+            {centerLayout.subtitle.lines.map((line, idx) => (
+              <span
+                key={`subtitle-${idx}`}
+                style={{
+                  position: "absolute",
+                  left: `${((line.x - centerLayout.shapeRect.x) / centerLayout.shapeRect.width) * 100}%`,
+                  top: `${((line.y - centerLayout.shapeRect.y) / centerLayout.shapeRect.height) * 100}%`,
+                  transform: "translate(-50%, -50%)",
+                  fontFamily: `"${line.fontFamily}", sans-serif`,
+                  fontWeight: line.fontWeight,
+                  fontSize: `${line.fontSize * scale}px`,
+                  color: subtitleColor,
+                  whiteSpace: "nowrap",
+                  lineHeight: 1.2
+                }}
+              >
+                {line.text}
+              </span>
+            ))}
+          </div>
         </div>
       )}
       {isProcessing && (
