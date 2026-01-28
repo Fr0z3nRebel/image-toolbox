@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RotateCcw, X } from "lucide-react";
+import { RotateCcw, X, Save, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import ToolPageLayout from "../../components/ToolPageLayout";
 import FileUploadZone, { FileWithPreview } from "../../components/FileUploadZone";
 import {
@@ -23,6 +23,49 @@ const LAYOUT_STYLES: { value: LayoutStyle; label: string }[] = [
   { value: "dividedGrid", label: "Divided Grid" },
   { value: "dividedGrid2", label: "Divided Grid 2" }
 ];
+
+const WIZARD_STEPS = [
+  { num: 1, label: "Setup" },
+  { num: 2, label: "Layout" },
+  { num: 3, label: "Center" },
+  { num: 4, label: "Animation" },
+  { num: 5, label: "Export" }
+] as const;
+
+interface BundleBuilderPreset {
+  name: string;
+  aspectRatio: AspectRatio;
+  layoutStyle: LayoutStyle;
+  backgroundMode: "transparent" | "backgroundImage" | "color";
+  backgroundColor: string;
+  textSafeAreaPercent: number;
+  imagesPerRow: number | undefined;
+  centerScale: number;
+  centerRotation: number;
+  centerXOffset: number;
+  centerYOffset: number;
+}
+
+const PRESET_STORAGE_KEY = "bundle-builder-presets";
+
+function loadPresets(): Record<string, BundleBuilderPreset> {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = localStorage.getItem(PRESET_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+function savePresets(presets: Record<string, BundleBuilderPreset>): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+  } catch {
+    // Ignore storage errors
+  }
+}
 function parseHex(s: string): string | null {
   const t = s.trim().replace(/^#/, "");
   if (/^[0-9a-fA-F]{3}$/.test(t)) return "#" + t[0] + t[0] + t[1] + t[1] + t[2] + t[2];
@@ -31,6 +74,7 @@ function parseHex(s: string): string | null {
 }
 
 export default function BundleBuilderTool() {
+  const [step, setStep] = useState(1);
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [backgroundFiles, setBackgroundFiles] = useState<FileWithPreview[]>([]);
   const [centerFiles, setCenterFiles] = useState<FileWithPreview[]>([]);
@@ -47,8 +91,10 @@ export default function BundleBuilderTool() {
   const [centerYOffset, setCenterYOffset] = useState<number>(0);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showColorPickerModal, setShowColorPickerModal] = useState(false);
+  const [presets, setPresets] = useState<Record<string, BundleBuilderPreset>>({});
+  const [presetNameInput, setPresetNameInput] = useState<string>("");
+  const [showSavePresetModal, setShowSavePresetModal] = useState(false);
 
   const handleDownload = async (format: ExportFormat) => {
     if (files.length < 2) return;
@@ -101,6 +147,7 @@ export default function BundleBuilderTool() {
   };
 
   const handleReset = () => {
+    setStep(1);
     // Clear all files
     setFiles([]);
     setBackgroundFiles([]);
@@ -118,7 +165,6 @@ export default function BundleBuilderTool() {
         setCenterXOffset(0);
         setCenterYOffset(0);
         setError(null);
-        setShowPreviewModal(false);
         setShowColorPickerModal(false);
     // Revoke object URLs to free memory
     files.forEach((file) => {
@@ -132,22 +178,83 @@ export default function BundleBuilderTool() {
     });
   };
 
+  // Load presets from localStorage on mount
+  useEffect(() => {
+    setPresets(loadPresets());
+  }, []);
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setShowPreviewModal(false);
         setShowColorPickerModal(false);
+        setShowSavePresetModal(false);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  const handleSavePreset = () => {
+    if (!presetNameInput.trim()) {
+      setError("Please enter a preset name");
+      return;
+    }
+    const newPreset: BundleBuilderPreset = {
+      name: presetNameInput.trim(),
+      aspectRatio,
+      layoutStyle,
+      backgroundMode,
+      backgroundColor,
+      textSafeAreaPercent,
+      imagesPerRow,
+      centerScale,
+      centerRotation,
+      centerXOffset,
+      centerYOffset
+    };
+    const updatedPresets = { ...presets, [presetNameInput.trim()]: newPreset };
+    setPresets(updatedPresets);
+    savePresets(updatedPresets);
+    setPresetNameInput("");
+    setShowSavePresetModal(false);
+    setError(null);
+  };
+
+  const handleLoadPreset = (presetName: string) => {
+    const preset = presets[presetName];
+    if (!preset) return;
+    setAspectRatio(preset.aspectRatio);
+    setLayoutStyle(preset.layoutStyle);
+    setBackgroundMode(preset.backgroundMode);
+    setBackgroundColor(preset.backgroundColor);
+    setHexInput(preset.backgroundColor);
+    setTextSafeAreaPercent(preset.textSafeAreaPercent);
+    setImagesPerRow(preset.imagesPerRow);
+    setCenterScale(preset.centerScale);
+    setCenterRotation(preset.centerRotation);
+    setCenterXOffset(preset.centerXOffset);
+    setCenterYOffset(preset.centerYOffset);
+  };
+
+  const handleDeletePreset = (presetName: string) => {
+    const updatedPresets = { ...presets };
+    delete updatedPresets[presetName];
+    setPresets(updatedPresets);
+    savePresets(updatedPresets);
+  };
+
   const { width: previewWidth, height: previewHeight } = getCanvasDimensions(aspectRatio);
 
-  const aspectRatioStyle =
+  const previewRatio = previewWidth && previewHeight ? previewWidth / previewHeight : 1;
+  const aspectRatioStyle: React.CSSProperties =
     previewWidth && previewHeight
-      ? { aspectRatio: `${previewWidth}/${previewHeight}` }
+      ? {
+          aspectRatio: `${previewWidth}/${previewHeight}`,
+          maxHeight: "90vh",
+          maxWidth: "100%",
+          width: `min(100%, ${90 * previewRatio}vh)`,
+          height: "auto"
+        }
       : {};
 
   const backgroundLabel = backgroundMode === "transparent" ? "Transparent" : backgroundMode === "backgroundImage" ? "Background image" : backgroundColor;
@@ -167,110 +274,131 @@ export default function BundleBuilderTool() {
     </button>
   ) : null;
 
-  const controls = (
-    <div className="space-y-4 flex-1 min-h-0 overflow-y-auto lg:pr-1">
-      {/* Bundle Images */}
-      <FileUploadZone
-        title="Bundle Images"
-        variant="subtleWhite"
-        dropPromptText="Drop images or click"
-        files={files}
-        onFilesChange={setFiles}
-        disabled={isExporting}
-        actionButton={actionButton}
-        acceptedFileTypes="image/*"
-        supportedFormatsText=""
-        maxDisplayHeight="max-h-48"
-        showThumbnails={true}
-        fileListColumns={2}
-        compactDropZone={true}
-      />
-
-      {/* Aspect ratio */}
-      <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">
-          Aspect ratio
-        </label>
-        <select
-          value={aspectRatio}
-          onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
-        >
-          {ASPECT_RATIOS.map((ratio) => (
-            <option key={ratio.value} value={ratio.value}>
-              {ratio.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Layout style */}
-      <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">
-          Layout style
-        </label>
-        <select
-          value={layoutStyle}
-          onChange={(e) => setLayoutStyle(e.target.value as LayoutStyle)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
-        >
-          {LAYOUT_STYLES.map((layout) => (
-            <option key={layout.value} value={layout.value}>
-              {layout.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Text-safe area size - only show for non-grid layouts */}
-      {layoutStyle !== "grid" && (
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
-            Central text area size: {textSafeAreaPercent}%
-          </label>
-          <input
-            type="range"
-            min="10"
-            max="40"
-            step="5"
-            value={textSafeAreaPercent}
-            onChange={(e) => setTextSafeAreaPercent(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-          />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>Smaller (10%)</span>
-            <span>Larger (40%)</span>
-          </div>
-        </div>
-      )}
-
-
-      {/* Images per row */}
-      <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">
-          Images per row
-        </label>
-        <input
-          type="number"
-          min="1"
-          max={files.length}
-          value={imagesPerRow || ""}
-          onChange={(e) => {
-            const value = e.target.value;
-            setImagesPerRow(value === "" ? undefined : Math.max(1, Math.min(files.length, Number(value))));
-          }}
-          placeholder="Auto"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
-        />
-      </div>
-
-      {/* Background and center - under Images per row */}
+  const stepContent =
+    step === 1 ? (
       <div className="space-y-4">
+        <div className="space-y-2 pb-4 border-b border-gray-200">
+          <label className="block text-sm font-bold text-gray-700 mb-2">Presets</label>
+          <div className="flex gap-2">
+            <select
+              value=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  handleLoadPreset(e.target.value);
+                  e.target.value = "";
+                }
+              }}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+            >
+              <option value="">Load preset...</option>
+              {Object.keys(presets).map((name) => (
+                <option key={name} value={name}>
+                  {presets[name].name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setShowSavePresetModal(true)}
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-sm font-medium"
+              title="Save current settings as preset"
+            >
+              <Save className="h-4 w-4" />
+              Save
+            </button>
+          </div>
+          {Object.keys(presets).length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {Object.keys(presets).map((name) => (
+                <div key={name} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 rounded-lg text-sm">
+                  <span className="text-gray-700">{name}</span>
+                  <button type="button" onClick={() => handleDeletePreset(name)} className="text-gray-500 hover:text-red-600 transition-colors" title="Delete preset">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <FileUploadZone
+          title="Bundle Images"
+          variant="subtleWhite"
+          dropPromptText="Drop images or click"
+          files={files}
+          onFilesChange={setFiles}
+          disabled={isExporting}
+          actionButton={actionButton}
+          acceptedFileTypes="image/*"
+          supportedFormatsText=""
+          maxDisplayHeight="max-h-48"
+          showThumbnails={true}
+          fileListColumns={2}
+          compactDropZone={true}
+        />
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Aspect ratio</label>
+          <select
+            value={aspectRatio}
+            onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+          >
+            {ASPECT_RATIOS.map((ratio) => (
+              <option key={ratio.value} value={ratio.value}>
+                {ratio.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    ) : step === 2 ? (
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Layout style</label>
+          <select
+            value={layoutStyle}
+            onChange={(e) => setLayoutStyle(e.target.value as LayoutStyle)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+          >
+            {LAYOUT_STYLES.map((layout) => (
+              <option key={layout.value} value={layout.value}>
+                {layout.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Images per row</label>
+          <p className="text-xs text-gray-500 mb-2">Leave empty for automatic layout.</p>
+          <input
+            type="number"
+            min={1}
+            max={files.length}
+            value={imagesPerRow ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              setImagesPerRow(value === "" ? undefined : Math.max(1, Math.min(files.length, Number(value))));
+            }}
+            placeholder="Auto"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+          />
+        </div>
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">Background</label>
           <div className="flex gap-2 items-center flex-wrap">
-            <button type="button" onClick={() => setBackgroundMode("transparent")} className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${backgroundMode === "transparent" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}>Transparent</button>
-            <button type="button" onClick={() => setBackgroundMode("backgroundImage")} className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${backgroundMode === "backgroundImage" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}>Background image</button>
+            <button
+              type="button"
+              onClick={() => setBackgroundMode("transparent")}
+              className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${backgroundMode === "transparent" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
+            >
+              Transparent
+            </button>
+            <button
+              type="button"
+              onClick={() => setBackgroundMode("backgroundImage")}
+              className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${backgroundMode === "backgroundImage" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
+            >
+              Background image
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -286,66 +414,117 @@ export default function BundleBuilderTool() {
           </div>
           {backgroundMode === "backgroundImage" && (
             <div className="mt-3">
-              <FileUploadZone title="Background image" variant="subtle" dropPromptText="Drop a background image or click to select" files={backgroundFiles} onFilesChange={setBackgroundFiles} disabled={isExporting} actionButton={null} acceptedFileTypes="image/*" supportedFormatsText="" maxDisplayHeight="max-h-24" multiple={false} maxFiles={1} showFileSize={false} compactDropZone={true} />
+              <FileUploadZone
+                title="Background image"
+                variant="subtle"
+                dropPromptText="Drop a background image or click to select"
+                files={backgroundFiles}
+                onFilesChange={setBackgroundFiles}
+                disabled={isExporting}
+                actionButton={null}
+                acceptedFileTypes="image/*"
+                supportedFormatsText=""
+                maxDisplayHeight="max-h-24"
+                multiple={false}
+                maxFiles={1}
+                showFileSize={false}
+                compactDropZone={true}
+              />
             </div>
           )}
         </div>
-        {layoutStyle !== "grid" && (
-          <div className="space-y-3">
-            <FileUploadZone title="Center image" variant="subtle" dropPromptText="Drop a center image or click to select" files={centerFiles} onFilesChange={setCenterFiles} disabled={isExporting} actionButton={null} acceptedFileTypes="image/*" supportedFormatsText="" maxDisplayHeight="max-h-24" multiple={false} maxFiles={1} showFileSize={false} compactDropZone={true} />
+      </div>
+    ) : step === 3 ? (
+      <div className="space-y-4">
+        {layoutStyle === "grid" ? (
+          <p className="text-sm text-gray-600">Center options are for divided layouts only. Use Back to change the layout style, or continue to the next step.</p>
+        ) : (
+          <>
+            <FileUploadZone
+              title="Center image"
+              variant="subtle"
+              dropPromptText="Drop a center image or click to select"
+              files={centerFiles}
+              onFilesChange={setCenterFiles}
+              disabled={isExporting}
+              actionButton={null}
+              acceptedFileTypes="image/*"
+              supportedFormatsText=""
+              maxDisplayHeight="max-h-24"
+              multiple={false}
+              maxFiles={1}
+              showFileSize={false}
+              compactDropZone={true}
+            />
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Center scale: {Math.round(centerScale * 100)}%</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Central text area size: {textSafeAreaPercent}%</label>
               <input
                 type="range"
-                min="50"
-                max="150"
-                step="1"
-                value={Math.round(centerScale * 100)}
-                onChange={(e) => setCenterScale(Number(e.target.value) / 100)}
+                min={10}
+                max={40}
+                step={5}
+                value={textSafeAreaPercent}
+                onChange={(e) => setTextSafeAreaPercent(Number(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
               />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Smaller (10%)</span>
+                <span>Larger (40%)</span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Center scale: {Math.round(centerScale * 100)}%</label>
+              <input type="range" min={50} max={150} step={1} value={Math.round(centerScale * 100)} onChange={(e) => setCenterScale(Number(e.target.value) / 100)} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider" />
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Center rotation: {centerRotation}°</label>
-              <input
-                type="range"
-                min="-180"
-                max="180"
-                step="1"
-                value={centerRotation}
-                onChange={(e) => setCenterRotation(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-              />
+              <input type="range" min={-180} max={180} step={1} value={centerRotation} onChange={(e) => setCenterRotation(Number(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider" />
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Center position (left/right): {centerXOffset}%</label>
-              <input
-                type="range"
-                min="-50"
-                max="50"
-                step="1"
-                value={centerXOffset}
-                onChange={(e) => setCenterXOffset(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-              />
+              <input type="range" min={-50} max={50} step={1} value={centerXOffset} onChange={(e) => setCenterXOffset(Number(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider" />
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Center position (up/down): {centerYOffset}%</label>
-              <input
-                type="range"
-                min="-50"
-                max="50"
-                step="1"
-                value={centerYOffset}
-                onChange={(e) => setCenterYOffset(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-              />
+              <input type="range" min={-50} max={50} step={1} value={centerYOffset} onChange={(e) => setCenterYOffset(Number(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider" />
             </div>
-          </div>
+          </>
         )}
       </div>
-    </div>
-  );
+    ) : step === 4 ? (
+      <div className="space-y-4">
+        <p className="text-sm text-gray-600">Animation options coming soon.</p>
+      </div>
+    ) : (
+      <div className="space-y-4">
+        <div className="text-sm text-gray-700">
+          <span className="font-medium">Current settings:</span> <span>{settingsSummary}</span>
+        </div>
+        <div className="text-sm text-gray-500">
+          Output size: <span className="font-medium">{previewWidth} × {previewHeight} px</span>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleDownload("png")}
+            disabled={files.length < 2 || isExporting}
+            className="flex-1 bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            type="button"
+          >
+            {isExporting ? "Preparing…" : "Download PNG"}
+          </button>
+          <button
+            onClick={() => handleDownload("webp")}
+            disabled={files.length < 2 || isExporting}
+            className="flex-1 bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            type="button"
+          >
+            {isExporting ? "Preparing…" : "Download WebP"}
+          </button>
+        </div>
+        {files.length < 2 && <p className="text-xs text-gray-500">Add at least 2 bundle images to export</p>}
+        <p className="text-xs text-gray-400">Tip: Use this as your primary bundle image to showcase what&apos;s inside larger digital product bundles or printable sets.</p>
+      </div>
+    );
 
   return (
     <ToolPageLayout
@@ -353,27 +532,57 @@ export default function BundleBuilderTool() {
       description="Arrange multiple previews into a single, text-ready bundle cover image for your digital products."
       showBackButton={true}
     >
-      {/* Uploads + controls */}
+      {/* Wizard + preview */}
       <div className="mb-8 bg-white rounded-xl border border-gray-200 p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
-          {/* Controls */}
+          {/* Stepper + step content */}
           <div className="flex flex-col min-h-0">
-            {controls}
+            <nav aria-label="Steps" className="flex flex-wrap items-center gap-x-1.5 gap-y-1 mb-4 pb-4 border-b border-gray-200">
+              {WIZARD_STEPS.map((s, i) => (
+                <span key={s.num} className="flex items-center gap-x-1.5">
+                  {i > 0 && <span className="text-gray-300 select-none" aria-hidden>•</span>}
+                  <span
+                    className={`text-sm font-medium ${step === s.num ? "text-blue-600" : "text-gray-500"}`}
+                    aria-current={step === s.num ? "step" : undefined}
+                  >
+                    {s.num}. {s.label}
+                  </span>
+                </span>
+              ))}
+            </nav>
+            <div className="space-y-4 flex-1 min-h-0 overflow-y-auto lg:pr-1">
+              {stepContent}
+            </div>
+            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 shrink-0">
+              {step > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setStep((s) => s - 1)}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors text-sm"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Back
+                </button>
+              ) : null}
+              {step < 5 ? (
+                <button
+                  type="button"
+                  onClick={() => setStep((s) => s + 1)}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors text-sm flex-1"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
           </div>
 
           {/* Bundle Image Preview (right column) */}
-          <div className="lg:col-span-2 space-y-4 flex flex-col min-h-0">
-            <h2 className="text-lg font-semibold text-gray-900">Bundle Image Preview</h2>
-
-            <div className="relative w-full flex-shrink-0">
+          <div className="lg:col-span-2 flex flex-col min-h-0">
+            <div className="relative w-full min-h-0 flex justify-center items-start max-h-[90vh]">
               <div
-                className={`relative w-full rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm ${files.length >= 2 ? "cursor-pointer hover:opacity-90 transition-opacity" : ""}`}
+                className="relative rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm shrink-0"
                 style={aspectRatioStyle}
-                onClick={files.length >= 2 ? () => setShowPreviewModal(true) : undefined}
-                onKeyDown={files.length >= 2 ? (e) => e.key === "Enter" && setShowPreviewModal(true) : undefined}
-                role={files.length >= 2 ? "button" : undefined}
-                tabIndex={files.length >= 2 ? 0 : undefined}
-                aria-label={files.length >= 2 ? "View larger preview" : undefined}
               >
                 {files.length >= 2 ? (
                   <InstantPreview
@@ -407,96 +616,6 @@ export default function BundleBuilderTool() {
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
-        </div>
-      )}
-
-      {/* Export - full width at bottom */}
-      <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Export
-          </h2>
-          <p className="text-sm text-gray-600">
-            Download your combined bundle image and add your brand text or titles in your preferred design tool (Canva, Affinity, Photoshop, etc.).
-          </p>
-
-          <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-            <div className="text-sm text-gray-700">
-              <span className="font-medium">Current settings:</span>{" "}
-              <span>{settingsSummary}</span>
-            </div>
-
-            <div className="text-sm text-gray-500">
-              Output size:{" "}
-              <span className="font-medium">
-                {previewWidth} × {previewHeight} px
-              </span>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleDownload("png")}
-                disabled={files.length < 2 || isExporting}
-                className="flex-1 bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                type="button"
-              >
-                {isExporting ? "Preparing…" : "Download PNG"}
-              </button>
-              <button
-                onClick={() => handleDownload("webp")}
-                disabled={files.length < 2 || isExporting}
-                className="flex-1 bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                type="button"
-              >
-                {isExporting ? "Preparing…" : "Download WebP"}
-              </button>
-            </div>
-            {files.length < 2 && (
-              <p className="text-xs text-gray-500">Add at least 2 bundle images to export</p>
-            )}
-
-            <p className="text-xs text-gray-400">
-              Tip: Use this as your primary bundle image to showcase what&apos;s inside larger digital product bundles or printable sets.
-            </p>
-          </div>
-      </div>
-
-      {/* Larger preview modal */}
-      {showPreviewModal && files.length >= 2 && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
-          onClick={() => setShowPreviewModal(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Larger preview"
-        >
-          <button
-            type="button"
-            onClick={() => setShowPreviewModal(false)}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/90 hover:bg-white text-gray-700 transition-colors z-10"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-          <div
-            className="w-full max-w-4xl max-h-[90vh] rounded-lg shadow-xl overflow-hidden bg-white"
-            style={{ aspectRatio: `${previewWidth}/${previewHeight}` }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <InstantPreview
-              files={files}
-              centerFiles={centerFiles}
-              backgroundFiles={backgroundFiles}
-              backgroundMode={backgroundMode}
-              backgroundColor={backgroundColor}
-              layoutStyle={layoutStyle}
-              textSafeAreaPercent={textSafeAreaPercent}
-              imagesPerRow={imagesPerRow}
-              centerScale={centerScale}
-              centerRotation={centerRotation}
-              aspectRatio={aspectRatio}
-              className="w-full h-full relative"
-            />
-          </div>
         </div>
       )}
 
@@ -562,6 +681,86 @@ export default function BundleBuilderTool() {
             >
               Done
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Save preset modal */}
+      {showSavePresetModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={() => {
+            setShowSavePresetModal(false);
+            setPresetNameInput("");
+            setError(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Save preset"
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl p-5 max-w-sm w-full space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Save Preset</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSavePresetModal(false);
+                  setPresetNameInput("");
+                  setError(null);
+                }}
+                className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Preset name
+              </label>
+              <input
+                type="text"
+                value={presetNameInput}
+                onChange={(e) => {
+                  setPresetNameInput(e.target.value);
+                  setError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSavePreset();
+                  }
+                }}
+                placeholder="Enter preset name..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-sm"
+                autoFocus
+              />
+              {error && (
+                <p className="text-sm text-red-600">{error}</p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSavePresetModal(false);
+                  setPresetNameInput("");
+                  setError(null);
+                }}
+                className="flex-1 py-2.5 px-4 rounded-lg bg-gray-100 text-gray-800 font-medium hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSavePreset}
+                className="flex-1 py-2.5 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}

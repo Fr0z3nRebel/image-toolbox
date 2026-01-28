@@ -230,6 +230,8 @@ export const compositeLayers = async (params: {
     backgroundImageFile,
     exportFormat
   } = params;
+  // Currently unused but kept for potential future center-image text-safe behavior
+  void textSafeAreaPercent;
   const canvas = document.createElement("canvas");
   canvas.width = contentWidth;
   canvas.height = contentHeight;
