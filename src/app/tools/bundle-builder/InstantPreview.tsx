@@ -103,14 +103,15 @@ export default function InstantPreview({
   const shapeBorderRadius = useMemo(() => {
     if (!centerLayout) return SHAPE_BORDER_RADIUS[centerShape];
     const minDim = Math.min(centerLayout.shapeRect.width, centerLayout.shapeRect.height);
+    // Scale the radius to match the preview scale (same as export calculation)
     if (centerShape === "roundedRect") {
-      return `${minDim * 0.12}px`;
+      return `${minDim * scale * 0.12}px`;
     }
     if (centerShape === "pill") {
-      return `${minDim / 2}px`;
+      return `${minDim * scale / 2}px`;
     }
     return SHAPE_BORDER_RADIUS[centerShape];
-  }, [centerLayout, centerShape]);
+  }, [centerLayout, centerShape, scale]);
 
   useEffect(() => {
     setContentCropped((prev) => {
