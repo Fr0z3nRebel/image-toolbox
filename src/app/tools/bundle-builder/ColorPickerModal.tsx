@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { X, Pipette } from "lucide-react";
+import { X, Pipette, Sparkles } from "lucide-react";
 
 export function parseHex(s: string): string | null {
   const t = s.trim().replace(/^#/, "");
@@ -14,6 +14,11 @@ function isEyeDropperSupported(): boolean {
   return typeof window !== "undefined" && "EyeDropper" in window;
 }
 
+export interface ColorSuggestion {
+  color: string;
+  label: string;
+}
+
 export interface ColorPickerModalProps {
   open: boolean;
   onClose: () => void;
@@ -22,6 +27,8 @@ export interface ColorPickerModalProps {
   title: string;
   /** When true, show "Pick from preview" button using EyeDropper (Chrome/Edge). */
   showPickFromPreview?: boolean;
+  /** Optional callback to auto-pick colors from the preview image. Returns array of suggestions. */
+  onAutoPick?: () => ColorSuggestion[] | null;
 }
 
 export default function ColorPickerModal({
@@ -30,17 +37,23 @@ export default function ColorPickerModal({
   value,
   onChange,
   title,
-  showPickFromPreview = false
+  showPickFromPreview = false,
+  onAutoPick
 }: ColorPickerModalProps) {
   const [hexInput, setHexInput] = useState(value);
   const [isPicking, setIsPicking] = useState(false);
+  const [isAutoPicking, setIsAutoPicking] = useState(false);
+  const [suggestions, setSuggestions] = useState<ColorSuggestion[] | null>(null);
 
   const syncFromValue = useCallback(() => {
     setHexInput(value);
   }, [value]);
 
   useEffect(() => {
-    if (open) setHexInput(value);
+    if (open) {
+      setHexInput(value);
+      setSuggestions(null);
+    }
   }, [open, value]);
 
   const handleHexChange = (raw: string) => {
@@ -68,6 +81,29 @@ export default function ColorPickerModal({
     } finally {
       setIsPicking(false);
     }
+  };
+
+  const handleAutoPick = () => {
+    if (!onAutoPick) return;
+    setIsAutoPicking(true);
+    try {
+      const suggestionsResult = onAutoPick();
+      if (suggestionsResult && suggestionsResult.length > 0) {
+        setSuggestions(suggestionsResult);
+        // Auto-select the first suggestion
+        onChange(suggestionsResult[0].color);
+        setHexInput(suggestionsResult[0].color);
+      }
+    } catch {
+      // Error analyzing colors
+    } finally {
+      setIsAutoPicking(false);
+    }
+  };
+
+  const handleSuggestionClick = (color: string) => {
+    onChange(color);
+    setHexInput(color);
   };
 
   if (!open) return null;
@@ -117,23 +153,63 @@ export default function ColorPickerModal({
             aria-label="Hex color"
           />
         </div>
-        {showPickFromPreview && (
-          <div>
-            {isEyeDropperSupported() ? (
+        <div className="space-y-2">
+          {onAutoPick && (
+            <>
               <button
                 type="button"
-                onClick={handlePickFromPreview}
-                disabled={isPicking}
-                className="w-full py-2 px-4 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm"
+                onClick={handleAutoPick}
+                disabled={isAutoPicking}
+                className="w-full py-2 px-4 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 text-sm"
               >
-                <Pipette className="h-4 w-4" />
-                {isPicking ? "Pick a color on screen…" : "Pick from preview"}
+                <Sparkles className="h-4 w-4" />
+                {isAutoPicking ? "Analyzing preview…" : "Suggest colors from preview"}
               </button>
-            ) : (
-              <p className="text-xs text-gray-500">Pick from preview is supported in Chrome and Edge.</p>
-            )}
-          </div>
-        )}
+              {suggestions && suggestions.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-gray-700">Suggested colors:</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {suggestions.map((suggestion, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSuggestionClick(suggestion.color)}
+                        className="flex flex-col items-center gap-1.5 p-2 rounded-lg border-2 transition-all hover:scale-105"
+                        style={{
+                          borderColor: value === suggestion.color ? suggestion.color : "transparent",
+                          backgroundColor: value === suggestion.color ? `${suggestion.color}15` : "transparent"
+                        }}
+                      >
+                        <div
+                          className="w-full h-10 rounded border border-gray-300"
+                          style={{ backgroundColor: suggestion.color }}
+                        />
+                        <span className="text-xs font-medium text-gray-700">{suggestion.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          {showPickFromPreview && (
+            <div>
+              {isEyeDropperSupported() ? (
+                <button
+                  type="button"
+                  onClick={handlePickFromPreview}
+                  disabled={isPicking}
+                  className="w-full py-2 px-4 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm"
+                >
+                  <Pipette className="h-4 w-4" />
+                  {isPicking ? "Pick a color on screen…" : "Pick from preview"}
+                </button>
+              ) : (
+                <p className="text-xs text-gray-500">Pick from preview is supported in Chrome and Edge.</p>
+              )}
+            </div>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => { syncFromValue(); onClose(); }}
