@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AspectRatio, LayoutStyle } from "./types";
 import type { CenterShapeId } from "./types";
 import type { FileWithPreview } from "../../components/FileUploadZone";
@@ -102,6 +102,18 @@ export default function InstantPreview({
   const [centerLayout, setCenterLayout] = useState<CenterTextLayout | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
+
+  const shapeBorderRadius = useMemo(() => {
+    if (!centerLayout) return SHAPE_BORDER_RADIUS[centerShape];
+    const minDim = Math.min(centerLayout.shapeRect.width, centerLayout.shapeRect.height);
+    if (centerShape === "roundedRect") {
+      return `${minDim * 0.12}px`;
+    }
+    if (centerShape === "pill") {
+      return `${minDim / 2}px`;
+    }
+    return SHAPE_BORDER_RADIUS[centerShape];
+  }, [centerLayout, centerShape]);
 
   useEffect(() => {
     setContentCropped((prev) => {
@@ -285,13 +297,13 @@ export default function InstantPreview({
             transform: `rotate(${centerRotation}deg)`
           }}
         >
-          <div
-            className="relative w-full h-full"
-            style={{
-              backgroundColor: shapeColor,
-              borderRadius: SHAPE_BORDER_RADIUS[centerShape]
-            }}
-          >
+            <div
+              className="relative w-full h-full"
+              style={{
+                backgroundColor: shapeColor,
+                borderRadius: shapeBorderRadius
+              }}
+            >
             {centerLayout.title.lines.map((line, idx) => (
               <span
                 key={`title-${idx}`}

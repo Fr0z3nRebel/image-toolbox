@@ -990,7 +990,7 @@ export default function BundleBuilderTool() {
           <div className="lg:col-span-2 flex flex-col min-h-0">
             <div className="relative w-full min-h-0 flex justify-center items-start max-h-[90vh]">
               <div
-                className="relative rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm shrink-0"
+                className="relative rounded-xl border border-gray-200 bg-white overflow-visible shadow-sm shrink-0"
                 style={aspectRatioStyle}
               >
                 {files.length >= 2 ? (
