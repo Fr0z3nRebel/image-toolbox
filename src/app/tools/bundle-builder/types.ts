@@ -4,7 +4,7 @@ export type AspectRatio = "4:3" | "1:1";
 
 export type CenterMode = "image" | "text";
 
-export type CenterShapeId = "rectangle" | "roundedRect" | "pill" | "badge" | "banner" | "bannerRibbon";
+export type CenterShapeId = "rectangle" | "roundedRect" | "pill";
 
 /** Shared font-size range (px) for title and subtitle. */
 export const CENTER_TEXT_FONT_SIZE_MIN = 12;

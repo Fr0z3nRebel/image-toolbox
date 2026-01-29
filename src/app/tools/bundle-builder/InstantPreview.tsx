@@ -52,10 +52,7 @@ export interface InstantPreviewProps {
 const SHAPE_BORDER_RADIUS: Record<CenterShapeId, string> = {
   rectangle: "0",
   roundedRect: "12%",
-  pill: "999px",
-  badge: "8%",
-  banner: "0",
-  bannerRibbon: "4%"
+  pill: "999px"
 };
 
 export default function InstantPreview({
