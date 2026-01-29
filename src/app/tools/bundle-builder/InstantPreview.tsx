@@ -36,6 +36,7 @@ export interface InstantPreviewProps {
   layoutStyle: LayoutStyle;
   textSafeAreaPercent: number;
   imagesPerRow?: number;
+  imageSpacingPercent?: number;
   centerWidthScale?: number;
   centerHeightScale?: number;
   centerRotation?: number;
@@ -80,6 +81,7 @@ export default function InstantPreview({
   layoutStyle,
   textSafeAreaPercent,
   imagesPerRow,
+  imageSpacingPercent = 5,
   centerWidthScale = 1,
   centerHeightScale = 1,
   centerRotation = 0,
@@ -218,7 +220,9 @@ export default function InstantPreview({
             backgroundColor: "#f3f4f6"
           };
 
-  const framePaddingPercent = layoutStyle === "grid" ? 92 : 90;
+  // Calculate frame padding: 100% - spacing% = image size%
+  // For example: 5% spacing = 95% image size, 10% spacing = 90% image size
+  const framePaddingPercent = 100 - imageSpacingPercent;
 
   const isProcessing = files.some((f) => f.preview && !contentCropped[f.id]);
 

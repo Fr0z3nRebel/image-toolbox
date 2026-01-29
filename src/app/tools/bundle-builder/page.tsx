@@ -62,6 +62,7 @@ interface BundleBuilderPreset {
   backgroundColor: string;
   textSafeAreaPercent: number;
   imagesPerRow: number | undefined;
+  imageSpacingPercent?: number;
   centerScale: number;
   centerRotation: number;
   centerXOffset: number;
@@ -341,6 +342,7 @@ export default function BundleBuilderTool() {
   const [hexInput, setHexInput] = useState<string>("#ffffff");
   const [textSafeAreaPercent, setTextSafeAreaPercent] = useState<number>(20);
   const [imagesPerRow, setImagesPerRow] = useState<number | undefined>(undefined);
+  const [imageSpacingPercent, setImageSpacingPercent] = useState<number>(5);
   const [centerWidthScale, setCenterWidthScale] = useState<number>(1);
   const [centerHeightScale, setCenterHeightScale] = useState<number>(1);
   const [centerScaleLocked, setCenterScaleLocked] = useState<boolean>(true);
@@ -355,7 +357,7 @@ export default function BundleBuilderTool() {
   const [showSavePresetModal, setShowSavePresetModal] = useState(false);
   const previewContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const [centerMode, setCenterMode] = useState<CenterMode>("image");
+  const [centerMode, setCenterMode] = useState<CenterMode>("text");
   const [centerShape, setCenterShape] = useState<CenterShapeId>("roundedRect");
   const [titleText, setTitleText] = useState<string>("Clipart Bundle");
   const [subtitleText, setSubtitleText] = useState<string>("20 PNGs | Transparent | Commercial Use | 300 DPI");
@@ -386,6 +388,7 @@ export default function BundleBuilderTool() {
         exportFormat: "png",
         textSafeAreaPercent,
         imagesPerRow: imagesPerRow && imagesPerRow > 0 ? imagesPerRow : undefined,
+        imageSpacingPercent,
         centerImageFile: undefined,
         backgroundImageFile: undefined
       });
@@ -454,6 +457,7 @@ export default function BundleBuilderTool() {
     setHexInput("#ffffff");
     setTextSafeAreaPercent(20);
     setImagesPerRow(undefined);
+    setImageSpacingPercent(5);
     setCenterWidthScale(1);
     setCenterHeightScale(1);
     setCenterScaleLocked(true);
@@ -462,7 +466,7 @@ export default function BundleBuilderTool() {
     setCenterYOffset(0);
     setError(null);
     setShowColorPickerModal(false);
-    setCenterMode("image");
+    setCenterMode("text");
     setCenterShape("roundedRect");
     setTitleText("Clipart Bundle");
     setSubtitleText("20 PNGs | Transparent | Commercial Use | 300 DPI");
@@ -527,6 +531,7 @@ export default function BundleBuilderTool() {
       backgroundColor,
       textSafeAreaPercent,
       imagesPerRow,
+      imageSpacingPercent,
       centerScale: centerWidthScale,
       centerRotation,
       centerXOffset,
@@ -558,6 +563,7 @@ export default function BundleBuilderTool() {
     setHexInput(preset.backgroundColor);
     setTextSafeAreaPercent(preset.textSafeAreaPercent);
     setImagesPerRow(preset.imagesPerRow);
+    if (preset.imageSpacingPercent !== undefined) setImageSpacingPercent(preset.imageSpacingPercent);
     setCenterWidthScale(preset.centerScale);
     setCenterHeightScale(preset.centerScale);
     setCenterScaleLocked(true);
@@ -721,6 +727,18 @@ export default function BundleBuilderTool() {
           />
         </div>
         <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Image padding: {imageSpacingPercent}%</label>
+          <input
+            type="range"
+            min={0}
+            max={20}
+            step={1}
+            value={imageSpacingPercent}
+            onChange={(e) => setImageSpacingPercent(Number(e.target.value))}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+          />
+        </div>
+        <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">Background</label>
           <div className="flex gap-2 items-center flex-wrap">
             <button
@@ -783,17 +801,17 @@ export default function BundleBuilderTool() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setCenterMode("image")}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${centerMode === "image" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
-                >
-                  Image
-                </button>
-                <button
-                  type="button"
                   onClick={() => setCenterMode("text")}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${centerMode === "text" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
                 >
                   Text
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCenterMode("image")}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${centerMode === "image" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
+                >
+                  Image
                 </button>
               </div>
             </div>
@@ -1271,6 +1289,7 @@ export default function BundleBuilderTool() {
                     layoutStyle={layoutStyle}
                     textSafeAreaPercent={textSafeAreaPercent}
                     imagesPerRow={imagesPerRow}
+                    imageSpacingPercent={imageSpacingPercent}
                     centerWidthScale={centerWidthScale}
                     centerHeightScale={centerHeightScale}
                     centerRotation={centerRotation}

@@ -27,6 +27,7 @@ export const composeListingImage = async (
     exportFormat,
     textSafeAreaPercent = 20,
     imagesPerRow,
+    imageSpacingPercent = 5,
     centerImageFile,
     backgroundImageFile
   } = options;
@@ -113,18 +114,15 @@ export const composeListingImage = async (
     const frame = frames[index] ?? frames[frames.length - 1];
     const { x, y, width: frameWidth, height: frameHeight, rotation } = frame;
 
-    // For grid layout, add padding for spacing between items
-    // For other layouts, add padding to ensure images never touch
-    const isGridLayout = layoutStyle === "grid";
-    const framePadding = isGridLayout 
-      ? Math.min(frameWidth, frameHeight) * 0.04 // 4% padding for spacing between grid items
-      : Math.min(frameWidth, frameHeight) * 0.05; // 5% padding on all sides
+    // Use imageSpacingPercent from options
+    const framePadding = Math.min(frameWidth, frameHeight) * (imageSpacingPercent / 100);
     const paddedWidth = frameWidth - framePadding * 2;
     const paddedHeight = frameHeight - framePadding * 2;
 
     let drawWidth: number;
     let drawHeight: number;
 
+    const isGridLayout = layoutStyle === "grid";
     if (isGridLayout) {
       // For grid layout, first scale to uniform content size, then fit to cell
       const bounds = contentBounds[index];

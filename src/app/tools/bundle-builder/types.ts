@@ -42,6 +42,7 @@ export interface ComposeOptions {
   exportFormat: ExportFormat;
   textSafeAreaPercent?: number; // Percentage of height for central text-safe area (default: 20)
   imagesPerRow?: number; // Number of images per row (default: auto-calculated) - only used for grid layouts
+  imageSpacingPercent?: number; // Percentage of frame size for padding around images (default: 5)
   centerImageFile?: File; // Optional image to place in the center safe area (divided grid layouts)
   backgroundImageFile?: File; // Optional image to draw behind everything, sized to cover the full canvas
   centerMode?: CenterMode;
