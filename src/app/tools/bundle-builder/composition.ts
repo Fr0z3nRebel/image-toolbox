@@ -213,6 +213,8 @@ export const compositeLayers = async (params: {
   subtitleText?: string;
   titleFont?: string;
   subtitleFont?: string;
+  titleBold?: boolean;
+  subtitleBold?: boolean;
   titleFontSizeAuto?: boolean;
   subtitleFontSizeAuto?: boolean;
   titleFontSize?: number;
@@ -223,7 +225,8 @@ export const compositeLayers = async (params: {
   wrapText?: boolean;
   layoutStyle?: LayoutStyle;
   textSafeAreaPercent?: number;
-  centerScale?: number;
+  centerWidthScale?: number;
+  centerHeightScale?: number;
   centerRotation?: number;
   centerXOffset?: number;
   centerYOffset?: number;
@@ -243,6 +246,8 @@ export const compositeLayers = async (params: {
     subtitleText = "",
     titleFont = "Open Sans",
     subtitleFont = "Open Sans",
+    titleBold = false,
+    subtitleBold = false,
     titleFontSizeAuto = false,
     subtitleFontSizeAuto = false,
     titleFontSize = 48,
@@ -253,7 +258,8 @@ export const compositeLayers = async (params: {
     wrapText = true,
     layoutStyle,
     textSafeAreaPercent = 20,
-    centerScale = 1,
+    centerWidthScale = 1,
+    centerHeightScale = 1,
     centerRotation = 0,
     centerXOffset = 0,
     centerYOffset = 0,
@@ -316,8 +322,8 @@ export const compositeLayers = async (params: {
         const targetSize = Math.max(contentWidth, contentHeight);
         const imageMaxDimension = Math.max(srcW, srcH);
         const baseScale = targetSize / imageMaxDimension;
-        const drawW = Math.round(srcW * baseScale * centerScale);
-        const drawH = Math.round(srcH * baseScale * centerScale);
+        const drawW = Math.round(srcW * baseScale * centerWidthScale);
+        const drawH = Math.round(srcH * baseScale * centerHeightScale);
         // Center on canvas, then apply offset (offset is percentage of canvas dimension)
         const offsetX = (contentWidth * centerXOffset) / 100;
         const offsetY = (contentHeight * centerYOffset) / 100;
@@ -346,13 +352,16 @@ export const compositeLayers = async (params: {
         canvasWidth: contentWidth,
         canvasHeight: contentHeight,
         textSafeAreaPercent,
-        centerScale,
+        centerWidthScale,
+        centerHeightScale,
         centerXOffset,
         centerYOffset,
         titleText,
         subtitleText,
         titleFont,
         subtitleFont,
+        titleBold,
+        subtitleBold,
         titleFontSize,
         subtitleFontSize,
         titleFontSizeAuto,
@@ -378,13 +387,13 @@ export const compositeLayers = async (params: {
     ctx.textAlign = "center";
 
     title.lines.forEach((line) => {
-      ctx.font = `600 ${line.fontSize}px "${line.fontFamily}", sans-serif`;
+      ctx.font = `${line.fontWeight} ${line.fontSize}px "${line.fontFamily}", sans-serif`;
       ctx.fillStyle = titleColor;
       ctx.fillText(line.text, line.x, line.y);
     });
 
     subtitle.lines.forEach((line) => {
-      ctx.font = `400 ${line.fontSize}px "${line.fontFamily}", sans-serif`;
+      ctx.font = `${line.fontWeight} ${line.fontSize}px "${line.fontFamily}", sans-serif`;
       ctx.fillStyle = subtitleColor;
       ctx.fillText(line.text, line.x, line.y);
     });

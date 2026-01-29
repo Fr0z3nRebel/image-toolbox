@@ -12,6 +12,7 @@ export const CENTER_TEXT_FONTS: { id: string; label: string }[] = [
   { id: "Nunito", label: "Nunito" },
   { id: "Work Sans", label: "Work Sans" },
   { id: "DM Sans", label: "DM Sans" },
+  { id: "Lora", label: "Lora" },
   { id: "Pacifico", label: "Pacifico" },
   { id: "Caveat", label: "Caveat" },
   { id: "Playfair Display", label: "Playfair Display" }

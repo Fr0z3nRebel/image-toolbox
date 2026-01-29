@@ -1,7 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RotateCcw, X, Save, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  RotateCcw,
+  X,
+  Save,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  Unlock,
+  Crosshair,
+  ArrowLeftRight,
+  ArrowUpDown,
+  Maximize2
+} from "lucide-react";
 import ToolPageLayout from "../../components/ToolPageLayout";
 import FileUploadZone, { FileWithPreview } from "../../components/FileUploadZone";
 import {
@@ -94,7 +107,9 @@ export default function BundleBuilderTool() {
   const [hexInput, setHexInput] = useState<string>("#ffffff");
   const [textSafeAreaPercent, setTextSafeAreaPercent] = useState<number>(20);
   const [imagesPerRow, setImagesPerRow] = useState<number | undefined>(undefined);
-  const [centerScale, setCenterScale] = useState<number>(1);
+  const [centerWidthScale, setCenterWidthScale] = useState<number>(1);
+  const [centerHeightScale, setCenterHeightScale] = useState<number>(1);
+  const [centerScaleLocked, setCenterScaleLocked] = useState<boolean>(true);
   const [centerRotation, setCenterRotation] = useState<number>(0);
   const [centerXOffset, setCenterXOffset] = useState<number>(0);
   const [centerYOffset, setCenterYOffset] = useState<number>(0);
@@ -107,10 +122,12 @@ export default function BundleBuilderTool() {
 
   const [centerMode, setCenterMode] = useState<CenterMode>("image");
   const [centerShape, setCenterShape] = useState<CenterShapeId>("roundedRect");
-  const [titleText, setTitleText] = useState<string>("");
-  const [subtitleText, setSubtitleText] = useState<string>("");
+  const [titleText, setTitleText] = useState<string>("Clipart Bundle");
+  const [subtitleText, setSubtitleText] = useState<string>("20 PNGs | Transparent | Commercial Use | 300 DPI");
   const [titleFont, setTitleFont] = useState<string>(CENTER_TEXT_FONTS[0]?.id ?? "Open Sans");
   const [subtitleFont, setSubtitleFont] = useState<string>(CENTER_TEXT_FONTS[0]?.id ?? "Open Sans");
+  const [titleBold, setTitleBold] = useState<boolean>(false);
+  const [subtitleBold, setSubtitleBold] = useState<boolean>(false);
   const [titleFontSize, setTitleFontSize] = useState<number>(48);
   const [subtitleFontSize, setSubtitleFontSize] = useState<number>(28);
   const [titleFontSizeAuto, setTitleFontSizeAuto] = useState<boolean>(false);
@@ -149,6 +166,8 @@ export default function BundleBuilderTool() {
         subtitleText: centerMode === "text" ? subtitleText : undefined,
         titleFont: centerMode === "text" ? titleFont : undefined,
         subtitleFont: centerMode === "text" ? subtitleFont : undefined,
+        titleBold: centerMode === "text" ? titleBold : undefined,
+        subtitleBold: centerMode === "text" ? subtitleBold : undefined,
         titleFontSizeAuto: centerMode === "text" ? titleFontSizeAuto : undefined,
         subtitleFontSizeAuto: centerMode === "text" ? subtitleFontSizeAuto : undefined,
         titleFontSize: centerMode === "text" ? titleFontSize : undefined,
@@ -159,7 +178,8 @@ export default function BundleBuilderTool() {
         subtitleColor: centerMode === "text" ? subtitleColor : undefined,
         layoutStyle,
         textSafeAreaPercent,
-        centerScale,
+        centerWidthScale,
+        centerHeightScale,
         centerRotation,
         centerXOffset,
         centerYOffset,
@@ -199,7 +219,9 @@ export default function BundleBuilderTool() {
     setHexInput("#ffffff");
     setTextSafeAreaPercent(20);
     setImagesPerRow(undefined);
-    setCenterScale(1);
+    setCenterWidthScale(1);
+    setCenterHeightScale(1);
+    setCenterScaleLocked(true);
     setCenterRotation(0);
     setCenterXOffset(0);
     setCenterYOffset(0);
@@ -207,10 +229,12 @@ export default function BundleBuilderTool() {
     setShowColorPickerModal(false);
     setCenterMode("image");
     setCenterShape("roundedRect");
-    setTitleText("");
-    setSubtitleText("");
+    setTitleText("Clipart Bundle");
+    setSubtitleText("20 PNGs | Transparent | Commercial Use | 300 DPI");
     setTitleFont(CENTER_TEXT_FONTS[0]?.id ?? "Open Sans");
     setSubtitleFont(CENTER_TEXT_FONTS[0]?.id ?? "Open Sans");
+    setTitleBold(false);
+    setSubtitleBold(false);
     setTitleFontSize(48);
     setSubtitleFontSize(28);
     setTitleFontSizeAuto(false);
@@ -268,7 +292,7 @@ export default function BundleBuilderTool() {
       backgroundColor,
       textSafeAreaPercent,
       imagesPerRow,
-      centerScale,
+      centerScale: centerWidthScale,
       centerRotation,
       centerXOffset,
       centerYOffset
@@ -291,7 +315,9 @@ export default function BundleBuilderTool() {
     setHexInput(preset.backgroundColor);
     setTextSafeAreaPercent(preset.textSafeAreaPercent);
     setImagesPerRow(preset.imagesPerRow);
-    setCenterScale(preset.centerScale);
+    setCenterWidthScale(preset.centerScale);
+    setCenterHeightScale(preset.centerScale);
+    setCenterScaleLocked(true);
     setCenterRotation(preset.centerRotation);
     setCenterXOffset(preset.centerXOffset);
     setCenterYOffset(preset.centerYOffset);
@@ -584,6 +610,18 @@ export default function BundleBuilderTool() {
                         <option key={f.id} value={f.id}>{f.label}</option>
                       ))}
                     </select>
+                    <div className="flex items-center gap-1.5 px-2 py-2 border border-gray-300 rounded-lg bg-white">
+                      <input
+                        id="bundle-builder-title-bold"
+                        type="checkbox"
+                        checked={titleBold}
+                        onChange={(e) => setTitleBold(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="bundle-builder-title-bold" className="text-sm text-gray-700 cursor-pointer">
+                        Bold
+                      </label>
+                    </div>
                     <select
                       value={titleFontSizeAuto ? "auto" : String(titleFontSize)}
                       onChange={(e) => {
@@ -639,6 +677,18 @@ export default function BundleBuilderTool() {
                         <option key={f.id} value={f.id}>{f.label}</option>
                       ))}
                     </select>
+                    <div className="flex items-center gap-1.5 px-2 py-2 border border-gray-300 rounded-lg bg-white">
+                      <input
+                        id="bundle-builder-subtitle-bold"
+                        type="checkbox"
+                        checked={subtitleBold}
+                        onChange={(e) => setSubtitleBold(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="bundle-builder-subtitle-bold" className="text-sm text-gray-700 cursor-pointer">
+                        Bold
+                      </label>
+                    </div>
                     <select
                       value={subtitleFontSizeAuto ? "auto" : String(subtitleFontSize)}
                       onChange={(e) => {
@@ -689,37 +739,163 @@ export default function BundleBuilderTool() {
                 </div>
               </div>
             )}
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Central text area size: {textSafeAreaPercent}%</label>
-              <input
-                type="range"
-                min={10}
-                max={40}
-                step={5}
-                value={textSafeAreaPercent}
-                onChange={(e) => setTextSafeAreaPercent(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Smaller (10%)</span>
-                <span>Larger (40%)</span>
+            <div className="flex flex-col md:flex-row md:items-start md:gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+                  <Maximize2 className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                  <span>Size: {textSafeAreaPercent}%</span>
+                </label>
+                <input
+                  type="range"
+                  min={10}
+                  max={40}
+                  step={5}
+                  value={textSafeAreaPercent}
+                  onChange={(e) => setTextSafeAreaPercent(Number(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+              </div>
+              <div className="flex-1 mt-4 md:mt-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <label className="block text-sm font-bold text-gray-700 flex-1 flex items-center gap-1.5">
+                    <RotateCcw className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                    <span>Rotation: {centerRotation}°</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setCenterRotation(0)}
+                    className="px-2 py-1 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                    aria-label="Reset rotation to 0°"
+                  >
+                    Reset
+                  </button>
+                </div>
+                <input
+                  type="range"
+                  min={-180}
+                  max={180}
+                  step={1}
+                  value={centerRotation}
+                  onChange={(e) => setCenterRotation(Number(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
               </div>
             </div>
+            {centerMode === "text" ? (
+              <>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <label className="block text-sm font-bold text-gray-700 flex-1 flex items-center gap-1.5">
+                      <ArrowLeftRight className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                      <span>Width: {Math.round(centerWidthScale * 100)}%</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setCenterScaleLocked(!centerScaleLocked)}
+                      className="p-1.5 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                      aria-label={centerScaleLocked ? "Unlock width and height" : "Lock width and height"}
+                    >
+                      {centerScaleLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                    </button>
+                    <label className="block text-sm font-bold text-gray-700 flex-1 text-right flex items-center justify-end gap-1.5">
+                      <ArrowUpDown className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                      <span>Height: {Math.round(centerHeightScale * 100)}%</span>
+                    </label>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="range"
+                      min={50}
+                      max={150}
+                      step={1}
+                      value={Math.round(centerWidthScale * 100)}
+                      onChange={(e) => {
+                        const newWidth = Number(e.target.value) / 100;
+                        setCenterWidthScale(newWidth);
+                        if (centerScaleLocked) {
+                          setCenterHeightScale(newWidth);
+                        }
+                      }}
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    />
+                    <input
+                      type="range"
+                      min={50}
+                      max={150}
+                      step={1}
+                      value={Math.round(centerHeightScale * 100)}
+                      onChange={(e) => {
+                        const newHeight = Number(e.target.value) / 100;
+                        setCenterHeightScale(newHeight);
+                        if (centerScaleLocked) {
+                          setCenterWidthScale(newHeight);
+                        }
+                      }}
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Center scale: {Math.round(centerWidthScale * 100)}%</label>
+                <input
+                  type="range"
+                  min={50}
+                  max={150}
+                  step={1}
+                  value={Math.round(centerWidthScale * 100)}
+                  onChange={(e) => {
+                    const newScale = Number(e.target.value) / 100;
+                    setCenterWidthScale(newScale);
+                    setCenterHeightScale(newScale);
+                  }}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+              </div>
+            )}
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Center scale: {Math.round(centerScale * 100)}%</label>
-              <input type="range" min={50} max={150} step={1} value={Math.round(centerScale * 100)} onChange={(e) => setCenterScale(Number(e.target.value) / 100)} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider" />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Center rotation: {centerRotation}°</label>
-              <input type="range" min={-180} max={180} step={1} value={centerRotation} onChange={(e) => setCenterRotation(Number(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider" />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Center position (left/right): {centerXOffset}%</label>
-              <input type="range" min={-50} max={50} step={1} value={centerXOffset} onChange={(e) => setCenterXOffset(Number(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider" />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Center position (up/down): {centerYOffset}%</label>
-              <input type="range" min={-50} max={50} step={1} value={centerYOffset} onChange={(e) => setCenterYOffset(Number(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider" />
+              <div className="flex items-center gap-2 mb-1">
+                <label className="block text-sm font-bold text-gray-700 flex-1 flex items-center gap-1.5">
+                  <ArrowLeftRight className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                  <span>Position: {centerXOffset}%</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCenterXOffset(0);
+                    setCenterYOffset(0);
+                  }}
+                  className="p-1.5 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors flex items-center justify-center"
+                  aria-label="Center position"
+                >
+                  <Crosshair className="h-4 w-4" />
+                </button>
+                <label className="block text-sm font-bold text-gray-700 flex-1 text-right flex items-center justify-end gap-1.5">
+                  <ArrowUpDown className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                  <span>Position: {centerYOffset}%</span>
+                </label>
+              </div>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="range"
+                  min={-50}
+                  max={50}
+                  step={1}
+                  value={centerXOffset}
+                  onChange={(e) => setCenterXOffset(Number(e.target.value))}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <input
+                  type="range"
+                  min={-50}
+                  max={50}
+                  step={1}
+                  value={centerYOffset}
+                  onChange={(e) => setCenterYOffset(Number(e.target.value))}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+              </div>
             </div>
           </>
         )}
@@ -827,6 +1003,8 @@ export default function BundleBuilderTool() {
                     subtitleText={subtitleText}
                     titleFont={titleFont}
                     subtitleFont={subtitleFont}
+                    titleBold={titleBold}
+                    subtitleBold={subtitleBold}
                     titleFontSize={titleFontSize}
                     subtitleFontSize={subtitleFontSize}
                     titleFontSizeAuto={titleFontSizeAuto}
@@ -841,7 +1019,8 @@ export default function BundleBuilderTool() {
                     layoutStyle={layoutStyle}
                     textSafeAreaPercent={textSafeAreaPercent}
                     imagesPerRow={imagesPerRow}
-                    centerScale={centerScale}
+                    centerWidthScale={centerWidthScale}
+                    centerHeightScale={centerHeightScale}
                     centerRotation={centerRotation}
                     centerXOffset={centerXOffset}
                     centerYOffset={centerYOffset}
@@ -869,7 +1048,7 @@ export default function BundleBuilderTool() {
       {/* Color picker modal */}
       {showColorPickerModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-transparent"
           onClick={() => setShowColorPickerModal(false)}
           role="dialog"
           aria-modal="true"

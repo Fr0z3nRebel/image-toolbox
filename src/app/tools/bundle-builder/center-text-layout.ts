@@ -25,13 +25,16 @@ export interface CenterTextLayoutOptions {
   canvasWidth: number;
   canvasHeight: number;
   textSafeAreaPercent: number;
-  centerScale: number;
+  centerWidthScale: number;
+  centerHeightScale: number;
   centerXOffset: number;
   centerYOffset: number;
   titleText?: string;
   subtitleText?: string;
   titleFont: string;
   subtitleFont: string;
+  titleBold: boolean;
+  subtitleBold: boolean;
   titleFontSize: number;
   subtitleFontSize: number;
   titleFontSizeAuto: boolean;
@@ -47,12 +50,13 @@ function computeShapeRect(
   canvasWidth: number,
   canvasHeight: number,
   textSafeRect: TextSafeRect,
-  centerScale: number,
+  centerWidthScale: number,
+  centerHeightScale: number,
   centerXOffset: number,
   centerYOffset: number
 ) {
-  const width = textSafeRect.width * centerScale;
-  const height = textSafeRect.height * centerScale;
+  const width = textSafeRect.width * centerWidthScale;
+  const height = textSafeRect.height * centerHeightScale;
   const offsetX = (canvasWidth * centerXOffset) / 100;
   const offsetY = (canvasHeight * centerYOffset) / 100;
   const x = (canvasWidth - width) / 2 + offsetX;
@@ -66,12 +70,12 @@ function wrapIntoLines(
   maxWidth: number,
   fontFamily: string,
   fontSize: number,
-  isTitle: boolean
+  fontWeight: number
 ): string[] {
   const words = text.split(/\s+/);
   const lines: string[] = [];
   let current = "";
-  ctx.font = `${isTitle ? 600 : 400} ${fontSize}px "${fontFamily}", sans-serif`;
+  ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}", sans-serif`;
   for (const word of words) {
     const test = current ? `${current} ${word}` : word;
     const w = ctx.measureText(test).width;
@@ -91,7 +95,7 @@ function computeAutoSize(
   text: string | undefined,
   fontFamily: string,
   base: number,
-  isTitle: boolean,
+  fontWeight: number,
   wrapText: boolean,
   maxWidth: number,
   maxHeight: number
@@ -99,12 +103,12 @@ function computeAutoSize(
   if (!text) return clampSize(base);
   let size = CENTER_TEXT_FONT_SIZE_MAX;
   while (size >= CENTER_TEXT_FONT_SIZE_MIN) {
-    ctx.font = `${isTitle ? 600 : 400} ${size}px "${fontFamily}", sans-serif`;
+    ctx.font = `${fontWeight} ${size}px "${fontFamily}", sans-serif`;
     if (!wrapText) {
       const width = ctx.measureText(text).width;
       if (width <= maxWidth) break;
     } else {
-      const lines = wrapIntoLines(ctx, text, maxWidth, fontFamily, size, isTitle);
+      const lines = wrapIntoLines(ctx, text, maxWidth, fontFamily, size, fontWeight);
       const lineHeight = size * 1.2;
       const totalHeight = lines.length * lineHeight;
       const anyTooWide = lines.some((line) => ctx.measureText(line).width > maxWidth);
@@ -123,13 +127,16 @@ export function layoutCenterText(
     canvasWidth,
     canvasHeight,
     textSafeAreaPercent,
-    centerScale,
+    centerWidthScale,
+    centerHeightScale,
     centerXOffset,
     centerYOffset,
     titleText = "",
     subtitleText = "",
     titleFont,
     subtitleFont,
+    titleBold,
+    subtitleBold,
     titleFontSize,
     subtitleFontSize,
     titleFontSizeAuto,
@@ -137,17 +144,23 @@ export function layoutCenterText(
     wrapText
   } = opts;
 
+  const titleWeight = titleBold ? 700 : 600;
+  const subtitleWeight = subtitleBold ? 700 : 400;
+
   const textSafeRect = getTextSafeRect(canvasWidth, canvasHeight, textSafeAreaPercent);
   const shapeRect = computeShapeRect(
     canvasWidth,
     canvasHeight,
     textSafeRect,
-    centerScale,
+    centerWidthScale,
+    centerHeightScale,
     centerXOffset,
     centerYOffset
   );
 
-  const maxTextWidth = shapeRect.width * 0.9;
+  // When Auto is selected, always use single-line mode and fit to width with padding
+  // When not Auto, respect the wrapText setting
+  const maxTextWidth = shapeRect.width * 0.85; // Reasonable padding (15% on each side)
   const maxTextHeight = shapeRect.height * 0.9;
 
   const tSize = titleFontSizeAuto
@@ -156,8 +169,8 @@ export function layoutCenterText(
         titleText,
         titleFont,
         titleFontSize,
-        true,
-        wrapText,
+        titleWeight,
+        false, // Auto always uses single-line mode
         maxTextWidth,
         maxTextHeight
       )
@@ -169,8 +182,8 @@ export function layoutCenterText(
         subtitleText,
         subtitleFont,
         subtitleFontSize,
-        false,
-        wrapText,
+        subtitleWeight,
+        false, // Auto always uses single-line mode
         maxTextWidth,
         maxTextHeight
       )
@@ -190,8 +203,10 @@ export function layoutCenterText(
   const subtitleLines: CenterTextLayoutLine[] = [];
 
   if (titleText) {
-    const lines = wrapText
-      ? wrapIntoLines(ctx, titleText, maxTextWidth, titleFont, tSize, true)
+    // When Auto is selected, always use single-line mode
+    const shouldWrap = !titleFontSizeAuto && wrapText;
+    const lines = shouldWrap
+      ? wrapIntoLines(ctx, titleText, maxTextWidth, titleFont, tSize, titleWeight)
       : [titleText];
     const lineHeight = tSize * 1.2;
     const totalHeight = lines.length * lineHeight;
@@ -203,15 +218,17 @@ export function layoutCenterText(
         x: shapeRect.x + shapeRect.width / 2,
         y: shapeRect.y + yLocal,
         fontFamily: titleFont,
-        fontWeight: 600,
+        fontWeight: titleWeight,
         fontSize: tSize
       });
     });
   }
 
   if (subtitleText) {
-    const lines = wrapText
-      ? wrapIntoLines(ctx, subtitleText, maxTextWidth, subtitleFont, sSize, false)
+    // When Auto is selected, always use single-line mode
+    const shouldWrap = !subtitleFontSizeAuto && wrapText;
+    const lines = shouldWrap
+      ? wrapIntoLines(ctx, subtitleText, maxTextWidth, subtitleFont, sSize, subtitleWeight)
       : [subtitleText];
     const lineHeight = sSize * 1.2;
     const totalHeight = lines.length * lineHeight;
@@ -223,7 +240,7 @@ export function layoutCenterText(
         x: shapeRect.x + shapeRect.width / 2,
         y: shapeRect.y + yLocal,
         fontFamily: subtitleFont,
-        fontWeight: 400,
+        fontWeight: subtitleWeight,
         fontSize: sSize
       });
     });

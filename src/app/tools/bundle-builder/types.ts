@@ -50,6 +50,8 @@ export interface ComposeOptions {
   subtitleText?: string;
   titleFont?: string;
   subtitleFont?: string;
+  titleBold?: boolean;
+  subtitleBold?: boolean;
   titleFontSizeAuto?: boolean;
   subtitleFontSizeAuto?: boolean;
   titleFontSize?: number;

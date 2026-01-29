@@ -20,6 +20,8 @@ export interface InstantPreviewProps {
   subtitleText?: string;
   titleFont?: string;
   subtitleFont?: string;
+  titleBold?: boolean;
+  subtitleBold?: boolean;
   titleFontSize?: number;
   subtitleFontSize?: number;
   shapeColor?: string;
@@ -34,7 +36,8 @@ export interface InstantPreviewProps {
   layoutStyle: LayoutStyle;
   textSafeAreaPercent: number;
   imagesPerRow?: number;
-  centerScale?: number;
+  centerWidthScale?: number;
+  centerHeightScale?: number;
   centerRotation?: number;
   centerXOffset?: number;
   centerYOffset?: number;
@@ -64,6 +67,8 @@ export default function InstantPreview({
   subtitleText = "",
   titleFont = "Open Sans",
   subtitleFont = "Open Sans",
+  titleBold = false,
+  subtitleBold = false,
   titleFontSize = 48,
   subtitleFontSize = 28,
   shapeColor = "#fef3c7",
@@ -78,7 +83,8 @@ export default function InstantPreview({
   layoutStyle,
   textSafeAreaPercent,
   imagesPerRow,
-  centerScale = 1,
+  centerWidthScale = 1,
+  centerHeightScale = 1,
   centerRotation = 0,
   centerXOffset = 0,
   centerYOffset = 0,
@@ -89,8 +95,8 @@ export default function InstantPreview({
   const textSafeRect = getTextSafeRect(w, h, textSafeAreaPercent);
   const frames = computeImageFrames(layoutStyle, w, h, files.length, textSafeRect, imagesPerRow);
 
-  const drawW = textSafeRect.width * centerScale;
-  const drawH = textSafeRect.height * centerScale;
+  const drawW = textSafeRect.width * centerWidthScale;
+  const drawH = textSafeRect.height * centerHeightScale;
 
   const [contentCropped, setContentCropped] = useState<Record<string, string>>({});
   const [centerLayout, setCenterLayout] = useState<CenterTextLayout | null>(null);
@@ -148,13 +154,16 @@ export default function InstantPreview({
         canvasWidth: w,
         canvasHeight: h,
         textSafeAreaPercent,
-        centerScale,
+        centerWidthScale,
+        centerHeightScale,
         centerXOffset,
         centerYOffset,
         titleText,
         subtitleText,
         titleFont,
         subtitleFont,
+        titleBold,
+        subtitleBold,
         titleFontSize,
         subtitleFontSize,
         titleFontSizeAuto,
@@ -170,13 +179,16 @@ export default function InstantPreview({
     w,
     h,
     textSafeAreaPercent,
-    centerScale,
+    centerWidthScale,
+    centerHeightScale,
     centerXOffset,
     centerYOffset,
     titleText,
     subtitleText,
     titleFont,
     subtitleFont,
+    titleBold,
+    subtitleBold,
     titleFontSize,
     subtitleFontSize,
     titleFontSizeAuto,
@@ -203,7 +215,7 @@ export default function InstantPreview({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full overflow-hidden ${className}`.trim()}
+      className={`relative w-full h-full ${className}`.trim()}
       style={bgStyle}
     >
       {frames.map((frame, i) => {
@@ -256,7 +268,7 @@ export default function InstantPreview({
               src={centerFiles[0].preview}
               alt=""
               className="max-w-full max-h-full object-contain"
-              style={{ transform: `scale(${centerScale}) rotate(${centerRotation}deg)` }}
+              style={{ transform: `scaleX(${centerWidthScale}) scaleY(${centerHeightScale}) rotate(${centerRotation}deg)` }}
             />
           ) : null}
         </div>
