@@ -190,6 +190,23 @@ export function layoutCenterText(
     : clampSize(subtitleFontSize);
 
   const localCenterY = shapeRect.height / 2;
+
+  // Calculate actual heights of title and subtitle blocks (accounting for wrapping)
+  const titleShouldWrap = titleText && !titleFontSizeAuto && wrapText;
+  const titleLinesArray = titleShouldWrap
+    ? wrapIntoLines(ctx, titleText, maxTextWidth, titleFont, tSize, titleWeight)
+    : titleText ? [titleText] : [];
+  const titleLineHeight = tSize * 1.2;
+  const titleTotalHeight = titleLinesArray.length * titleLineHeight;
+
+  const subtitleShouldWrap = subtitleText && !subtitleFontSizeAuto && wrapText;
+  const subtitleLinesArray = subtitleShouldWrap
+    ? wrapIntoLines(ctx, subtitleText, maxTextWidth, subtitleFont, sSize, subtitleWeight)
+    : subtitleText ? [subtitleText] : [];
+  const subtitleLineHeight = sSize * 1.2;
+  const subtitleTotalHeight = subtitleLinesArray.length * subtitleLineHeight;
+
+  // Calculate center Y positions (matching original logic when no wrapping)
   const titleCenterY =
     titleText && subtitleText
       ? localCenterY - (tSize + sSize) * 0.35
@@ -199,20 +216,26 @@ export function layoutCenterText(
       ? localCenterY + (tSize + sSize) * 0.35
       : localCenterY;
 
+  // When title wraps, adjust subtitle position to add extra space
+  // Calculate the bottom of the title block and add spacing
+  const titleBottomY = titleCenterY + titleTotalHeight / 2;
+  const baseSubtitleTopY = subtitleCenterY - subtitleTotalHeight / 2;
+  
+  // Original spacing when no wrap: subtitleTop - titleBottom = (tSize + sSize) * 0.2
+  // When title wraps, ensure minimum spacing
+  const minSpacing = (tSize + sSize) * 0.2;
+  const actualSpacing = baseSubtitleTopY - titleBottomY;
+  const adjustedSubtitleCenterY = actualSpacing < minSpacing
+    ? titleBottomY + minSpacing + subtitleTotalHeight / 2
+    : subtitleCenterY;
+
   const titleLines: CenterTextLayoutLine[] = [];
   const subtitleLines: CenterTextLayoutLine[] = [];
 
   if (titleText) {
-    // When Auto is selected, always use single-line mode
-    const shouldWrap = !titleFontSizeAuto && wrapText;
-    const lines = shouldWrap
-      ? wrapIntoLines(ctx, titleText, maxTextWidth, titleFont, tSize, titleWeight)
-      : [titleText];
-    const lineHeight = tSize * 1.2;
-    const totalHeight = lines.length * lineHeight;
-    const startY = titleCenterY - (totalHeight - lineHeight) / 2;
-    lines.forEach((line, idx) => {
-      const yLocal = startY + idx * lineHeight;
+    const startY = titleCenterY - (titleTotalHeight - titleLineHeight) / 2;
+    titleLinesArray.forEach((line, idx) => {
+      const yLocal = startY + idx * titleLineHeight;
       titleLines.push({
         text: line,
         x: shapeRect.x + shapeRect.width / 2,
@@ -225,16 +248,9 @@ export function layoutCenterText(
   }
 
   if (subtitleText) {
-    // When Auto is selected, always use single-line mode
-    const shouldWrap = !subtitleFontSizeAuto && wrapText;
-    const lines = shouldWrap
-      ? wrapIntoLines(ctx, subtitleText, maxTextWidth, subtitleFont, sSize, subtitleWeight)
-      : [subtitleText];
-    const lineHeight = sSize * 1.2;
-    const totalHeight = lines.length * lineHeight;
-    const startY = subtitleCenterY - (totalHeight - lineHeight) / 2;
-    lines.forEach((line, idx) => {
-      const yLocal = startY + idx * lineHeight;
+    const startY = adjustedSubtitleCenterY - (subtitleTotalHeight - subtitleLineHeight) / 2;
+    subtitleLinesArray.forEach((line, idx) => {
+      const yLocal = startY + idx * subtitleLineHeight;
       subtitleLines.push({
         text: line,
         x: shapeRect.x + shapeRect.width / 2,
