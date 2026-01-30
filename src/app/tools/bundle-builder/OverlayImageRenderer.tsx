@@ -93,8 +93,17 @@ export default function OverlayImageRenderer({
             y: Math.max(0, Math.min(100, state.imageY + deltaYPercent))
           });
         } else if (state.type === "resize" && state.handle) {
-          const deltaXPercent = (deltaX / rect.width) * 100;
-          const deltaYPercent = (deltaY / rect.height) * 100;
+          // Calculate center point in pixels
+          const centerX = rect.width * (state.imageX / 100);
+          const centerY = rect.height * (state.imageY / 100);
+          
+          // Calculate distance from center to current mouse position
+          const currentDistanceX = Math.abs(currentX - centerX);
+          const currentDistanceY = Math.abs(currentY - centerY);
+          
+          // Calculate distance from center to initial mouse position
+          const initialDistanceX = Math.abs(state.startX - centerX);
+          const initialDistanceY = Math.abs(state.startY - centerY);
           
           let newWidth = state.imageWidth;
           let newHeight = state.imageHeight;
@@ -105,36 +114,37 @@ export default function OverlayImageRenderer({
           const isCornerHandle = ["nw", "ne", "sw", "se"].includes(state.handle || "");
           
           if (isCornerHandle) {
-            // Use the larger delta to maintain aspect ratio
-            const deltaPercent = Math.abs(deltaXPercent) > Math.abs(deltaYPercent) ? deltaXPercent : deltaYPercent;
-            const signX = state.handle.includes("e") ? 1 : -1;
-            const signY = state.handle.includes("s") ? 1 : -1;
+            // Calculate scale factor based on distance from center
+            // Use the larger dimension to maintain aspect ratio
+            const initialDistance = Math.max(initialDistanceX, initialDistanceY);
+            const currentDistance = Math.max(currentDistanceX, currentDistanceY);
             
-            newWidth = Math.max(5, Math.min(50, state.imageWidth + deltaPercent * signX));
-            newHeight = newWidth / state.aspectRatio;
-            
-            // Adjust position if resizing from left or top
-            if (state.handle.includes("w")) {
-              newX = Math.max(0, Math.min(100, state.imageX + (state.imageWidth - newWidth)));
-            }
-            if (state.handle.includes("n")) {
-              newY = Math.max(0, Math.min(100, state.imageY + (state.imageHeight - newHeight)));
+            if (initialDistance > 0) {
+              const scale = currentDistance / initialDistance;
+              newWidth = Math.max(5, Math.min(50, state.imageWidth * scale));
+              newHeight = newWidth / state.aspectRatio;
+              
+              // Center point stays fixed, so x and y don't change
+              newX = state.imageX;
+              newY = state.imageY;
             }
           } else {
-            // Edge handles allow independent resizing
-            if (state.handle.includes("e")) {
-              newWidth = Math.max(5, Math.min(50, state.imageWidth + deltaXPercent));
+            // Edge handles allow independent resizing, but scale from center
+            if (state.handle.includes("e") || state.handle.includes("w")) {
+              if (initialDistanceX > 0) {
+                const scaleX = currentDistanceX / initialDistanceX;
+                newWidth = Math.max(5, Math.min(50, state.imageWidth * scaleX));
+                // Center point stays fixed
+                newX = state.imageX;
+              }
             }
-            if (state.handle.includes("w")) {
-              newWidth = Math.max(5, Math.min(50, state.imageWidth - deltaXPercent));
-              newX = Math.max(0, Math.min(100, state.imageX + deltaXPercent));
-            }
-            if (state.handle.includes("s")) {
-              newHeight = Math.max(5, Math.min(50, state.imageHeight + deltaYPercent));
-            }
-            if (state.handle.includes("n")) {
-              newHeight = Math.max(5, Math.min(50, state.imageHeight - deltaYPercent));
-              newY = Math.max(0, Math.min(100, state.imageY + deltaYPercent));
+            if (state.handle.includes("s") || state.handle.includes("n")) {
+              if (initialDistanceY > 0) {
+                const scaleY = currentDistanceY / initialDistanceY;
+                newHeight = Math.max(5, Math.min(50, state.imageHeight * scaleY));
+                // Center point stays fixed
+                newY = state.imageY;
+              }
             }
           }
 
@@ -316,7 +326,11 @@ export default function OverlayImageRenderer({
               height: `${overlay.height}%`,
               transform: `translate(-50%, -50%) rotate(${overlay.rotation}deg)`,
               transformOrigin: "center center",
-              zIndex: 40 + index + (isSelected ? 0.5 : 0) // Later items appear on top, selected items slightly higher
+              zIndex: 40 + index + (isSelected ? 0.5 : 0), // Later items appear on top, selected items slightly higher
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              MozUserSelect: "none",
+              msUserSelect: "none"
             }}
             onMouseDown={(e) => handleMouseDown(e, overlay.id, "drag")}
             onClick={(e) => {

@@ -29,7 +29,8 @@ export const composeListingImage = async (
     imagesPerRow,
     imageSpacingPercent = 5,
     centerImageFile,
-    backgroundImageFile
+    backgroundImageFile,
+    customImagePositions
   } = options;
 
   const { canvas, ctx } = createBaseCanvas(aspectRatio, background);
@@ -63,7 +64,16 @@ export const composeListingImage = async (
     }
   }
 
-  const frames = computeImageFrames(layoutStyle, width, height, images.length, textSafeRect, imagesPerRow);
+  // Use custom positions if provided, otherwise compute frames
+  const frames = layoutStyle === "custom" && customImagePositions && customImagePositions.length > 0
+    ? customImagePositions.map((pos) => ({
+        x: (pos.x / 100) * width - ((pos.width / 100) * width / 2),
+        y: (pos.y / 100) * height - ((pos.height / 100) * height / 2),
+        width: (pos.width / 100) * width,
+        height: (pos.height / 100) * height,
+        rotation: pos.rotation
+      }))
+    : computeImageFrames(layoutStyle === "custom" ? "dividedGrid" : layoutStyle, width, height, images.length, textSafeRect, imagesPerRow);
 
   // Optional center image (only for divided grid layouts)
   if (centerImageFile && layoutStyle !== "grid") {
@@ -114,8 +124,9 @@ export const composeListingImage = async (
     const frame = frames[index] ?? frames[frames.length - 1];
     const { x, y, width: frameWidth, height: frameHeight, rotation } = frame;
 
-    // Use imageSpacingPercent from options
-    const framePadding = Math.min(frameWidth, frameHeight) * (imageSpacingPercent / 100);
+    // For custom layout, don't apply padding (positions already account for it)
+    // For other layouts, use imageSpacingPercent from options
+    const framePadding = layoutStyle === "custom" ? 0 : Math.min(frameWidth, frameHeight) * (imageSpacingPercent / 100);
     const paddedWidth = frameWidth - framePadding * 2;
     const paddedHeight = frameHeight - framePadding * 2;
 
@@ -123,6 +134,8 @@ export const composeListingImage = async (
     let drawHeight: number;
 
     const isGridLayout = layoutStyle === "grid";
+    const isCustomLayout = layoutStyle === "custom";
+    
     if (isGridLayout) {
       // For grid layout, first scale to uniform content size, then fit to cell
       const bounds = contentBounds[index];
@@ -145,6 +158,20 @@ export const composeListingImage = async (
         const cellScale = Math.min(paddedWidth / img.naturalWidth, paddedHeight / img.naturalHeight);
         drawWidth = img.naturalWidth * cellScale;
         drawHeight = img.naturalHeight * cellScale;
+      }
+    } else if (isCustomLayout) {
+      // For custom layout, fit image within frame maintaining aspect ratio (object-contain behavior)
+      const imageAspectRatio = img.naturalWidth / img.naturalHeight;
+      const frameAspectRatio = paddedWidth / paddedHeight;
+      
+      if (imageAspectRatio > frameAspectRatio) {
+        // Image is wider - fit to width
+        drawWidth = paddedWidth;
+        drawHeight = paddedWidth / imageAspectRatio;
+      } else {
+        // Image is taller - fit to height
+        drawHeight = paddedHeight;
+        drawWidth = paddedHeight * imageAspectRatio;
       }
     } else {
       // For other layouts, images fit within padded area
@@ -300,17 +327,8 @@ export const compositeLayers = async (params: {
     ctx.clearRect(0, 0, contentWidth, contentHeight);
   }
 
-  await new Promise<void>((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0);
-      resolve();
-    };
-    img.onerror = () => reject(new Error("Failed to load content image"));
-    img.src = contentUrl;
-  });
-
-  // Optional center image (only for divided grid layouts), drawn on top of content
+  // Draw center shape/text BEFORE content image (so it appears below bundle images)
+  // Optional center image (only for divided grid layouts), drawn below content
   if (centerImageFile && layoutStyle && layoutStyle !== "grid" && centerMode !== "text") {
     try {
       const [centerImg] = await loadFilesAsImages([centerImageFile], { cropToContent: false });
@@ -344,7 +362,7 @@ export const compositeLayers = async (params: {
     }
   }
 
-  // Center text (shape + title/subtitle) for divided grid layouts
+  // Center text (shape + title/subtitle) for divided grid layouts, drawn below content
   if (centerMode === "text" && layoutStyle && layoutStyle !== "grid") {
     await loadFonts([titleFont, subtitleFont]);
     const layout = layoutCenterText(
@@ -400,6 +418,17 @@ export const compositeLayers = async (params: {
 
     ctx.restore();
   }
+
+  // Draw content image (with bundle images) on top of center shape/text
+  await new Promise<void>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+      resolve();
+    };
+    img.onerror = () => reject(new Error("Failed to load content image"));
+    img.src = contentUrl;
+  });
 
   // Draw overlay images on top of everything
   if (overlayImages && overlayImages.length > 0) {

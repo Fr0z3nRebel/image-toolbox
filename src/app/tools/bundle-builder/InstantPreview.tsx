@@ -44,6 +44,7 @@ export interface InstantPreviewProps {
   centerYOffset?: number;
   aspectRatio: AspectRatio;
   className?: string;
+  onContentCroppedChange?: (contentCropped: Record<string, string>) => void;
 }
 
 /**
@@ -88,7 +89,8 @@ export default function InstantPreview({
   centerXOffset = 0,
   centerYOffset = 0,
   aspectRatio,
-  className = ""
+  className = "",
+  onContentCroppedChange
 }: InstantPreviewProps) {
   const { width: w, height: h } = getCanvasDimensions(aspectRatio);
   const textSafeRect = getTextSafeRect(w, h, textSafeAreaPercent);
@@ -131,6 +133,13 @@ export default function InstantPreview({
         .catch(() => {});
     });
   }, [files]);
+
+  // Notify parent when contentCropped changes
+  useEffect(() => {
+    if (onContentCroppedChange) {
+      onContentCroppedChange(contentCropped);
+    }
+  }, [contentCropped, onContentCroppedChange]);
 
   useLayoutEffect(() => {
     const updateScale = () => {
@@ -232,7 +241,8 @@ export default function InstantPreview({
       className={`relative w-full h-full ${className}`.trim()}
       style={bgStyle}
     >
-      {frames.map((frame, i) => {
+      {/* Only render bundle images if not in custom mode (custom mode uses BundleImageRenderer) */}
+      {layoutStyle !== "custom" && frames.map((frame, i) => {
         const file = files[i];
         const cropped = file ? contentCropped[file.id] : undefined;
         return (
@@ -243,7 +253,8 @@ export default function InstantPreview({
               left: `${(frame.x / w) * 100}%`,
               top: `${(frame.y / h) * 100}%`,
               width: `${(frame.width / w) * 100}%`,
-              height: `${(frame.height / h) * 100}%`
+              height: `${(frame.height / h) * 100}%`,
+              zIndex: 10 + i // Above center shape/text (z-5)
             }}
           >
             <div
@@ -267,13 +278,14 @@ export default function InstantPreview({
       })}
       {layoutStyle !== "grid" && centerMode === "image" && (
         <div
-          className="absolute z-10 flex items-center justify-center"
+          className="absolute flex items-center justify-center"
           style={{
             left: `calc(50% + ${centerXOffset}%)`,
             top: `calc(50% + ${centerYOffset}%)`,
             transform: "translate(-50%, -50%)",
             width: `${(Math.max(w, h) / w) * 100}%`,
-            height: `${(Math.max(w, h) / h) * 100}%`
+            height: `${(Math.max(w, h) / h) * 100}%`,
+            zIndex: 5 // Below bundle images (z-10+) and overlay images (z-40+)
           }}
         >
           {centerFiles[0]?.preview ? (
@@ -289,14 +301,15 @@ export default function InstantPreview({
       )}
       {layoutStyle !== "grid" && centerMode === "text" && centerLayout && (
         <div
-          className="absolute z-10"
+          className="absolute"
           style={{
             left: `${(centerLayout.shapeRect.x / w) * 100}%`,
             top: `${(centerLayout.shapeRect.y / h) * 100}%`,
             width: `${(centerLayout.shapeRect.width / w) * 100}%`,
             height: `${(centerLayout.shapeRect.height / h) * 100}%`,
             transformOrigin: "50% 50%",
-            transform: `rotate(${centerRotation}deg)`
+            transform: `rotate(${centerRotation}deg)`,
+            zIndex: 5 // Below bundle images (z-10+) and overlay images (z-40+)
           }}
         >
             <div

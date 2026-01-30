@@ -35,6 +35,7 @@ import { CENTER_SHAPES } from "./center-shapes";
 import { CENTER_TEXT_FONTS, loadFont } from "./fonts";
 import OverlayImageEditor, { type OverlayImage } from "./OverlayImageEditor";
 import OverlayImageRenderer from "./OverlayImageRenderer";
+import BundleImageRenderer, { type BundleImagePosition } from "./BundleImageRenderer";
 
 const ASPECT_RATIOS: { value: AspectRatio; label: string }[] = [
   { value: "4:3", label: "4:3" },
@@ -387,6 +388,52 @@ export default function BundleBuilderTool() {
   const [centerColorPicker, setCenterColorPicker] = useState<"shape" | "title" | "subtitle" | null>(null);
   const [wrapText, setWrapText] = useState<boolean>(true);
   const [overlayImages, setOverlayImages] = useState<OverlayImage[]>([]);
+  
+  // Custom bundle image positions (when layoutStyle is "custom")
+  const [customBundleImagePositions, setCustomBundleImagePositions] = useState<BundleImagePosition[]>([]);
+  
+  // Track content cropped images from InstantPreview
+  const [contentCropped, setContentCropped] = useState<Record<string, string>>({});
+
+  // Initialize custom positions from computed frames when needed
+  useEffect(() => {
+    if (customBundleImagePositions.length === 0 && files.length >= 2) {
+      const initializeCustomPositions = async () => {
+        const { width: w, height: h } = getCanvasDimensions(aspectRatio);
+        const { getTextSafeRect } = await import("./text-safe-area");
+        const textSafeRect = getTextSafeRect(w, h, textSafeAreaPercent);
+        const { computeImageFrames } = await import("./layouts");
+        const currentLayout = layoutStyle === "custom" ? "dividedGrid" : layoutStyle;
+        const frames = computeImageFrames(currentLayout, w, h, files.length, textSafeRect, imagesPerRow);
+        
+        const positions: BundleImagePosition[] = files.map((file, i) => {
+          const frame = frames[i];
+          if (!frame) return null;
+          
+          // Account for image spacing - frame already has padding applied in InstantPreview
+          const framePaddingPercent = 100 - imageSpacingPercent;
+          const frameWidthPercent = (frame.width / w) * 100;
+          const frameHeightPercent = (frame.height / h) * 100;
+          const actualWidth = frameWidthPercent * (framePaddingPercent / 100);
+          const actualHeight = frameHeightPercent * (framePaddingPercent / 100);
+          
+          // Center position (x, y are percentages from top-left, we need center)
+          return {
+            fileId: file.id,
+            x: (frame.x / w) * 100 + (frameWidthPercent / 2),
+            y: (frame.y / h) * 100 + (frameHeightPercent / 2),
+            width: actualWidth,
+            height: actualHeight,
+            rotation: frame.rotation
+          };
+        }).filter((pos): pos is BundleImagePosition => pos !== null);
+        
+        setCustomBundleImagePositions(positions);
+      };
+      
+      initializeCustomPositions();
+    }
+  }, [files, aspectRatio, textSafeAreaPercent, imagesPerRow, imageSpacingPercent, layoutStyle, customBundleImagePositions.length]);
 
   const handleDownload = async (format: ExportFormat) => {
     if (files.length < 2) return;
@@ -403,7 +450,15 @@ export default function BundleBuilderTool() {
         imagesPerRow: imagesPerRow && imagesPerRow > 0 ? imagesPerRow : undefined,
         imageSpacingPercent,
         centerImageFile: undefined,
-        backgroundImageFile: undefined
+        backgroundImageFile: undefined,
+        customImagePositions: layoutStyle === "custom" ? customBundleImagePositions.map((pos) => ({
+          fileId: pos.fileId,
+          x: pos.x,
+          y: pos.y,
+          width: pos.width,
+          height: pos.height,
+          rotation: pos.rotation
+        })) : undefined
       });
       contentUrl = content.url;
       const final = await compositeLayers({
@@ -473,6 +528,8 @@ export default function BundleBuilderTool() {
     setBackgroundFiles([]);
     setCenterFiles([]);
     setOverlayImages([]);
+    setCustomBundleImagePositions([]);
+    setContentCropped({});
     // Reset to default settings
     setAspectRatio("1:1");
     setLayoutStyle("dividedGrid");
@@ -750,15 +807,27 @@ export default function BundleBuilderTool() {
           <label className="block text-sm font-bold text-gray-700 mb-2">Layout style</label>
           <select
             value={layoutStyle}
-            onChange={(e) => setLayoutStyle(e.target.value as LayoutStyle)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+            onChange={(e) => {
+              const newLayout = e.target.value as LayoutStyle;
+              setLayoutStyle(newLayout);
+              // Reset custom positions when switching away from custom
+              if (newLayout !== "custom") {
+                setCustomBundleImagePositions([]);
+              }
+            }}
+            disabled={layoutStyle === "custom"}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             {LAYOUT_STYLES.map((layout) => (
               <option key={layout.value} value={layout.value}>
                 {layout.label}
               </option>
             ))}
+            <option value="custom">Custom</option>
           </select>
+          {layoutStyle === "custom" && (
+            <p className="text-xs text-gray-500 mt-1">Drag images in the preview to reposition them.</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">Images per row</label>
@@ -773,7 +842,8 @@ export default function BundleBuilderTool() {
               setImagesPerRow(value === "" ? undefined : Math.max(1, Math.min(files.length, Number(value))));
             }}
             placeholder="Auto"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+            disabled={layoutStyle === "custom"}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
         </div>
         <div>
@@ -785,7 +855,8 @@ export default function BundleBuilderTool() {
             step={1}
             value={imageSpacingPercent}
             onChange={(e) => setImageSpacingPercent(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+            disabled={layoutStyle === "custom"}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
         <div>
@@ -1317,7 +1388,13 @@ export default function BundleBuilderTool() {
               <div
                 ref={previewContainerRef}
                 className="relative rounded-xl border border-gray-200 bg-white overflow-visible shadow-sm shrink-0"
-                style={aspectRatioStyle}
+                style={{
+                  ...aspectRatioStyle,
+                  userSelect: "none",
+                  WebkitUserSelect: "none",
+                  MozUserSelect: "none",
+                  msUserSelect: "none"
+                }}
               >
                 {files.length >= 2 ? (
                   <InstantPreview
@@ -1353,11 +1430,30 @@ export default function BundleBuilderTool() {
                     centerYOffset={centerYOffset}
                     aspectRatio={aspectRatio}
                     className="absolute inset-0"
+                    onContentCroppedChange={setContentCropped}
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-400" style={{ minHeight: 200 }}>
                     Add at least 2 bundle images to see a live preview
                   </div>
+                )}
+                {files.length >= 2 && customBundleImagePositions.length > 0 && (
+                  <BundleImageRenderer
+                    files={files}
+                    positions={customBundleImagePositions}
+                    onPositionsChange={(positions) => {
+                      setCustomBundleImagePositions(positions);
+                    }}
+                    onDragStart={() => {
+                      // Set layout to custom when user starts dragging
+                      if (layoutStyle !== "custom") {
+                        setLayoutStyle("custom");
+                      }
+                    }}
+                    aspectRatio={aspectRatio}
+                    containerRef={previewContainerRef}
+                    contentCropped={contentCropped}
+                  />
                 )}
                 {files.length >= 2 && overlayImages.length > 0 && (
                   <OverlayImageRenderer

@@ -1,4 +1,4 @@
-export type LayoutStyle = "dividedGrid" | "dividedGrid2" | "grid";
+export type LayoutStyle = "dividedGrid" | "dividedGrid2" | "grid" | "custom";
 
 export type AspectRatio = "4:3" | "1:1";
 
@@ -35,6 +35,15 @@ export interface ImageFrame {
   rotation: number;
 }
 
+export interface CustomImagePosition {
+  fileId: string;
+  x: number; // Percentage of canvas width
+  y: number; // Percentage of canvas height
+  width: number; // Percentage of canvas width
+  height: number; // Percentage of canvas height
+  rotation: number; // Degrees
+}
+
 export interface ComposeOptions {
   aspectRatio: AspectRatio;
   layoutStyle: LayoutStyle;
@@ -61,6 +70,7 @@ export interface ComposeOptions {
   titleColor?: string;
   subtitleColor?: string;
   wrapText?: boolean;
+  customImagePositions?: CustomImagePosition[]; // Custom positions when layoutStyle is "custom"
 }
 
 export interface ComposeResult {
