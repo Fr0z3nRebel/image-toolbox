@@ -63,10 +63,16 @@ interface BundleBuilderPreset {
   textSafeAreaPercent: number;
   imagesPerRow: number | undefined;
   imageSpacingPercent?: number;
+  centerMode?: CenterMode;
+  centerShape?: CenterShapeId;
   centerScale: number;
+  centerHeightScale?: number;
+  centerScaleLocked?: boolean;
   centerRotation: number;
   centerXOffset: number;
   centerYOffset: number;
+  titleText?: string;
+  subtitleText?: string;
   titleFont?: string;
   subtitleFont?: string;
   titleBold?: boolean;
@@ -75,6 +81,10 @@ interface BundleBuilderPreset {
   subtitleFontSize?: number;
   titleFontSizeAuto?: boolean;
   subtitleFontSizeAuto?: boolean;
+  shapeColor?: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  wrapText?: boolean;
 }
 
 const PRESET_STORAGE_KEY = "bundle-builder-presets";
@@ -532,10 +542,16 @@ export default function BundleBuilderTool() {
       textSafeAreaPercent,
       imagesPerRow,
       imageSpacingPercent,
+      centerMode,
+      centerShape,
       centerScale: centerWidthScale,
+      centerHeightScale,
+      centerScaleLocked,
       centerRotation,
       centerXOffset,
       centerYOffset,
+      titleText,
+      subtitleText,
       titleFont,
       subtitleFont,
       titleBold,
@@ -543,7 +559,11 @@ export default function BundleBuilderTool() {
       titleFontSize,
       subtitleFontSize,
       titleFontSizeAuto,
-      subtitleFontSizeAuto
+      subtitleFontSizeAuto,
+      shapeColor,
+      titleColor,
+      subtitleColor,
+      wrapText
     };
     const updatedPresets = { ...presets, [presetNameInput.trim()]: newPreset };
     setPresets(updatedPresets);
@@ -564,12 +584,24 @@ export default function BundleBuilderTool() {
     setTextSafeAreaPercent(preset.textSafeAreaPercent);
     setImagesPerRow(preset.imagesPerRow);
     if (preset.imageSpacingPercent !== undefined) setImageSpacingPercent(preset.imageSpacingPercent);
+    if (preset.centerMode !== undefined) setCenterMode(preset.centerMode);
+    if (preset.centerShape !== undefined) setCenterShape(preset.centerShape);
     setCenterWidthScale(preset.centerScale);
-    setCenterHeightScale(preset.centerScale);
-    setCenterScaleLocked(true);
+    if (preset.centerHeightScale !== undefined) {
+      setCenterHeightScale(preset.centerHeightScale);
+    } else {
+      setCenterHeightScale(preset.centerScale);
+    }
+    if (preset.centerScaleLocked !== undefined) {
+      setCenterScaleLocked(preset.centerScaleLocked);
+    } else {
+      setCenterScaleLocked(true);
+    }
     setCenterRotation(preset.centerRotation);
     setCenterXOffset(preset.centerXOffset);
     setCenterYOffset(preset.centerYOffset);
+    if (preset.titleText !== undefined) setTitleText(preset.titleText);
+    if (preset.subtitleText !== undefined) setSubtitleText(preset.subtitleText);
     if (preset.titleFont !== undefined) setTitleFont(preset.titleFont);
     if (preset.subtitleFont !== undefined) setSubtitleFont(preset.subtitleFont);
     if (preset.titleBold !== undefined) setTitleBold(preset.titleBold);
@@ -578,6 +610,10 @@ export default function BundleBuilderTool() {
     if (preset.subtitleFontSize !== undefined) setSubtitleFontSize(preset.subtitleFontSize);
     if (preset.titleFontSizeAuto !== undefined) setTitleFontSizeAuto(preset.titleFontSizeAuto);
     if (preset.subtitleFontSizeAuto !== undefined) setSubtitleFontSizeAuto(preset.subtitleFontSizeAuto);
+    if (preset.shapeColor !== undefined) setShapeColor(preset.shapeColor);
+    if (preset.titleColor !== undefined) setTitleColor(preset.titleColor);
+    if (preset.subtitleColor !== undefined) setSubtitleColor(preset.subtitleColor);
+    if (preset.wrapText !== undefined) setWrapText(preset.wrapText);
   };
 
   const handleDeletePreset = (presetName: string) => {
