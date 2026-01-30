@@ -42,6 +42,8 @@ export interface CustomImagePosition {
   width: number; // Percentage of canvas width
   height: number; // Percentage of canvas height
   rotation: number; // Degrees
+  mirrorHorizontal?: boolean;
+  mirrorVertical?: boolean;
 }
 
 export interface ComposeOptions {

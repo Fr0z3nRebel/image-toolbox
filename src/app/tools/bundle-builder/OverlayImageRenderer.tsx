@@ -105,7 +105,7 @@ export default function OverlayImageRenderer({
       const selectedImages = Array.from(imagesToOperateOn).map((id) => {
         const img = overlayImages.find((i) => i.id === id);
         return img ? { imageId: id, x: img.x, y: img.y, width: img.width, height: img.height, rotation: img.rotation, mirrorHorizontal: img.mirrorHorizontal, mirrorVertical: img.mirrorVertical } : null;
-      }).filter((img): img is { imageId: string; x: number; y: number; width: number; height: number; rotation: number; mirrorHorizontal?: boolean; mirrorVertical?: boolean } => img !== null);
+      }).filter((img): img is { imageId: string; x: number; y: number; width: number; height: number; rotation: number; mirrorHorizontal: boolean | undefined; mirrorVertical: boolean | undefined } => img !== null);
 
       dragStateRef.current = {
         imageId,
@@ -467,9 +467,14 @@ export default function OverlayImageRenderer({
     return () => document.removeEventListener("click", handleClick);
   }, [contextMenu]);
 
+
   // Handle drag selection on container
   const handleContainerMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      // Only handle left mouse button (button 0)
+      if (e.button !== 0) {
+        return;
+      }
       // Only start drag selection if clicking on empty space (not on an image or handle)
       if ((e.target as HTMLElement).closest('[data-image-element]') || 
           (e.target as HTMLElement).closest('[data-handle]')) {
@@ -538,6 +543,14 @@ export default function OverlayImageRenderer({
         setDragSelection(null);
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
+        // Re-disable pointer events on container
+        const container = containerRef.current;
+        if (container) {
+          const dragContainer = container.querySelector('.drag-selection-container') as HTMLElement;
+          if (dragContainer) {
+            dragContainer.style.pointerEvents = 'none';
+          }
+        }
       };
 
       document.addEventListener("mousemove", handleMouseMove);
@@ -624,8 +637,36 @@ export default function OverlayImageRenderer({
     containerHeight: container.clientHeight
   } : null;
 
+
   return (
-    <>
+    <div
+      className="absolute inset-0"
+      onContextMenuCapture={(e) => {
+        // Show context menu if any images are selected, otherwise prevent browser menu
+        // Use capture phase to catch events before children handle them
+        if (selectedImageIds.size > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Use the first selected image ID (context menu actions work on all selected)
+          const firstSelectedId = Array.from(selectedImageIds)[0];
+          setContextMenu({ x: e.clientX, y: e.clientY, imageId: firstSelectedId });
+        } else {
+          // Prevent browser menu on empty space
+          e.preventDefault();
+        }
+      }}
+    >
+      {/* Container for drag selection */}
+      <div
+        className="absolute inset-0 drag-selection-container"
+        style={{ zIndex: 1 }}
+        onMouseDown={(e) => {
+          // Only handle left mouse button (button 0) for drag selection
+          if (e.button === 0) {
+            handleContainerMouseDown(e);
+          }
+        }}
+      />
       {/* Selection box */}
       {selectionBox && selectionBox.width > 0 && selectionBox.height > 0 && (
         <div
@@ -639,12 +680,6 @@ export default function OverlayImageRenderer({
           }}
         />
       )}
-      {/* Container for drag selection */}
-      <div
-        className="absolute inset-0"
-        style={{ zIndex: 1 }}
-        onMouseDown={handleContainerMouseDown}
-      />
       {overlayImages.map((overlay, index) => {
         const isSelected = selectedImageIds.has(overlay.id);
         return (
@@ -663,9 +698,14 @@ export default function OverlayImageRenderer({
               userSelect: "none",
               WebkitUserSelect: "none",
               MozUserSelect: "none",
-              msUserSelect: "none"
+              msUserSelect: "none",
+              pointerEvents: "auto" // Ensure image containers can receive pointer events
             }}
             onMouseDown={(e) => {
+              // Only handle left mouse button (button 0) - ignore right-clicks
+              if (e.button !== 0) {
+                return;
+              }
               // Track if this mousedown will result in a drag operation
               const isHandle = (e.target as HTMLElement).closest('[data-handle]');
               if (!isHandle) {
@@ -702,7 +742,6 @@ export default function OverlayImageRenderer({
                 setSelectedImageIds(new Set([overlay.id]));
               }
             }}
-            onContextMenu={(e) => handleContextMenu(e, overlay.id)}
           >
             {/* Image */}
             {overlay.file.preview && (
@@ -797,10 +836,11 @@ export default function OverlayImageRenderer({
         
         return (
           <div
-            className="fixed bg-white border border-gray-300 rounded-lg shadow-lg py-1 z-50 min-w-[160px]"
+            className="fixed bg-white border border-gray-300 rounded-lg shadow-lg py-1 min-w-[160px]"
             style={{
               left: `${contextMenu.x}px`,
-              top: `${contextMenu.y}px`
+              top: `${contextMenu.y}px`,
+              zIndex: 20000
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -883,6 +923,6 @@ export default function OverlayImageRenderer({
           </div>
         );
       })()}
-    </>
+    </div>
   );
 }

@@ -441,7 +441,13 @@ export default function BundleBuilderTool() {
     setError(null);
     let contentUrl: string | null = null;
     try {
-      const content = await composeListingImage(files as File[], {
+      // Ensure we're passing actual File instances (FileWithPreview extends File)
+      const fileInstances = files.map(f => {
+        // If the file is already a File instance (which FileWithPreview is), use it directly
+        // Otherwise, extract the underlying File if needed
+        return f instanceof File ? f : f;
+      });
+      const content = await composeListingImage(fileInstances, {
         aspectRatio,
         layoutStyle,
         background: "transparent",
@@ -457,7 +463,9 @@ export default function BundleBuilderTool() {
           y: pos.y,
           width: pos.width,
           height: pos.height,
-          rotation: pos.rotation
+          rotation: pos.rotation,
+          mirrorHorizontal: pos.mirrorHorizontal,
+          mirrorVertical: pos.mirrorVertical
         })) : undefined
       });
       contentUrl = content.url;
@@ -1443,6 +1451,13 @@ export default function BundleBuilderTool() {
                     positions={customBundleImagePositions}
                     onPositionsChange={(positions) => {
                       setCustomBundleImagePositions(positions);
+                    }}
+                    onFilesChange={(newFiles) => {
+                      setFiles(newFiles);
+                      // Also update positions to match remaining files
+                      setCustomBundleImagePositions((prev) => 
+                        prev.filter((pos) => newFiles.some((f) => f.id === pos.fileId))
+                      );
                     }}
                     onDragStart={() => {
                       // Set layout to custom when user starts dragging

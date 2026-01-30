@@ -120,17 +120,32 @@ export default function InstantPreview({
   useEffect(() => {
     setContentCropped((prev) => {
       const next = { ...prev };
+      // Remove entries for files that no longer exist
       for (const id of Object.keys(next)) {
         if (!files.some((f) => f.id === id)) delete next[id];
       }
+      
+      // Process only files that haven't been processed yet
+      files.forEach((file) => {
+        if (!file.preview) return;
+        // Check if this file ID already has processed data
+        if (next[file.id]) return;
+        
+        // Check if another file with the same preview URL has been processed
+        // (this handles duplicated files which share the same preview URL)
+        const existingFileId = files.find((f) => f.id !== file.id && f.preview === file.preview && next[f.id]);
+        if (existingFileId) {
+          // Reuse the processed data for this file
+          next[file.id] = next[existingFileId.id];
+        } else {
+          // Process this file
+          getContentCroppedDataUrlFromUrl(file.preview)
+            .then((url) => setContentCropped((prevState) => ({ ...prevState, [file.id]: url })))
+            .catch(() => {});
+        }
+      });
+      
       return next;
-    });
-
-    files.forEach((file) => {
-      if (!file.preview) return;
-      getContentCroppedDataUrlFromUrl(file.preview)
-        .then((url) => setContentCropped((prev) => ({ ...prev, [file.id]: url })))
-        .catch(() => {});
     });
   }, [files]);
 

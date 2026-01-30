@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { Copy, FlipHorizontal, FlipVertical, ArrowDown, ArrowUp, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import type { FileWithPreview } from "../../components/FileUploadZone";
 import type { AspectRatio } from "./types";
 import { getCanvasDimensions } from "./canvas";
@@ -12,12 +13,15 @@ export interface BundleImagePosition {
   width: number; // Percentage of canvas width
   height: number; // Percentage of canvas height
   rotation: number; // Degrees
+  mirrorHorizontal?: boolean;
+  mirrorVertical?: boolean;
 }
 
 interface BundleImageRendererProps {
   files: FileWithPreview[];
   positions: BundleImagePosition[];
   onPositionsChange: (positions: BundleImagePosition[]) => void;
+  onFilesChange?: (files: FileWithPreview[]) => void; // Called when files should be deleted
   aspectRatio: AspectRatio;
   containerRef: React.RefObject<HTMLDivElement>;
   contentCropped: Record<string, string>;
@@ -28,12 +32,14 @@ export default function BundleImageRenderer({
   files,
   positions,
   onPositionsChange,
+  onFilesChange,
   aspectRatio,
   containerRef,
   contentCropped,
   onDragStart
 }: BundleImageRendererProps) {
   const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(new Set());
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; fileId: string } | null>(null);
   const [dragSelection, setDragSelection] = useState<{
     startX: number;
     startY: number;
@@ -444,6 +450,219 @@ export default function BundleImageRenderer({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selectedImageIds, positions, onPositionsChange]);
 
+  const handleDuplicate = useCallback(
+    async (fileId: string) => {
+      // Duplicate all selected images
+      const filesToDuplicate = Array.from(selectedImageIds).map((id) => 
+        files.find((file) => file.id === id)
+      ).filter((file): file is FileWithPreview => file !== undefined);
+
+      if (filesToDuplicate.length === 0 || !onFilesChange) return;
+
+      // Create duplicated files with new IDs
+      // Since FileWithPreview is just a File object with extra properties added,
+      // and Files are immutable, we can safely reuse the same File instance.
+      // However, we need separate entries in the files array for selection purposes.
+      // The solution: Read the File as a Blob and create a new File from it.
+      // This ensures we have a proper File instance.
+      const duplicatedFiles: FileWithPreview[] = await Promise.all(
+        filesToDuplicate.map(async (file, index) => {
+          // Read the file as a blob
+          const blob = await file.arrayBuffer();
+          // Create a new File from the blob (this creates a proper File instance)
+          const newFile = new File([blob], file.name, {
+            type: file.type,
+            lastModified: file.lastModified
+          });
+          // Cast to FileWithPreview and add properties (same as FileUploadZone does)
+          const duplicated = newFile as FileWithPreview;
+          duplicated.id = `${file.id}-copy-${Date.now()}-${index}`;
+          duplicated.preview = file.preview; // Reuse the same preview URL
+          duplicated.originalSize = file.originalSize || file.size;
+          return duplicated;
+        })
+      );
+
+      // Create duplicated positions
+      const duplicatedPositions: BundleImagePosition[] = filesToDuplicate.map((file, index) => {
+        const originalPos = positions.find((pos) => pos.fileId === file.id);
+        if (!originalPos) return null;
+        return {
+          ...originalPos,
+          fileId: duplicatedFiles[index].id,
+          x: Math.min(100, originalPos.x + 2), // Slight offset
+          y: Math.min(100, originalPos.y + 2)
+        };
+      }).filter((pos): pos is BundleImagePosition => pos !== null);
+
+      // Add duplicated files and positions
+      onFilesChange([...files, ...duplicatedFiles]);
+      onPositionsChange([...positions, ...duplicatedPositions]);
+      setContextMenu(null);
+      setSelectedImageIds(new Set(duplicatedFiles.map((file) => file.id)));
+    },
+    [files, positions, onPositionsChange, onFilesChange, selectedImageIds]
+  );
+
+  const handleMirrorHorizontal = useCallback(
+    (fileId: string) => {
+      // Mirror all selected images - batch update
+      const updates = new Map<string, Partial<BundleImagePosition>>();
+      selectedImageIds.forEach((id) => {
+        const position = positions.find((pos) => pos.fileId === id);
+        if (position) {
+          updates.set(id, {
+            mirrorHorizontal: !position.mirrorHorizontal
+          });
+        }
+      });
+      
+      // Apply all updates at once
+      if (updates.size > 0) {
+        onPositionsChange(
+          positions.map((pos) => {
+            const update = updates.get(pos.fileId);
+            return update ? { ...pos, ...update } : pos;
+          })
+        );
+      }
+      setContextMenu(null);
+    },
+    [positions, onPositionsChange, selectedImageIds]
+  );
+
+  const handleMirrorVertical = useCallback(
+    (fileId: string) => {
+      // Mirror all selected images - batch update
+      const updates = new Map<string, Partial<BundleImagePosition>>();
+      selectedImageIds.forEach((id) => {
+        const position = positions.find((pos) => pos.fileId === id);
+        if (position) {
+          updates.set(id, {
+            mirrorVertical: !position.mirrorVertical
+          });
+        }
+      });
+      
+      // Apply all updates at once
+      if (updates.size > 0) {
+        onPositionsChange(
+          positions.map((pos) => {
+            const update = updates.get(pos.fileId);
+            return update ? { ...pos, ...update } : pos;
+          })
+        );
+      }
+      setContextMenu(null);
+    },
+    [positions, onPositionsChange, selectedImageIds]
+  );
+
+  const handleDelete = useCallback(
+    (fileId: string) => {
+      // Delete all selected images
+      if (onFilesChange) {
+        onFilesChange(files.filter((file) => !selectedImageIds.has(file.id)));
+      }
+      // Update positions to remove deleted images
+      onPositionsChange(positions.filter((pos) => !selectedImageIds.has(pos.fileId)));
+      setContextMenu(null);
+      setSelectedImageIds(new Set());
+    },
+    [files, positions, onPositionsChange, onFilesChange, selectedImageIds]
+  );
+
+  const handleSendToBack = useCallback(
+    (fileId: string) => {
+      // Send all selected images to back, maintaining their relative order
+      const selectedPositions = Array.from(selectedImageIds)
+        .map((id) => positions.find((pos) => pos.fileId === id))
+        .filter((pos): pos is BundleImagePosition => pos !== undefined);
+      
+      if (selectedPositions.length === 0) return;
+
+      const newPositions = positions.filter((pos) => !selectedImageIds.has(pos.fileId));
+      // Insert selected positions at the beginning, maintaining their relative order
+      newPositions.unshift(...selectedPositions);
+      onPositionsChange(newPositions);
+      setContextMenu(null);
+    },
+    [positions, onPositionsChange, selectedImageIds]
+  );
+
+  const handleSendBackwards = useCallback(
+    (fileId: string) => {
+      // Move all selected images one step backward
+      const selectedIndices = Array.from(selectedImageIds)
+        .map((id) => positions.findIndex((pos) => pos.fileId === id))
+        .filter((idx) => idx !== -1)
+        .sort((a, b) => a - b); // Sort ascending
+      
+      if (selectedIndices.length === 0 || selectedIndices[0] === 0) return; // Already at back
+
+      const newPositions = [...positions];
+      // Move each selected image backward one position
+      selectedIndices.forEach((index) => {
+        if (index > 0 && !selectedImageIds.has(newPositions[index - 1].fileId)) {
+          [newPositions[index - 1], newPositions[index]] = [newPositions[index], newPositions[index - 1]];
+        }
+      });
+      onPositionsChange(newPositions);
+      setContextMenu(null);
+    },
+    [positions, onPositionsChange, selectedImageIds]
+  );
+
+  const handleBringForward = useCallback(
+    (fileId: string) => {
+      // Move all selected images one step forward
+      const selectedIndices = Array.from(selectedImageIds)
+        .map((id) => positions.findIndex((pos) => pos.fileId === id))
+        .filter((idx) => idx !== -1)
+        .sort((a, b) => b - a); // Sort descending
+      
+      if (selectedIndices.length === 0 || selectedIndices[0] === positions.length - 1) return; // Already at front
+
+      const newPositions = [...positions];
+      // Move each selected image forward one position
+      selectedIndices.forEach((index) => {
+        if (index < newPositions.length - 1 && !selectedImageIds.has(newPositions[index + 1].fileId)) {
+          [newPositions[index], newPositions[index + 1]] = [newPositions[index + 1], newPositions[index]];
+        }
+      });
+      onPositionsChange(newPositions);
+      setContextMenu(null);
+    },
+    [positions, onPositionsChange, selectedImageIds]
+  );
+
+  const handleBringToFront = useCallback(
+    (fileId: string) => {
+      // Bring all selected images to front, maintaining their relative order
+      const selectedPositions = Array.from(selectedImageIds)
+        .map((id) => positions.find((pos) => pos.fileId === id))
+        .filter((pos): pos is BundleImagePosition => pos !== undefined);
+      
+      if (selectedPositions.length === 0) return;
+
+      const newPositions = positions.filter((pos) => !selectedImageIds.has(pos.fileId));
+      // Append selected positions at the end, maintaining their relative order
+      newPositions.push(...selectedPositions);
+      onPositionsChange(newPositions);
+      setContextMenu(null);
+    },
+    [positions, onPositionsChange, selectedImageIds]
+  );
+
+  // Close context menu on click outside
+  useEffect(() => {
+    if (!contextMenu) return;
+
+    const handleClick = () => setContextMenu(null);
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [contextMenu]);
+
   if (positions.length === 0) return null;
 
   // Calculate selection box bounds
@@ -458,7 +677,23 @@ export default function BundleImageRenderer({
   } : null;
 
   return (
-    <>
+    <div
+      className="absolute inset-0"
+      onContextMenuCapture={(e) => {
+        // Show context menu if any images are selected, otherwise prevent browser menu
+        // Use capture phase to catch events before children handle them
+        if (selectedImageIds.size > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Use the first selected image ID (context menu actions work on all selected)
+          const firstSelectedId = Array.from(selectedImageIds)[0];
+          setContextMenu({ x: e.clientX, y: e.clientY, fileId: firstSelectedId });
+        } else {
+          // Prevent browser menu on empty space
+          e.preventDefault();
+        }
+      }}
+    >
       {/* Selection box */}
       {selectionBox && selectionBox.width > 0 && selectionBox.height > 0 && (
         <div
@@ -472,12 +707,6 @@ export default function BundleImageRenderer({
           }}
         />
       )}
-      {/* Container for drag selection */}
-      <div
-        className="absolute inset-0"
-        style={{ zIndex: 1 }}
-        onMouseDown={handleContainerMouseDown}
-      />
       {positions.map((position, index) => {
         const file = files.find((f) => f.id === position.fileId);
         if (!file) return null;
@@ -504,6 +733,10 @@ export default function BundleImageRenderer({
               msUserSelect: "none"
             }}
             onMouseDown={(e) => {
+              // Only handle left mouse button (button 0) - ignore right-clicks
+              if (e.button !== 0) {
+                return;
+              }
               // Track if this mousedown will result in a drag operation
               const isHandle = (e.target as HTMLElement).closest('[data-handle]');
               if (!isHandle) {
@@ -557,6 +790,9 @@ export default function BundleImageRenderer({
                 alt=""
                 className="w-full h-full object-contain pointer-events-none"
                 draggable={false}
+                style={{
+                  transform: `scaleX(${position.mirrorHorizontal ? -1 : 1}) scaleY(${position.mirrorVertical ? -1 : 1})`
+                }}
               />
             ) : (
               <div className="w-full h-full min-h-[2px] bg-gray-200" />
@@ -634,6 +870,110 @@ export default function BundleImageRenderer({
           </div>
         );
       })}
-    </>
+      {/* Container for drag selection */}
+      <div
+        className="absolute inset-0"
+        style={{ zIndex: 1 }}
+        onMouseDown={handleContainerMouseDown}
+      />
+
+      {/* Context Menu */}
+      {contextMenu && (() => {
+        const positionIndex = positions.findIndex((pos) => pos.fileId === contextMenu.fileId);
+        const isAtBack = positionIndex === 0;
+        const isAtFront = positionIndex === positions.length - 1;
+        
+        return (
+          <div
+            className="fixed bg-white border border-gray-300 rounded-lg shadow-lg py-1 min-w-[160px]"
+            style={{
+              left: `${contextMenu.x}px`,
+              top: `${contextMenu.y}px`,
+              zIndex: 20000
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                handleDuplicate(contextMenu.fileId).catch(console.error);
+              }}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              Duplicate
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDelete(contextMenu.fileId)}
+              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </button>
+            <div className="border-t border-gray-200 my-1" />
+            <div className="px-2 py-1">
+              <div className="text-xs font-medium text-gray-500 px-2 py-1">Mirror</div>
+              <button
+                type="button"
+                onClick={() => handleMirrorHorizontal(contextMenu.fileId)}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <FlipHorizontal className="h-4 w-4" />
+                Horizontal
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMirrorVertical(contextMenu.fileId)}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <FlipVertical className="h-4 w-4" />
+                Vertical
+              </button>
+            </div>
+            <div className="border-t border-gray-200 my-1" />
+            <div className="px-2 py-1">
+              <div className="text-xs font-medium text-gray-500 px-2 py-1">Layer Order</div>
+              <button
+                type="button"
+                onClick={() => handleBringToFront(contextMenu.fileId)}
+                disabled={isAtFront}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronUp className="h-4 w-4" />
+                Bring to Front
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBringForward(contextMenu.fileId)}
+                disabled={isAtFront}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowUp className="h-4 w-4" />
+                Bring Forward
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSendBackwards(contextMenu.fileId)}
+                disabled={isAtBack}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowDown className="h-4 w-4" />
+                Send Backwards
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSendToBack(contextMenu.fileId)}
+                disabled={isAtBack}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronDown className="h-4 w-4" />
+                Send to Back
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
   );
 }

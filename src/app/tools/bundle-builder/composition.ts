@@ -71,7 +71,9 @@ export const composeListingImage = async (
         y: (pos.y / 100) * height - ((pos.height / 100) * height / 2),
         width: (pos.width / 100) * width,
         height: (pos.height / 100) * height,
-        rotation: pos.rotation
+        rotation: pos.rotation,
+        mirrorHorizontal: pos.mirrorHorizontal,
+        mirrorVertical: pos.mirrorVertical
       }))
     : computeImageFrames(layoutStyle === "custom" ? "dividedGrid" : layoutStyle, width, height, images.length, textSafeRect, imagesPerRow);
 
@@ -122,7 +124,7 @@ export const composeListingImage = async (
 
   images.forEach((img, index) => {
     const frame = frames[index] ?? frames[frames.length - 1];
-    const { x, y, width: frameWidth, height: frameHeight, rotation } = frame;
+    const { x, y, width: frameWidth, height: frameHeight, rotation, mirrorHorizontal, mirrorVertical } = frame;
 
     // For custom layout, don't apply padding (positions already account for it)
     // For other layouts, use imageSpacingPercent from options
@@ -192,7 +194,15 @@ export const composeListingImage = async (
     const imageCenterY = drawY + drawHeight / 2;
     ctx.translate(imageCenterX, imageCenterY);
     ctx.rotate(rad);
-    ctx.translate(-imageCenterX, -imageCenterY);
+    
+    // Apply mirroring transforms
+    const scaleX = mirrorHorizontal ? -1 : 1;
+    const scaleY = mirrorVertical ? -1 : 1;
+    ctx.scale(scaleX, scaleY);
+    
+    // Translate back to draw position, accounting for scaling flip
+    // When scaleX/scaleY is -1, the coordinate system flips, so we need to adjust
+    ctx.translate(-drawX - drawWidth / 2, -drawY - drawHeight / 2);
 
     ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 
