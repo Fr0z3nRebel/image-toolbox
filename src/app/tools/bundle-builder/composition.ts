@@ -231,6 +231,7 @@ export const compositeLayers = async (params: {
   backgroundMode: "transparent" | "backgroundImage" | "color";
   backgroundColor?: string;
   backgroundImageFile?: File;
+  overlayImages?: Array<{ file: File; x: number; y: number; width: number; height: number; rotation: number; mirrorHorizontal?: boolean; mirrorVertical?: boolean }>;
   exportFormat: ExportFormat;
 }): Promise<ComposeResult> => {
   const {
@@ -264,6 +265,7 @@ export const compositeLayers = async (params: {
     backgroundMode,
     backgroundColor,
     backgroundImageFile,
+    overlayImages = [],
     exportFormat
   } = params;
   const canvas = document.createElement("canvas");
@@ -397,6 +399,57 @@ export const compositeLayers = async (params: {
     });
 
     ctx.restore();
+  }
+
+  // Draw overlay images on top of everything
+  if (overlayImages && overlayImages.length > 0) {
+    for (const overlay of overlayImages) {
+      try {
+        const [overlayImg] = await loadFilesAsImages([overlay.file], { cropToContent: false });
+        if (overlayImg && overlayImg.naturalWidth > 0 && overlayImg.naturalHeight > 0) {
+          // Calculate dimensions matching the preview coordinate system
+          // The preview uses percentages relative to the container which maintains canvas aspect ratio
+          const drawX = (contentWidth * overlay.x) / 100;
+          const drawY = (contentHeight * overlay.y) / 100;
+          const drawWidth = (contentWidth * overlay.width) / 100;
+          const drawHeight = (contentHeight * overlay.height) / 100;
+          
+          // Match preview's object-contain behavior: fit image within bounds while maintaining aspect ratio
+          const imageAspectRatio = overlayImg.naturalWidth / overlayImg.naturalHeight;
+          const containerAspectRatio = drawWidth / drawHeight;
+          
+          let finalDrawWidth = drawWidth;
+          let finalDrawHeight = drawHeight;
+          
+          if (imageAspectRatio > containerAspectRatio) {
+            // Image is wider - fit to width
+            finalDrawHeight = drawWidth / imageAspectRatio;
+          } else {
+            // Image is taller - fit to height
+            finalDrawWidth = drawHeight * imageAspectRatio;
+          }
+          
+          const cx = drawX;
+          const cy = drawY;
+          const rad = (overlay.rotation * Math.PI) / 180;
+
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(rad);
+          
+          // Apply mirroring
+          const scaleX = overlay.mirrorHorizontal ? -1 : 1;
+          const scaleY = overlay.mirrorVertical ? -1 : 1;
+          ctx.scale(scaleX, scaleY);
+          
+          ctx.translate(-finalDrawWidth / 2, -finalDrawHeight / 2);
+          ctx.drawImage(overlayImg, 0, 0, overlayImg.naturalWidth, overlayImg.naturalHeight, 0, 0, finalDrawWidth, finalDrawHeight);
+          ctx.restore();
+        }
+      } catch (err) {
+        console.warn("Failed to draw overlay image:", err);
+      }
+    }
   }
 
   const mimeType = exportFormat === "webp" ? "image/webp" : "image/png";

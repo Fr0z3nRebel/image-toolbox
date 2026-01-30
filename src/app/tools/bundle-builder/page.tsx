@@ -33,6 +33,8 @@ import InstantPreview from "./InstantPreview";
 import ColorPickerModal from "./ColorPickerModal";
 import { CENTER_SHAPES } from "./center-shapes";
 import { CENTER_TEXT_FONTS, loadFont } from "./fonts";
+import OverlayImageEditor, { type OverlayImage } from "./OverlayImageEditor";
+import OverlayImageRenderer from "./OverlayImageRenderer";
 
 const ASPECT_RATIOS: { value: AspectRatio; label: string }[] = [
   { value: "4:3", label: "4:3" },
@@ -384,6 +386,7 @@ export default function BundleBuilderTool() {
   const [subtitleColor, setSubtitleColor] = useState<string>("#4b5563");
   const [centerColorPicker, setCenterColorPicker] = useState<"shape" | "title" | "subtitle" | null>(null);
   const [wrapText, setWrapText] = useState<boolean>(true);
+  const [overlayImages, setOverlayImages] = useState<OverlayImage[]>([]);
 
   const handleDownload = async (format: ExportFormat) => {
     if (files.length < 2) return;
@@ -434,6 +437,16 @@ export default function BundleBuilderTool() {
         backgroundMode,
         backgroundColor: backgroundMode === "color" ? backgroundColor : undefined,
         backgroundImageFile: backgroundMode === "backgroundImage" ? (backgroundFiles[0] as File | undefined) : undefined,
+        overlayImages: overlayImages && overlayImages.length > 0 ? overlayImages.map((overlay) => ({
+          file: overlay.file as File,
+          x: overlay.x,
+          y: overlay.y,
+          width: overlay.width,
+          height: overlay.height,
+          rotation: overlay.rotation,
+          mirrorHorizontal: overlay.mirrorHorizontal ?? false,
+          mirrorVertical: overlay.mirrorVertical ?? false
+        })) : [],
         exportFormat: format
       });
       if (contentUrl) URL.revokeObjectURL(contentUrl);
@@ -459,6 +472,7 @@ export default function BundleBuilderTool() {
     setFiles([]);
     setBackgroundFiles([]);
     setCenterFiles([]);
+    setOverlayImages([]);
     // Reset to default settings
     setAspectRatio("1:1");
     setLayoutStyle("dividedGrid");
@@ -1217,6 +1231,12 @@ export default function BundleBuilderTool() {
         <div className="text-sm text-gray-500">
           Output size: <span className="font-medium">{previewWidth} × {previewHeight} px</span>
         </div>
+        <OverlayImageEditor
+          overlayImages={overlayImages}
+          onOverlayImagesChange={setOverlayImages}
+          aspectRatio={aspectRatio}
+          previewContainerRef={previewContainerRef}
+        />
         <div className="flex gap-2">
           <button
             onClick={() => handleDownload("png")}
@@ -1338,6 +1358,14 @@ export default function BundleBuilderTool() {
                   <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-400" style={{ minHeight: 200 }}>
                     Add at least 2 bundle images to see a live preview
                   </div>
+                )}
+                {files.length >= 2 && overlayImages.length > 0 && (
+                  <OverlayImageRenderer
+                    overlayImages={overlayImages}
+                    onOverlayImagesChange={setOverlayImages}
+                    aspectRatio={aspectRatio}
+                    containerRef={previewContainerRef}
+                  />
                 )}
               </div>
             </div>
