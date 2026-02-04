@@ -6,7 +6,9 @@ export function GoogleAnalytics() {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   if (!gaId) {
-    console.warn('Google Analytics ID not found. Please set NEXT_PUBLIC_GA_ID in your Vercel environment variables.');
+    if (typeof window !== 'undefined') {
+      console.warn('Google Analytics ID not found. Please set NEXT_PUBLIC_GA_ID in your Vercel environment variables.');
+    }
     return null;
   }
 

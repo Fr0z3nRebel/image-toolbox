@@ -1,4 +1,4 @@
-import { ImageIcon, Ruler, LayoutGrid } from "lucide-react";
+import { ImageIcon, Ruler, LayoutGrid, FileText } from "lucide-react";
 import Link from "next/link";
 
 interface ToolCardProps {
@@ -88,6 +88,15 @@ export default function Home() {
       icon: <LayoutGrid className="h-6 w-6 text-amber-600" />,
       href: "/tools/bundle-builder",
       color: "hover:border-amber-200",
+      badge: "New"
+    },
+    {
+      title: "Clipart License Generator",
+      description:
+        "Create a PDF with download link and license terms for digital products",
+      icon: <FileText className="h-6 w-6 text-emerald-600" />,
+      href: "/tools/clipart-license-generator",
+      color: "hover:border-emerald-200",
       badge: "New"
     },
     // More tools can be added here in the future
