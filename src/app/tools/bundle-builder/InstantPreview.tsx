@@ -1,72 +1,237 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AspectRatio, LayoutStyle } from "./types";
+import type { CenterShapeId } from "./types";
 import type { FileWithPreview } from "../../components/FileUploadZone";
 import { getCanvasDimensions } from "./canvas";
 import { getTextSafeRect } from "./text-safe-area";
 import { computeImageFrames } from "./layouts";
 import { getContentCroppedDataUrlFromUrl } from "./image-processing";
+import { layoutCenterText } from "./center-text-layout";
+import type { CenterTextLayout } from "./center-text-layout";
 
 export interface InstantPreviewProps {
   files: FileWithPreview[];
   centerFiles: FileWithPreview[];
+  centerMode?: "image" | "text";
+  centerShape?: CenterShapeId;
+  titleText?: string;
+  subtitleText?: string;
+  titleFont?: string;
+  subtitleFont?: string;
+  titleBold?: boolean;
+  subtitleBold?: boolean;
+  titleFontSize?: number;
+  subtitleFontSize?: number;
+  shapeColor?: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  titleFontSizeAuto?: boolean;
+  subtitleFontSizeAuto?: boolean;
+  wrapText?: boolean;
   backgroundFiles: FileWithPreview[];
   backgroundMode: "transparent" | "backgroundImage" | "color";
   backgroundColor: string;
   layoutStyle: LayoutStyle;
   textSafeAreaPercent: number;
   imagesPerRow?: number;
-  centerScale?: number;
+  imageSpacingPercent?: number;
+  centerWidthScale?: number;
+  centerHeightScale?: number;
   centerRotation?: number;
   centerXOffset?: number;
   centerYOffset?: number;
   aspectRatio: AspectRatio;
   className?: string;
+  onContentCroppedChange?: (contentCropped: Record<string, string>) => void;
+  fadeImages?: boolean; // Fade images when processing
+  hideBundleImages?: boolean; // Hide bundle images (used when BundleImageRenderer handles them)
 }
 
 /**
  * DOM-based instant preview. Uses file preview URLs and layout math only—
  * no canvas or image loading. Matches the export layout; composition runs only on export.
  */
+const SHAPE_BORDER_RADIUS: Record<CenterShapeId, string> = {
+  rectangle: "0",
+  roundedRect: "12%",
+  pill: "999px"
+};
+
 export default function InstantPreview({
   files,
   centerFiles,
+  centerMode = "image",
+  centerShape = "roundedRect",
+  titleText = "",
+  subtitleText = "",
+  titleFont = "Open Sans",
+  subtitleFont = "Open Sans",
+  titleBold = false,
+  subtitleBold = false,
+  titleFontSize = 48,
+  subtitleFontSize = 28,
+  shapeColor = "#fef3c7",
+  titleColor = "#1f2937",
+  subtitleColor = "#4b5563",
+  titleFontSizeAuto = false,
+  subtitleFontSizeAuto = false,
+  wrapText = true,
   backgroundFiles,
   backgroundMode,
   backgroundColor,
   layoutStyle,
   textSafeAreaPercent,
   imagesPerRow,
-  centerScale = 1,
+  imageSpacingPercent = 5,
+  centerWidthScale = 1,
+  centerHeightScale = 1,
   centerRotation = 0,
   centerXOffset = 0,
   centerYOffset = 0,
   aspectRatio,
-  className = ""
+  className = "",
+  onContentCroppedChange,
+  fadeImages = false,
+  hideBundleImages = false
 }: InstantPreviewProps) {
   const { width: w, height: h } = getCanvasDimensions(aspectRatio);
   const textSafeRect = getTextSafeRect(w, h, textSafeAreaPercent);
-  const frames = computeImageFrames(layoutStyle, w, h, files.length, textSafeRect, imagesPerRow);
+  const frames = computeImageFrames(layoutStyle, w, h, files.length, textSafeRect, imagesPerRow, imageSpacingPercent);
 
   const [contentCropped, setContentCropped] = useState<Record<string, string>>({});
+  const [centerLayout, setCenterLayout] = useState<CenterTextLayout | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
+
+  const shapeBorderRadius = useMemo(() => {
+    if (!centerLayout) return SHAPE_BORDER_RADIUS[centerShape];
+    const minDim = Math.min(centerLayout.shapeRect.width, centerLayout.shapeRect.height);
+    // Scale the radius to match the preview scale (same as export calculation)
+    if (centerShape === "roundedRect") {
+      return `${minDim * scale * 0.12}px`;
+    }
+    if (centerShape === "pill") {
+      return `${minDim * scale / 2}px`;
+    }
+    return SHAPE_BORDER_RADIUS[centerShape];
+  }, [centerLayout, centerShape, scale]);
 
   useEffect(() => {
     setContentCropped((prev) => {
       const next = { ...prev };
+      // Remove entries for files that no longer exist
       for (const id of Object.keys(next)) {
         if (!files.some((f) => f.id === id)) delete next[id];
       }
+      
+      // Process only files that haven't been processed yet
+      files.forEach((file) => {
+        if (!file.preview) return;
+        // Check if this file ID already has processed data
+        if (next[file.id]) return;
+        
+        // Check if another file with the same preview URL has been processed
+        // (this handles duplicated files which share the same preview URL)
+        const existingFileId = files.find((f) => f.id !== file.id && f.preview === file.preview && next[f.id]);
+        if (existingFileId) {
+          // Reuse the processed data for this file
+          next[file.id] = next[existingFileId.id];
+        } else {
+          // Process this file
+          getContentCroppedDataUrlFromUrl(file.preview)
+            .then((url) => setContentCropped((prevState) => ({ ...prevState, [file.id]: url })))
+            .catch(() => {});
+        }
+      });
+      
       return next;
     });
-
-    files.forEach((file) => {
-      if (!file.preview) return;
-      getContentCroppedDataUrlFromUrl(file.preview)
-        .then((url) => setContentCropped((prev) => ({ ...prev, [file.id]: url })))
-        .catch(() => {});
-    });
   }, [files]);
+
+  // Notify parent when contentCropped changes
+  useEffect(() => {
+    if (onContentCroppedChange) {
+      onContentCroppedChange(contentCropped);
+    }
+  }, [contentCropped, onContentCroppedChange]);
+
+  useLayoutEffect(() => {
+    const updateScale = () => {
+      const el = containerRef.current;
+      if (!el || w === 0) return;
+      const width = el.clientWidth;
+      setScale(width / w);
+    };
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, [w]);
+
+  useEffect(() => {
+    if (centerMode !== "text" || layoutStyle === "grid") {
+      setCenterLayout(null);
+      return;
+    }
+    if (typeof document === "undefined") {
+      setCenterLayout(null);
+      return;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      setCenterLayout(null);
+      return;
+    }
+    const layout = layoutCenterText(
+      {
+        canvasWidth: w,
+        canvasHeight: h,
+        textSafeAreaPercent,
+        centerWidthScale,
+        centerHeightScale,
+        centerXOffset,
+        centerYOffset,
+        titleText,
+        subtitleText,
+        titleFont,
+        subtitleFont,
+        titleBold,
+        subtitleBold,
+        titleFontSize,
+        subtitleFontSize,
+        titleFontSizeAuto,
+        subtitleFontSizeAuto,
+        wrapText
+      },
+      ctx
+    );
+    setCenterLayout(layout);
+  }, [
+    centerMode,
+    layoutStyle,
+    w,
+    h,
+    textSafeAreaPercent,
+    centerWidthScale,
+    centerHeightScale,
+    centerXOffset,
+    centerYOffset,
+    titleText,
+    subtitleText,
+    titleFont,
+    subtitleFont,
+    titleBold,
+    subtitleBold,
+    titleFontSize,
+    subtitleFontSize,
+    titleFontSizeAuto,
+    subtitleFontSizeAuto,
+    wrapText
+  ]);
 
   const bgStyle: React.CSSProperties =
     backgroundMode === "transparent"
@@ -80,16 +245,18 @@ export default function InstantPreview({
             backgroundColor: "#f3f4f6"
           };
 
-  const framePaddingPercent = layoutStyle === "grid" ? 92 : 90;
-
-  const isProcessing = files.some((f) => f.preview && !contentCropped[f.id]);
+  // Calculate frame padding: 100% - spacing% = image size%
+  // For example: 5% spacing = 95% image size, 10% spacing = 90% image size
+  const framePaddingPercent = 100 - imageSpacingPercent;
 
   return (
     <div
-      className={`relative w-full h-full overflow-hidden ${className}`.trim()}
+      ref={containerRef}
+      className={`relative w-full h-full ${className}`.trim()}
       style={bgStyle}
     >
-      {frames.map((frame, i) => {
+      {/* Only render bundle images if not hidden (BundleImageRenderer handles them when hidden) */}
+      {!hideBundleImages && frames.map((frame, i) => {
         const file = files[i];
         const cropped = file ? contentCropped[file.id] : undefined;
         return (
@@ -97,40 +264,51 @@ export default function InstantPreview({
             key={i}
             className="absolute flex items-center justify-center"
             style={{
-              left: `${(frame.x / w) * 100}%`,
-              top: `${(frame.y / h) * 100}%`,
-              width: `${(frame.width / w) * 100}%`,
-              height: `${(frame.height / h) * 100}%`
+              left: `${((frame.x / w) * 100).toFixed(6)}%`,
+              top: `${((frame.y / h) * 100).toFixed(6)}%`,
+              width: `${((frame.width / w) * 100).toFixed(6)}%`,
+              height: `${((frame.height / h) * 100).toFixed(6)}%`,
+              zIndex: 10 + i // Above center shape/text (z-5)
             }}
           >
             <div
               className="flex items-center justify-center"
-              style={{ width: `${framePaddingPercent}%`, height: `${framePaddingPercent}%` }}
+              style={{ 
+                width: layoutStyle === "grid" ? "100%" : `${framePaddingPercent}%`, 
+                height: layoutStyle === "grid" ? "100%" : `${framePaddingPercent}%` 
+              }}
             >
               {cropped ? (
                 // eslint-disable-next-line @next/next/no-img-element -- data URL from content crop, next/image doesn't support object/data URLs
                 <img
                   src={cropped}
                   alt=""
-                  className="max-w-full max-h-full object-contain"
+                  className={`max-w-full max-h-full object-contain transition-opacity ${
+                    fadeImages ? "opacity-50" : ""
+                  }`}
                   style={{ transform: `rotate(${frame.rotation}deg)` }}
                 />
               ) : (
-                <div className="w-full h-full min-h-[2px] bg-gray-200" />
+                <div
+                  className={`w-full h-full min-h-[2px] bg-gray-200 transition-opacity ${
+                    fadeImages ? "opacity-50" : ""
+                  }`}
+                />
               )}
             </div>
           </div>
         );
       })}
-      {layoutStyle !== "grid" && (
+      {layoutStyle !== "grid" && centerMode === "image" && (
         <div
-          className="absolute z-10 flex items-center justify-center"
+          className="absolute flex items-center justify-center"
           style={{
             left: `calc(50% + ${centerXOffset}%)`,
             top: `calc(50% + ${centerYOffset}%)`,
             transform: "translate(-50%, -50%)",
             width: `${(Math.max(w, h) / w) * 100}%`,
-            height: `${(Math.max(w, h) / h) * 100}%`
+            height: `${(Math.max(w, h) / h) * 100}%`,
+            zIndex: 5 // Below bundle images (z-10+) and overlay images (z-40+)
           }}
         >
           {centerFiles[0]?.preview ? (
@@ -138,15 +316,73 @@ export default function InstantPreview({
             <img
               src={centerFiles[0].preview}
               alt=""
-              className="max-w-full max-h-full object-contain"
-              style={{ transform: `scale(${centerScale}) rotate(${centerRotation}deg)` }}
+              className={`max-w-full max-h-full object-contain transition-opacity ${
+                fadeImages ? "opacity-50" : ""
+              }`}
+              style={{ transform: `scaleX(${centerWidthScale}) scaleY(${centerHeightScale}) rotate(${centerRotation}deg)` }}
             />
           ) : null}
         </div>
       )}
-      {isProcessing && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/90">
-          <span className="text-sm text-gray-500">Processing…</span>
+      {layoutStyle !== "grid" && centerMode === "text" && centerLayout && (
+        <div
+          className="absolute"
+          style={{
+            left: `${(centerLayout.shapeRect.x / w) * 100}%`,
+            top: `${(centerLayout.shapeRect.y / h) * 100}%`,
+            width: `${(centerLayout.shapeRect.width / w) * 100}%`,
+            height: `${(centerLayout.shapeRect.height / h) * 100}%`,
+            transformOrigin: "50% 50%",
+            transform: `rotate(${centerRotation}deg)`,
+            zIndex: 5 // Below bundle images (z-10+) and overlay images (z-40+)
+          }}
+        >
+            <div
+              className="relative w-full h-full"
+              style={{
+                backgroundColor: shapeColor,
+                borderRadius: shapeBorderRadius
+              }}
+            >
+            {centerLayout.title.lines.map((line, idx) => (
+              <span
+                key={`title-${idx}`}
+                style={{
+                  position: "absolute",
+                  left: `${((line.x - centerLayout.shapeRect.x) / centerLayout.shapeRect.width) * 100}%`,
+                  top: `${((line.y - centerLayout.shapeRect.y) / centerLayout.shapeRect.height) * 100}%`,
+                  transform: "translate(-50%, -50%)",
+                  fontFamily: `"${line.fontFamily}", sans-serif`,
+                  fontWeight: line.fontWeight,
+                  fontSize: `${line.fontSize * scale}px`,
+                  color: titleColor,
+                  whiteSpace: "nowrap",
+                  lineHeight: 1.2
+                }}
+              >
+                {line.text}
+              </span>
+            ))}
+            {centerLayout.subtitle.lines.map((line, idx) => (
+              <span
+                key={`subtitle-${idx}`}
+                style={{
+                  position: "absolute",
+                  left: `${((line.x - centerLayout.shapeRect.x) / centerLayout.shapeRect.width) * 100}%`,
+                  top: `${((line.y - centerLayout.shapeRect.y) / centerLayout.shapeRect.height) * 100}%`,
+                  transform: "translate(-50%, -50%)",
+                  fontFamily: `"${line.fontFamily}", sans-serif`,
+                  fontWeight: line.fontWeight,
+                  fontSize: `${line.fontSize * scale}px`,
+                  color: subtitleColor,
+                  whiteSpace: "nowrap",
+                  lineHeight: 1.2
+                }}
+              >
+                {line.text}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>

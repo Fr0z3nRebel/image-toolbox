@@ -4,6 +4,10 @@ import { createBaseCanvas } from "./canvas";
 import { loadFilesAsImages, getContentBoundingBoxIgnoringWhite } from "./image-processing";
 import { getTextSafeRect } from "./text-safe-area";
 import { computeImageFrames } from "./layouts";
+import { drawCenterShape } from "./center-shapes";
+import type { CenterShapeId } from "./types";
+import { loadFonts } from "./fonts";
+import { layoutCenterText } from "./center-text-layout";
 
 /**
  * Compose a listing image from multiple images with specified layout and options
@@ -23,8 +27,10 @@ export const composeListingImage = async (
     exportFormat,
     textSafeAreaPercent = 20,
     imagesPerRow,
+    imageSpacingPercent = 5,
     centerImageFile,
-    backgroundImageFile
+    backgroundImageFile,
+    customImagePositions
   } = options;
 
   const { canvas, ctx } = createBaseCanvas(aspectRatio, background);
@@ -58,7 +64,18 @@ export const composeListingImage = async (
     }
   }
 
-  const frames = computeImageFrames(layoutStyle, width, height, images.length, textSafeRect, imagesPerRow);
+  // Use custom positions if provided, otherwise compute frames
+  const frames = layoutStyle === "custom" && customImagePositions && customImagePositions.length > 0
+    ? customImagePositions.map((pos) => ({
+        x: (pos.x / 100) * width - ((pos.width / 100) * width / 2),
+        y: (pos.y / 100) * height - ((pos.height / 100) * height / 2),
+        width: (pos.width / 100) * width,
+        height: (pos.height / 100) * height,
+        rotation: pos.rotation,
+        mirrorHorizontal: pos.mirrorHorizontal,
+        mirrorVertical: pos.mirrorVertical
+      }))
+    : computeImageFrames(layoutStyle === "custom" ? "dividedGrid" : layoutStyle, width, height, images.length, textSafeRect, imagesPerRow, imageSpacingPercent);
 
   // Optional center image (only for divided grid layouts)
   if (centerImageFile && layoutStyle !== "grid") {
@@ -108,19 +125,21 @@ export const composeListingImage = async (
   images.forEach((img, index) => {
     const frame = frames[index] ?? frames[frames.length - 1];
     const { x, y, width: frameWidth, height: frameHeight, rotation } = frame;
+    const mirrorHorizontal = "mirrorHorizontal" in frame ? frame.mirrorHorizontal : false;
+    const mirrorVertical = "mirrorVertical" in frame ? frame.mirrorVertical : false;
 
-    // For grid layout, add padding for spacing between items
-    // For other layouts, add padding to ensure images never touch
-    const isGridLayout = layoutStyle === "grid";
-    const framePadding = isGridLayout 
-      ? Math.min(frameWidth, frameHeight) * 0.04 // 4% padding for spacing between grid items
-      : Math.min(frameWidth, frameHeight) * 0.05; // 5% padding on all sides
+    // For custom layout, don't apply padding (positions already account for it)
+    // For other layouts, use imageSpacingPercent from options
+    const framePadding = layoutStyle === "custom" ? 0 : Math.min(frameWidth, frameHeight) * (imageSpacingPercent / 100);
     const paddedWidth = frameWidth - framePadding * 2;
     const paddedHeight = frameHeight - framePadding * 2;
 
     let drawWidth: number;
     let drawHeight: number;
 
+    const isGridLayout = layoutStyle === "grid";
+    const isCustomLayout = layoutStyle === "custom";
+    
     if (isGridLayout) {
       // For grid layout, first scale to uniform content size, then fit to cell
       const bounds = contentBounds[index];
@@ -144,6 +163,20 @@ export const composeListingImage = async (
         drawWidth = img.naturalWidth * cellScale;
         drawHeight = img.naturalHeight * cellScale;
       }
+    } else if (isCustomLayout) {
+      // For custom layout, fit image within frame maintaining aspect ratio (object-contain behavior)
+      const imageAspectRatio = img.naturalWidth / img.naturalHeight;
+      const frameAspectRatio = paddedWidth / paddedHeight;
+      
+      if (imageAspectRatio > frameAspectRatio) {
+        // Image is wider - fit to width
+        drawWidth = paddedWidth;
+        drawHeight = paddedWidth / imageAspectRatio;
+      } else {
+        // Image is taller - fit to height
+        drawHeight = paddedHeight;
+        drawWidth = paddedHeight * imageAspectRatio;
+      }
     } else {
       // For other layouts, images fit within padded area
       const scale = Math.min(paddedWidth / img.naturalWidth, paddedHeight / img.naturalHeight);
@@ -163,7 +196,15 @@ export const composeListingImage = async (
     const imageCenterY = drawY + drawHeight / 2;
     ctx.translate(imageCenterX, imageCenterY);
     ctx.rotate(rad);
-    ctx.translate(-imageCenterX, -imageCenterY);
+    
+    // Apply mirroring transforms
+    const scaleX = mirrorHorizontal ? -1 : 1;
+    const scaleY = mirrorVertical ? -1 : 1;
+    ctx.scale(scaleX, scaleY);
+    
+    // Translate back to draw position, accounting for scaling flip
+    // When scaleX/scaleY is -1, the coordinate system flips, so we need to adjust
+    ctx.translate(-drawX - drawWidth / 2, -drawY - drawHeight / 2);
 
     ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 
@@ -203,15 +244,33 @@ export const compositeLayers = async (params: {
   contentWidth: number;
   contentHeight: number;
   centerImageFile?: File;
+  centerMode?: "image" | "text";
+  centerShape?: CenterShapeId;
+  titleText?: string;
+  subtitleText?: string;
+  titleFont?: string;
+  subtitleFont?: string;
+  titleBold?: boolean;
+  subtitleBold?: boolean;
+  titleFontSizeAuto?: boolean;
+  subtitleFontSizeAuto?: boolean;
+  titleFontSize?: number;
+  subtitleFontSize?: number;
+  shapeColor?: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  wrapText?: boolean;
   layoutStyle?: LayoutStyle;
   textSafeAreaPercent?: number;
-  centerScale?: number;
+  centerWidthScale?: number;
+  centerHeightScale?: number;
   centerRotation?: number;
   centerXOffset?: number;
   centerYOffset?: number;
   backgroundMode: "transparent" | "backgroundImage" | "color";
   backgroundColor?: string;
   backgroundImageFile?: File;
+  overlayImages?: Array<{ file: File; x: number; y: number; width: number; height: number; rotation: number; mirrorHorizontal?: boolean; mirrorVertical?: boolean }>;
   exportFormat: ExportFormat;
 }): Promise<ComposeResult> => {
   const {
@@ -219,19 +278,35 @@ export const compositeLayers = async (params: {
     contentWidth,
     contentHeight,
     centerImageFile,
+    centerMode,
+    centerShape = "roundedRect",
+    titleText = "",
+    subtitleText = "",
+    titleFont = "Open Sans",
+    subtitleFont = "Open Sans",
+    titleBold = false,
+    subtitleBold = false,
+    titleFontSizeAuto = false,
+    subtitleFontSizeAuto = false,
+    titleFontSize = 48,
+    subtitleFontSize = 28,
+    shapeColor = "#fef3c7",
+    titleColor = "#1f2937",
+    subtitleColor = "#4b5563",
+    wrapText = true,
     layoutStyle,
     textSafeAreaPercent = 20,
-    centerScale = 1,
+    centerWidthScale = 1,
+    centerHeightScale = 1,
     centerRotation = 0,
     centerXOffset = 0,
     centerYOffset = 0,
     backgroundMode,
     backgroundColor,
     backgroundImageFile,
+    overlayImages = [],
     exportFormat
   } = params;
-  // Currently unused but kept for potential future center-image text-safe behavior
-  void textSafeAreaPercent;
   const canvas = document.createElement("canvas");
   canvas.width = contentWidth;
   canvas.height = contentHeight;
@@ -264,18 +339,9 @@ export const compositeLayers = async (params: {
     ctx.clearRect(0, 0, contentWidth, contentHeight);
   }
 
-  await new Promise<void>((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0);
-      resolve();
-    };
-    img.onerror = () => reject(new Error("Failed to load content image"));
-    img.src = contentUrl;
-  });
-
-  // Optional center image (only for divided grid layouts), drawn on top of content
-  if (centerImageFile && layoutStyle && layoutStyle !== "grid") {
+  // Draw center shape/text BEFORE content image (so it appears below bundle images)
+  // Optional center image (only for divided grid layouts), drawn below content
+  if (centerImageFile && layoutStyle && layoutStyle !== "grid" && centerMode !== "text") {
     try {
       const [centerImg] = await loadFilesAsImages([centerImageFile], { cropToContent: false });
       if (centerImg) {
@@ -286,8 +352,8 @@ export const compositeLayers = async (params: {
         const targetSize = Math.max(contentWidth, contentHeight);
         const imageMaxDimension = Math.max(srcW, srcH);
         const baseScale = targetSize / imageMaxDimension;
-        const drawW = Math.round(srcW * baseScale * centerScale);
-        const drawH = Math.round(srcH * baseScale * centerScale);
+        const drawW = Math.round(srcW * baseScale * centerWidthScale);
+        const drawH = Math.round(srcH * baseScale * centerHeightScale);
         // Center on canvas, then apply offset (offset is percentage of canvas dimension)
         const offsetX = (contentWidth * centerXOffset) / 100;
         const offsetY = (contentHeight * centerYOffset) / 100;
@@ -305,6 +371,125 @@ export const compositeLayers = async (params: {
       }
     } catch (err) {
       console.warn("Failed to draw center image in composite:", err);
+    }
+  }
+
+  // Center text (shape + title/subtitle) for divided grid layouts, drawn below content
+  if (centerMode === "text" && layoutStyle && layoutStyle !== "grid") {
+    await loadFonts([titleFont, subtitleFont]);
+    const layout = layoutCenterText(
+      {
+        canvasWidth: contentWidth,
+        canvasHeight: contentHeight,
+        textSafeAreaPercent,
+        centerWidthScale,
+        centerHeightScale,
+        centerXOffset,
+        centerYOffset,
+        titleText,
+        subtitleText,
+        titleFont,
+        subtitleFont,
+        titleBold,
+        subtitleBold,
+        titleFontSize,
+        subtitleFontSize,
+        titleFontSizeAuto,
+        subtitleFontSizeAuto,
+        wrapText
+      },
+      ctx
+    );
+
+    const { shapeRect, title, subtitle } = layout;
+    const cx = shapeRect.x + shapeRect.width / 2;
+    const cy = shapeRect.y + shapeRect.height / 2;
+    const rad = (centerRotation * Math.PI) / 180;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rad);
+    ctx.translate(-cx, -cy);
+
+    drawCenterShape(ctx, centerShape, shapeRect, shapeColor);
+
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+
+    title.lines.forEach((line) => {
+      ctx.font = `${line.fontWeight} ${line.fontSize}px "${line.fontFamily}", sans-serif`;
+      ctx.fillStyle = titleColor;
+      ctx.fillText(line.text, line.x, line.y);
+    });
+
+    subtitle.lines.forEach((line) => {
+      ctx.font = `${line.fontWeight} ${line.fontSize}px "${line.fontFamily}", sans-serif`;
+      ctx.fillStyle = subtitleColor;
+      ctx.fillText(line.text, line.x, line.y);
+    });
+
+    ctx.restore();
+  }
+
+  // Draw content image (with bundle images) on top of center shape/text
+  await new Promise<void>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+      resolve();
+    };
+    img.onerror = () => reject(new Error("Failed to load content image"));
+    img.src = contentUrl;
+  });
+
+  // Draw overlay images on top of everything
+  if (overlayImages && overlayImages.length > 0) {
+    for (const overlay of overlayImages) {
+      try {
+        const [overlayImg] = await loadFilesAsImages([overlay.file], { cropToContent: false });
+        if (overlayImg && overlayImg.naturalWidth > 0 && overlayImg.naturalHeight > 0) {
+          // Calculate dimensions matching the preview coordinate system
+          // The preview uses percentages relative to the container which maintains canvas aspect ratio
+          const drawX = (contentWidth * overlay.x) / 100;
+          const drawY = (contentHeight * overlay.y) / 100;
+          const drawWidth = (contentWidth * overlay.width) / 100;
+          const drawHeight = (contentHeight * overlay.height) / 100;
+          
+          // Match preview's object-contain behavior: fit image within bounds while maintaining aspect ratio
+          const imageAspectRatio = overlayImg.naturalWidth / overlayImg.naturalHeight;
+          const containerAspectRatio = drawWidth / drawHeight;
+          
+          let finalDrawWidth = drawWidth;
+          let finalDrawHeight = drawHeight;
+          
+          if (imageAspectRatio > containerAspectRatio) {
+            // Image is wider - fit to width
+            finalDrawHeight = drawWidth / imageAspectRatio;
+          } else {
+            // Image is taller - fit to height
+            finalDrawWidth = drawHeight * imageAspectRatio;
+          }
+          
+          const cx = drawX;
+          const cy = drawY;
+          const rad = (overlay.rotation * Math.PI) / 180;
+
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(rad);
+          
+          // Apply mirroring
+          const scaleX = overlay.mirrorHorizontal ? -1 : 1;
+          const scaleY = overlay.mirrorVertical ? -1 : 1;
+          ctx.scale(scaleX, scaleY);
+          
+          ctx.translate(-finalDrawWidth / 2, -finalDrawHeight / 2);
+          ctx.drawImage(overlayImg, 0, 0, overlayImg.naturalWidth, overlayImg.naturalHeight, 0, 0, finalDrawWidth, finalDrawHeight);
+          ctx.restore();
+        }
+      } catch (err) {
+        console.warn("Failed to draw overlay image:", err);
+      }
     }
   }
 

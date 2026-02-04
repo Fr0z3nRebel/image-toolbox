@@ -28,6 +28,8 @@ interface FileUploadZoneProps {
   belowDropZone?: React.ReactNode;
   children?: React.ReactNode; // For additional controls like format selection or quality slider
   actionButton: React.ReactNode; // For action buttons like Convert, Compress, etc.
+  processedFileIds?: Set<string>; // IDs of files that have been processed
+  fadeAll?: boolean; // If true, fade all images regardless of processing status
 }
 
 export default function FileUploadZone({
@@ -48,7 +50,8 @@ export default function FileUploadZone({
   compactDropZone = false,
   belowDropZone,
   children,
-  actionButton
+  actionButton,
+  fadeAll = false
 }: FileUploadZoneProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -192,7 +195,7 @@ export default function FileUploadZone({
             )}
           </div>
           <div
-            className={`grid gap-2 ${maxDisplayHeight} overflow-y-auto ${
+            className={`grid gap-x-2 gap-y-2 ${maxDisplayHeight} overflow-y-auto ${
               fileListColumns === 2
                 ? "grid-cols-2"
                 : fileListColumns === 3
@@ -200,21 +203,28 @@ export default function FileUploadZone({
                   : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
             }`}
           >
-            {files.map((file) => (
-              <div
-                key={file.id}
-                className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
-              >
-                {showThumbnails && file.preview ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- blob URL from File API, next/image doesn't support object URLs
-                  <img
-                    src={file.preview}
-                    alt=""
-                    className="h-14 w-14 flex-shrink-0 rounded object-cover bg-gray-200"
-                  />
-                ) : (
-                  <ImageIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                )}
+            {files.map((file) => {
+              // If fadeAll is true, fade ALL images unconditionally (used when processing is active)
+              // This ensures all images are faded during processing, not just unprocessed ones
+              const shouldFade = Boolean(fadeAll);
+              
+              return (
+                <div
+                  key={file.id}
+                  className={`flex items-center gap-2 p-2 bg-gray-50 rounded-lg transition-opacity ${
+                    shouldFade ? "opacity-50" : ""
+                  }`}
+                >
+                  {showThumbnails && file.preview ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- blob URL from File API, next/image doesn't support object URLs
+                    <img
+                      src={file.preview}
+                      alt=""
+                      className="h-14 w-14 flex-shrink-0 rounded object-cover bg-gray-200"
+                    />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {file.name}
@@ -233,7 +243,8 @@ export default function FileUploadZone({
                   <X className="h-4 w-4" />
                 </button>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       )}

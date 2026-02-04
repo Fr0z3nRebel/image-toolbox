@@ -5,7 +5,8 @@ const computeGridLayout = (
   canvasHeight: number,
   imagesCount: number,
   textSafeRect: TextSafeRect,
-  imagesPerRow?: number
+  imagesPerRow?: number,
+  imageSpacingPercent: number = 5
 ): ImageFrame[] => {
   if (imagesCount <= 0) return [];
 
@@ -14,7 +15,11 @@ const computeGridLayout = (
 
   // Smaller margins to maximize image size
   const margin = Math.min(canvasWidth, canvasHeight) * 0.02;
-  const gapBetweenImages = Math.min(canvasWidth, canvasHeight) * 0.03; // Increased gap to ensure images never touch
+  // Calculate gap between images based on imageSpacingPercent
+  // Convert percentage (0-20) to a gap size relative to canvas dimensions
+  // At 0%, gap is 0 (images can touch), at 20% use 3% of smaller dimension
+  const maxGap = Math.min(canvasWidth, canvasHeight) * 0.03; // 3% maximum
+  const gapBetweenImages = (imageSpacingPercent / 20) * maxGap;
   const innerWidth = canvasWidth - margin * 2;
 
   // Calculate available space above and below the text-safe area
@@ -49,7 +54,8 @@ const computeGridLayout = (
     if (count <= 0) return;
 
     const rows = Math.ceil(count / Math.max(1, colsInSection));
-    const totalGapHeight = gapBetweenImages * Math.max(0, rows - 1);
+    // Include gap before first row: rows gaps total (not rows - 1)
+    const totalGapHeight = gapBetweenImages * rows;
     const cellHeight = (availableHeight - totalGapHeight) / Math.max(1, rows);
 
     // Compute how many items are in each row using the "natural" fill order.
@@ -90,8 +96,8 @@ const computeGridLayout = (
   pushSectionFrames({
     count: imagesAbove,
     colsInSection: Math.max(1, colsAbove),
-    yStart: margin,
-    availableHeight: topAvailableHeight,
+    yStart: margin + gapBetweenImages, // Add gap before first row for uniform spacing
+    availableHeight: topAvailableHeight - gapBetweenImages, // Adjust for gap added to yStart
     yMin: margin,
     yMax: textSafeRect.y - gapBetweenImages,
     fillFromBottom: false
@@ -141,11 +147,12 @@ const computePlainGridLayout = (
   canvasHeight: number,
   imagesCount: number,
   textSafeRect: TextSafeRect,
-  imagesPerRow?: number
+  imagesPerRow?: number,
+  imageSpacingPercent: number = 5
 ): ImageFrame[] => {
   if (imagesCount <= 0) return [];
 
-  // Calculate optimal grid dimensions
+  // Calculate optimal grid dimensions first
   let cols: number;
   let rows: number;
 
@@ -165,9 +172,29 @@ const computePlainGridLayout = (
     }
   }
 
-  // Calculate cell dimensions - fill entire canvas with no gaps or margins
-  const cellWidth = canvasWidth / cols;
-  const cellHeight = canvasHeight / rows;
+  // Calculate uniform spacing using imageSpacingPercent
+  // The spacing is a percentage of the cell size, ensuring uniform gaps
+  const spacingRatio = imageSpacingPercent / 100;
+  const numGapsY = Math.max(0, rows - 1);
+  const numGapsX = Math.max(0, cols - 1);
+  
+  // Solve: canvasHeight = rows * cellHeight + numGapsY * gapSize
+  // Where: gapSize = cellHeight * spacingRatio
+  // So: canvasHeight = rows * cellHeight + numGapsY * cellHeight * spacingRatio
+  //    = cellHeight * (rows + numGapsY * spacingRatio)
+  const cellHeight = canvasHeight / (rows + numGapsY * spacingRatio);
+  const gapSize = cellHeight * spacingRatio;
+  
+  // Same for width
+  const cellWidth = canvasWidth / (cols + numGapsX * spacingRatio);
+  const gapWidth = cellWidth * spacingRatio;
+  
+  // Use vertical gap size for row spacing (this is what matters for uniform row gaps)
+  const uniformGapSize = gapSize;
+  
+  // Use the calculated cell sizes directly - they already account for uniform gaps
+  const finalCellWidth = cellWidth;
+  const finalCellHeight = cellHeight;
 
   const frames: ImageFrame[] = [];
 
@@ -175,11 +202,17 @@ const computePlainGridLayout = (
     const row = Math.floor(i / cols);
     const col = i % cols;
 
+    // Position frames with EXACTLY uniformGapSize between each row
+    // Formula: y = row * (cellHeight + gapSize)
+    // This ensures: gap between row N and N+1 = (N+1)*(cellHeight+gap) - N*(cellHeight+gap) - cellHeight = gapSize
+    const x = col * (finalCellWidth + gapWidth);
+    const y = row * (finalCellHeight + uniformGapSize);
+
     frames.push({
-      x: col * cellWidth,
-      y: row * cellHeight,
-      width: cellWidth,
-      height: cellHeight,
+      x,
+      y,
+      width: finalCellWidth,
+      height: finalCellHeight,
       rotation: 0
     });
   }
@@ -196,23 +229,24 @@ export const computeImageFrames = (
   canvasHeight: number,
   imagesCount: number,
   textSafeRect: TextSafeRect,
-  imagesPerRow?: number
+  imagesPerRow?: number,
+  imageSpacingPercent?: number
 ): ImageFrame[] => {
   if (imagesCount <= 0) return [];
 
   switch (layoutStyle) {
     case "grid": {
-      return computePlainGridLayout(canvasWidth, canvasHeight, imagesCount, textSafeRect, imagesPerRow);
+      return computePlainGridLayout(canvasWidth, canvasHeight, imagesCount, textSafeRect, imagesPerRow, imageSpacingPercent);
     }
     case "dividedGrid": {
-      return computeGridLayout(canvasWidth, canvasHeight, imagesCount, textSafeRect, imagesPerRow);
+      return computeGridLayout(canvasWidth, canvasHeight, imagesCount, textSafeRect, imagesPerRow, imageSpacingPercent);
     }
     case "dividedGrid2": {
-      const base = computeGridLayout(canvasWidth, canvasHeight, imagesCount, textSafeRect, imagesPerRow);
+      const base = computeGridLayout(canvasWidth, canvasHeight, imagesCount, textSafeRect, imagesPerRow, imageSpacingPercent);
       return applyAngledVariation(base, 6);
     }
     default: {
-      return computeGridLayout(canvasWidth, canvasHeight, imagesCount, textSafeRect, imagesPerRow);
+      return computeGridLayout(canvasWidth, canvasHeight, imagesCount, textSafeRect, imagesPerRow, imageSpacingPercent);
     }
   }
 };

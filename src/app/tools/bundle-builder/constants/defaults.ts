@@ -1,0 +1,33 @@
+import type { AspectRatio, LayoutStyle, CenterMode, CenterShapeId } from "../types";
+import { CENTER_TEXT_FONTS } from "../fonts";
+
+export const DEFAULT_ASPECT_RATIO: AspectRatio = "1:1";
+export const DEFAULT_LAYOUT_STYLE: LayoutStyle = "dividedGrid";
+export const DEFAULT_BACKGROUND_MODE: "transparent" | "backgroundImage" | "color" = "transparent";
+export const DEFAULT_BACKGROUND_COLOR = "#ffffff";
+export const DEFAULT_TEXT_SAFE_AREA_PERCENT = 20;
+export const DEFAULT_IMAGE_SPACING_PERCENT = 5;
+export const DEFAULT_CENTER_WIDTH_SCALE = 1;
+export const DEFAULT_CENTER_HEIGHT_SCALE = 1;
+export const DEFAULT_CENTER_SCALE_LOCKED = true;
+export const DEFAULT_CENTER_ROTATION = 0;
+export const DEFAULT_CENTER_X_OFFSET = 0;
+export const DEFAULT_CENTER_Y_OFFSET = 0;
+export const DEFAULT_CENTER_MODE: CenterMode = "text";
+export const DEFAULT_CENTER_SHAPE: CenterShapeId = "roundedRect";
+export const DEFAULT_TITLE_TEXT = "Clipart Bundle";
+export const DEFAULT_SUBTITLE_TEXT = "20 PNGs | Transparent | Commercial Use | 300 DPI";
+export const DEFAULT_TITLE_FONT = CENTER_TEXT_FONTS[0]?.id ?? "Open Sans";
+export const DEFAULT_SUBTITLE_FONT = CENTER_TEXT_FONTS[0]?.id ?? "Open Sans";
+export const DEFAULT_TITLE_BOLD = false;
+export const DEFAULT_SUBTITLE_BOLD = false;
+export const DEFAULT_TITLE_FONT_SIZE = 48;
+export const DEFAULT_SUBTITLE_FONT_SIZE = 28;
+export const DEFAULT_TITLE_FONT_SIZE_AUTO = false;
+export const DEFAULT_SUBTITLE_FONT_SIZE_AUTO = false;
+export const DEFAULT_SHAPE_COLOR = "#fef3c7";
+export const DEFAULT_TITLE_COLOR = "#1f2937";
+export const DEFAULT_SUBTITLE_COLOR = "#4b5563";
+export const DEFAULT_WRAP_TEXT = true;
+
+export const PRESET_STORAGE_KEY = "bundle-builder-presets";
