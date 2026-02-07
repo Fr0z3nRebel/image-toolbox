@@ -1,4 +1,4 @@
-import { ImageIcon, Ruler, LayoutGrid, FileText, ScanLine } from "lucide-react";
+import { ImageIcon, Ruler, LayoutGrid, FileText, ScanLine, Eraser } from "lucide-react";
 import Link from "next/link";
 
 interface ToolCardProps {
@@ -82,12 +82,20 @@ export default function Home() {
       color: "hover:border-purple-200",
     },
     {
+      title: "Background Remover",
+      description: "Remove backgrounds from images in your browser — private, client-side AI",
+      icon: <Eraser className="h-6 w-6 text-violet-600" />,
+      href: "/tools/background-remover",
+      color: "hover:border-violet-200",
+      badge: "Beta"
+    },
+    {
       title: "Raster Vectorizer",
       description: "Convert images to SVG with filters and optional single-color output",
       icon: <ScanLine className="h-6 w-6 text-teal-600" />,
       href: "/tools/raster-vectorizer",
       color: "hover:border-teal-200",
-      badge: "New"
+      badge: "Beta"
     },
     {
       title: "Bundle Builder",
