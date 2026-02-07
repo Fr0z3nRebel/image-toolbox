@@ -1,4 +1,4 @@
-import { ImageIcon, Ruler, LayoutGrid, FileText } from "lucide-react";
+import { ImageIcon, Ruler, LayoutGrid, FileText, ScanLine } from "lucide-react";
 import Link from "next/link";
 
 interface ToolCardProps {
@@ -80,6 +80,13 @@ export default function Home() {
       icon: <Ruler className="h-6 w-6 text-purple-600" />,
       href: "/tools/resolution-changer",
       color: "hover:border-purple-200",
+    },
+    {
+      title: "Raster Vectorizer",
+      description: "Convert images to SVG with filters and optional single-color output",
+      icon: <ScanLine className="h-6 w-6 text-teal-600" />,
+      href: "/tools/raster-vectorizer",
+      color: "hover:border-teal-200",
       badge: "New"
     },
     {

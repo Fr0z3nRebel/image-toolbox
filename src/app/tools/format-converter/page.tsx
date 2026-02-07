@@ -60,7 +60,9 @@ export default function FormatConverter() {
       </label>
       <select
         value={targetFormat}
-        onChange={(e) => setTargetFormat(e.target.value as "avif" | "jpeg" | "png" | "webp")}
+        onChange={(e) =>
+          setTargetFormat(e.target.value as "avif" | "jpeg" | "png" | "webp")
+        }
         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
       >
         <option value="avif">AVIF</option>

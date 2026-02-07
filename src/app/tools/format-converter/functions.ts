@@ -59,17 +59,16 @@ export const convertImageToFormat = (file: File, targetFormat: string): Promise<
 
 // Process multiple files for conversion
 export const convertImages = async (
-  files: File[], 
+  files: File[],
   targetFormat: string,
   onProgress?: (current: number, total: number) => void
 ): Promise<ProcessedFile[]> => {
   const converted: ProcessedFile[] = [];
-  
-  // Convert each file client-side
+
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     onProgress?.(i + 1, files.length);
-    
+
     try {
       const result = await convertImageToFormat(file, targetFormat);
       converted.push(result);
@@ -77,14 +76,14 @@ export const convertImages = async (
       console.error(`Failed to convert ${file.name}:`, error);
     }
   }
-  
+
   return converted;
 };
 
 // Check if individual downloads should be disabled for Firefox AVIF
 export const shouldDisableIndividualDownload = (
-  targetFormat: string, 
+  targetFormat: string,
   isFirefox: boolean
 ): boolean => {
   return isFirefox && targetFormat === 'avif';
-}; 
+};
