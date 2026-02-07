@@ -1,4 +1,19 @@
 import Link from "next/link";
+import { Facebook } from "lucide-react";
+
+/** X (Twitter) social media logo SVG — stylized X brand mark */
+function XLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M2 2l8.5 8.5L2 19h3l6.5-6.5L18 19h3l-8.5-8.5L21 2h-3l-6.5 6.5L6 2H2z" />
+    </svg>
+  );
+}
 
 export function Header() {
   return (
@@ -18,17 +33,23 @@ export function Header() {
 
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link 
-              href="/privacy-policy" 
-              className="text-gray-300 hover:text-white transition-colors text-sm"
+            <a
+              href="https://www.facebook.com/groups/1619414616070949/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-300 hover:text-white transition-colors"
+              aria-label="Facebook"
             >
-              Privacy Policy
-            </Link>
-            <a 
-              href="https://www.leftystudios.com"
-              className="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium"
+              <Facebook className="w-6 h-6" />
+            </a>
+            <a
+              href="https://x.com/LeftyStudios"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-300 hover:text-white transition-colors"
+              aria-label="X"
             >
-              Contact
+              <XLogo className="w-5 h-5" />
             </a>
           </nav>
 

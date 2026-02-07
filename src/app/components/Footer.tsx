@@ -45,11 +45,13 @@ export function Footer() {
               <p className="text-gray-400 text-sm">
                 Questions or concerns?
               </p>
-              <a 
-                href="mailto:contactus@leftystudios.com"
+              <a
+                href="https://www.leftystudios.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300 transition-colors text-sm"
               >
-                contactus@leftystudios.com
+                Contact
               </a>
               <div className="pt-2">
                 <a
