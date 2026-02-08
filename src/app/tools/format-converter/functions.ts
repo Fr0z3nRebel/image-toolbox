@@ -1,59 +1,124 @@
 import { ProcessedFile } from "../../components/ProcessedFilesDisplay";
 
+export const SVG_SIZE_PRESETS = [1024, 2048, 4096, 8192] as const;
+export type SvgSizePreset = (typeof SVG_SIZE_PRESETS)[number];
+export const SVG_SIZE_DEFAULT = 4096;
+
+export interface SvgExportOptions {
+  /** Longest side in pixels (used when input is SVG). */
+  svgLongestSide: number;
+  /** If true, output 1:1 square with padding on shortest sides. */
+  svgSquare: boolean;
+}
+
+function isSvgFile(file: File): boolean {
+  return file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
+}
+
 // Client-side image conversion function
-export const convertImageToFormat = (file: File, targetFormat: string): Promise<ProcessedFile> => {
+export const convertImageToFormat = (
+  file: File,
+  targetFormat: string,
+  options?: SvgExportOptions
+): Promise<ProcessedFile> => {
   return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
       if (!ctx) {
-        reject(new Error('Could not get canvas context'));
+        reject(new Error("Could not get canvas context"));
         return;
       }
 
-      // Set canvas dimensions to match image
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+      const isSvg = isSvgFile(file);
+      const useSvgOptions = isSvg && options && options.svgLongestSide > 0;
 
-      // Draw image to canvas
-      ctx.drawImage(img, 0, 0);
+      if (useSvgOptions) {
+        const w = img.naturalWidth || 1;
+        const h = img.naturalHeight || 1;
+        const longest = Math.max(w, h);
+        const scale = options.svgLongestSide / longest;
+        const drawW = Math.round(w * scale);
+        const drawH = Math.round(h * scale);
 
-      // Convert to target format
-      const mimeType = `image/${targetFormat}`;
-      
-      // Add timeout for AVIF conversion as it can be slow
-      const timeoutMs = targetFormat === 'avif' ? 15000 : 10000;
-      const timeoutId = setTimeout(() => {
-        reject(new Error(`Conversion timeout - ${targetFormat.toUpperCase()} encoding took too long`));
-      }, timeoutMs);
-      
-      canvas.toBlob((blob) => {
-        clearTimeout(timeoutId);
-        
-        if (!blob) {
-          reject(new Error(`Failed to convert image to ${targetFormat.toUpperCase()} - format may not be supported by this browser`));
-          return;
+        if (options.svgSquare) {
+          canvas.width = options.svgLongestSide;
+          canvas.height = options.svgLongestSide;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(
+            img,
+            0,
+            0,
+            w,
+            h,
+            (options.svgLongestSide - drawW) / 2,
+            (options.svgLongestSide - drawH) / 2,
+            drawW,
+            drawH
+          );
+        } else {
+          canvas.width = drawW;
+          canvas.height = drawH;
+          ctx.drawImage(img, 0, 0, w, h, 0, 0, drawW, drawH);
         }
+      } else {
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        ctx.drawImage(img, 0, 0);
+      }
 
-        const fileName = file.name.replace(/\.[^/.]+$/, "") + `.${targetFormat}`;
-        const url = URL.createObjectURL(blob);
+      const mimeType = `image/${targetFormat}`;
 
-        resolve({
-          name: fileName,
-          url: url,
-          blob: blob,
-          originalSize: file.size,
-          processedSize: blob.size
-        });
-      }, mimeType, 1.0); // Quality 1.0 = no compression
+      const timeoutMs = targetFormat === "avif" ? 15000 : 10000;
+      const timeoutId = setTimeout(() => {
+        reject(
+          new Error(
+            `Conversion timeout - ${targetFormat.toUpperCase()} encoding took too long`
+          )
+        );
+      }, timeoutMs);
+
+      canvas.toBlob(
+        (blob) => {
+          clearTimeout(timeoutId);
+
+          if (!blob) {
+            reject(
+              new Error(
+                `Failed to convert image to ${targetFormat.toUpperCase()} - format may not be supported by this browser`
+              )
+            );
+            return;
+          }
+
+          const fileName =
+            file.name.replace(/\.[^/.]+$/, "") + `.${targetFormat}`;
+          const resultUrl = URL.createObjectURL(blob);
+
+          resolve({
+            name: fileName,
+            url: resultUrl,
+            blob: blob,
+            originalSize: file.size,
+            processedSize: blob.size,
+          });
+        },
+        mimeType,
+        1.0
+      );
     };
 
-    img.onerror = () => reject(new Error('Failed to load image'));
-    
-    // Load the image
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to load image"));
+    };
+
+    img.src = url;
   });
 };
 
@@ -61,7 +126,8 @@ export const convertImageToFormat = (file: File, targetFormat: string): Promise<
 export const convertImages = async (
   files: File[],
   targetFormat: string,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  options?: SvgExportOptions
 ): Promise<ProcessedFile[]> => {
   const converted: ProcessedFile[] = [];
 
@@ -70,7 +136,7 @@ export const convertImages = async (
     onProgress?.(i + 1, files.length);
 
     try {
-      const result = await convertImageToFormat(file, targetFormat);
+      const result = await convertImageToFormat(file, targetFormat, options);
       converted.push(result);
     } catch (error) {
       console.error(`Failed to convert ${file.name}:`, error);
