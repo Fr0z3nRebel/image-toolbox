@@ -194,7 +194,10 @@ async function cropSvgToSvg(
 
   let bbox: DOMRect;
   try {
-    bbox = clone.getBBox();
+    // getBBox is defined on SVGGraphicsElement/SVGSVGElement, but TypeScript's
+    // lib DOM typings don't expose it on the generic SVGElement type, so we
+    // use a narrow cast here.
+    bbox = (clone as unknown as SVGGraphicsElement).getBBox();
   } finally {
     document.body.removeChild(wrapper);
   }
