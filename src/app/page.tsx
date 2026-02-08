@@ -1,4 +1,4 @@
-import { ImageIcon, Ruler, LayoutGrid, FileText, ScanLine, Eraser } from "lucide-react";
+import { ImageIcon, Ruler, LayoutGrid, FileText, ScanLine, Eraser, Crop, Square } from "lucide-react";
 import Link from "next/link";
 
 interface ToolCardProps {
@@ -96,6 +96,20 @@ export default function Home() {
       href: "/tools/raster-vectorizer",
       color: "hover:border-teal-200",
       badge: "Beta"
+    },
+    {
+      title: "Auto-Cropper",
+      description: "Crop images and SVGs to remove unused transparent or white space",
+      icon: <Crop className="h-6 w-6 text-indigo-600" />,
+      href: "/tools/auto-cropper",
+      color: "hover:border-indigo-200"
+    },
+    {
+      title: "Rationalizer",
+      description: "Add transparent padding so images become perfect 1:1 squares",
+      icon: <Square className="h-6 w-6 text-sky-600" />,
+      href: "/tools/rationalizer",
+      color: "hover:border-sky-200"
     },
     {
       title: "Bundle Builder",
