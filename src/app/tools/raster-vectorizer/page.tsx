@@ -36,6 +36,7 @@ function makeId(file: File, index: number): string {
 }
 
 export default function RasterVectorizerPage() {
+  const [mode, setMode] = useState<"single" | "bulk">("bulk");
   const [items, setItems] = useState<VectorItem[]>([]);
   const [presetId, setPresetId] = useState<PotracePresetId>("clean");
   const [threshold, setThreshold] = useState(128);
@@ -54,9 +55,24 @@ export default function RasterVectorizerPage() {
     }
   }, [items.length, mobileIndex]);
 
+  useEffect(() => {
+    if (mode === "single" && items.length > 1) {
+      setItems((prev) => (prev.length > 0 ? [prev[0]] : []));
+      setMobileIndex(0);
+      setPreviewId(null);
+    }
+  }, [mode, items.length]);
+
   const applyFiles = useCallback((files: FileList | File[]) => {
     setGlobalError(null);
-    const list = Array.from(files).slice(0, MAX_FILES);
+
+    let list = Array.from(files);
+    if (mode === "single") {
+      list = list.slice(0, 1);
+    } else {
+      list = list.slice(0, MAX_FILES);
+    }
+
     const valid: VectorItem[] = [];
     const errors: string[] = [];
     list.forEach((file, index) => {
@@ -80,9 +96,13 @@ export default function RasterVectorizerPage() {
       setGlobalError(`Skipped ${errors.length} file(s). ${errors[0]}`);
     }
     if (valid.length > 0) {
-      setItems((prev) => [...prev, ...valid]);
+      if (mode === "single") {
+        setItems([valid[0]]);
+      } else {
+        setItems((prev) => [...prev, ...valid]);
+      }
     }
-  }, []);
+  }, [mode]);
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -296,6 +316,38 @@ export default function RasterVectorizerPage() {
         <div
           className="order-2 lg:order-1 flex flex-col bg-white rounded-xl border border-gray-200 p-6 overflow-visible lg:overflow-hidden lg:h-[50vh]"
         >
+          <div
+            role="tablist"
+            aria-label="Vectorization mode"
+            className="flex mb-4 flex-shrink-0"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "single"}
+              onClick={() => setMode("single")}
+              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                mode === "single"
+                  ? "bg-brand-600 text-white border-brand-600"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              Single image
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "bulk"}
+              onClick={() => setMode("bulk")}
+              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                mode === "bulk"
+                  ? "bg-brand-600 text-white border-brand-600"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              Multiple images
+            </button>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-1 gap-8 lg:flex-1 lg:min-h-0 lg:items-stretch">
             <ToolControls
               presetId={presetId}
@@ -319,7 +371,7 @@ export default function RasterVectorizerPage() {
               <input
                 type="file"
                 accept={ACCEPTED_TYPES}
-                multiple
+                multiple={mode === "bulk"}
                 onChange={handleFileChange}
                 className="hidden"
                 id="r2v-upload"
@@ -341,17 +393,25 @@ export default function RasterVectorizerPage() {
                     htmlFor="r2v-upload"
                     className={`cursor-pointer flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors flex-1 min-h-[200px] ${
                       isDragging
-                        ? "border-teal-500 bg-teal-50"
+                        ? "border-brand-500 bg-brand-50"
                         : "border-gray-200 bg-gray-50 hover:border-gray-300"
                     }`}
                   >
                     <Upload className="h-10 w-10 text-gray-400" />
                     <span className="text-sm text-gray-600">
-                      Drop images or click to select
+                      {mode === "single"
+                        ? "Drop an image or click to select"
+                        : "Drop images or click to select"}
                     </span>
-                    <span className="text-xs text-gray-500">
-                      JPG, PNG, GIF, WebP — max 4 MB each, up to {MAX_FILES} files
-                    </span>
+                    {mode === "bulk" ? (
+                      <span className="text-xs text-gray-500">
+                        JPG, PNG, GIF, WebP — max 4 MB each, up to {MAX_FILES} files
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-500">
+                        JPG, PNG, GIF, WebP — max 4 MB, one file at a time
+                      </span>
+                    )}
                   </label>
                 ) : (
                   <>
@@ -359,9 +419,11 @@ export default function RasterVectorizerPage() {
                     className={`relative min-h-0 w-full ${items.length === 1 ? "flex-1 min-h-0 overflow-hidden lg:absolute lg:inset-0 lg:flex-none" : "flex-1 min-h-0 flex flex-col lg:flex-initial lg:flex-shrink-0"}`}
                   >
                     {isDragging && (
-                      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-teal-500/10 border-2 border-dashed border-teal-500 pointer-events-none">
-                        <span className="text-sm font-medium text-teal-700 bg-white/90 px-4 py-2 rounded-lg shadow">
-                          Drop to add more images
+                      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-brand-500/10 border-2 border-dashed border-brand-500 pointer-events-none">
+                        <span className="text-sm font-medium text-brand-700 bg-white/90 px-4 py-2 rounded-lg shadow">
+                          {mode === "single"
+                            ? "Drop an image to replace"
+                            : "Drop to add more images"}
                         </span>
                       </div>
                     )}
@@ -377,7 +439,7 @@ export default function RasterVectorizerPage() {
                                 if (e.key === "Enter" && item.svgPreviewUrl && item.status === "done")
                                   openPreview(item.id);
                               }}
-                              className="relative w-full h-full max-w-full max-h-full rounded-lg border border-gray-200 overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 flex items-center justify-center"
+                              className="relative w-full h-full max-w-full max-h-full rounded-lg border border-gray-200 overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 flex items-center justify-center"
                             >
                               {item.status === "converting" && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 z-10">
@@ -438,7 +500,7 @@ export default function RasterVectorizerPage() {
                                   if (e.key === "Enter" && item.svgPreviewUrl && item.status === "done")
                                     openPreview(item.id);
                                 }}
-                                className="relative w-full h-full max-w-full max-h-full rounded-lg border border-gray-200 overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 flex items-center justify-center"
+                                className="relative w-full h-full max-w-full max-h-full rounded-lg border border-gray-200 overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 flex items-center justify-center"
                               >
                                 {item.status === "converting" && (
                                   <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 z-10">
@@ -511,7 +573,7 @@ export default function RasterVectorizerPage() {
                               if (e.key === "Enter" && item.svgPreviewUrl && item.status === "done")
                                 openPreview(item.id);
                             }}
-                            className="relative w-full rounded-lg border border-gray-200 overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                            className="relative w-full rounded-lg border border-gray-200 overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
                             style={{ aspectRatio: "1" }}
                           >
                             {item.status === "converting" && (
@@ -574,7 +636,7 @@ export default function RasterVectorizerPage() {
                           <button
                             type="button"
                             onClick={() => downloadOne(previewItem!)}
-                            className="inline-flex items-center gap-1 text-teal-600 hover:text-teal-700 font-medium text-sm"
+                            className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-700 font-medium text-sm"
                           >
                             <Download className="h-4 w-4" />
                             Download
@@ -634,7 +696,7 @@ export default function RasterVectorizerPage() {
             <button
               type="button"
               onClick={downloadAll}
-              className="w-full mt-4 py-3 px-4 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 inline-flex items-center justify-center gap-2"
+              className="w-full mt-4 py-3 px-4 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 inline-flex items-center justify-center gap-2"
             >
               <Download className="h-5 w-5" />
               Download

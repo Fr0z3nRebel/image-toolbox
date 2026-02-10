@@ -51,9 +51,9 @@ export default function ToolControls({
               onClick={() => onPresetIdChange(p.id)}
               disabled={isConverting}
               title={p.description}
-              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:ring-offset-gray-100 disabled:opacity-50 ${
+              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 focus:ring-offset-gray-100 disabled:opacity-50 ${
                 presetId === p.id
-                  ? "bg-white text-teal-700 shadow-sm rounded-md"
+                  ? "bg-white text-brand-700 shadow-sm rounded-md"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
@@ -74,7 +74,7 @@ export default function ToolControls({
           value={threshold}
           onChange={(e) => onThresholdChange(Number(e.target.value))}
           disabled={isConverting}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-600"
         />
         <p className="text-xs text-gray-500 mt-0.5">
           Lower = more pixels as shape.
@@ -87,7 +87,7 @@ export default function ToolControls({
           checked={invert}
           onChange={(e) => onInvertChange(e.target.checked)}
           disabled={isConverting}
-          className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+          className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
         />
         <span className="text-sm font-medium text-gray-700">
           Invert (light = shape)
@@ -101,7 +101,7 @@ export default function ToolControls({
             checked={useSingleColor}
             onChange={(e) => onUseSingleColorChange(e.target.checked)}
             disabled={isConverting}
-            className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+            className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
           />
           <span className="text-sm font-medium text-gray-700">
             Apply single color to SVG

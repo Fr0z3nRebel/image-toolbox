@@ -92,9 +92,9 @@ export default function Home() {
     {
       title: "Raster Vectorizer",
       description: "Convert images to SVG with filters and optional single-color output",
-      icon: <ScanLine className="h-6 w-6 text-teal-600" />,
+      icon: <ScanLine className="h-6 w-6 text-brand-600" />,
       href: "/tools/raster-vectorizer",
-      color: "hover:border-teal-200",
+      color: "hover:border-brand-200",
       badge: "Beta"
     },
     {

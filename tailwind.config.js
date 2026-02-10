@@ -26,6 +26,15 @@ module.exports = {
       indigo: colors.indigo,
       purple: colors.violet,
       pink: colors.pink,
+      // Brand accent color: rgb(243, 121, 27)
+      brand: {
+        50: "#FFF4EC",
+        100: "#FFE4D0",
+        200: "#FFC7A1",
+        500: "#F3791B",
+        600: "#E06D18",
+        700: "#C15E14",
+      },
     },
     spacing: {
       px: "1px",
