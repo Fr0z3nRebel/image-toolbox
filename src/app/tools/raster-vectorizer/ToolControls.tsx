@@ -39,18 +39,28 @@ export default function ToolControls({
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Style
         </label>
-        <select
-          value={presetId}
-          onChange={(e) => onPresetIdChange(e.target.value as PotracePresetId)}
-          disabled={isConverting}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-gray-900 bg-white disabled:opacity-50"
+        <div
+          role="group"
+          aria-label="Style preset"
+          className="flex rounded-lg border border-gray-300 overflow-hidden bg-gray-100 p-0.5"
         >
           {POTRACE_PRESETS.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.label} — {p.description}
-            </option>
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onPresetIdChange(p.id)}
+              disabled={isConverting}
+              title={p.description}
+              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:ring-offset-gray-100 disabled:opacity-50 ${
+                presetId === p.id
+                  ? "bg-white text-teal-700 shadow-sm rounded-md"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              {p.label}
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       <div>

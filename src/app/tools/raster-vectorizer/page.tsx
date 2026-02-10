@@ -9,7 +9,6 @@ import { ACCEPTED_TYPES, MAX_FILE_SIZE_BYTES, MAX_FILES } from "./constants";
 import JSZip from "jszip";
 import ToolControls from "./ToolControls";
 import HelpContent from "./HelpContent";
-import AdPlaceholder from "./AdPlaceholder";
 
 const LIVE_PREVIEW_DEBOUNCE_MS = 400;
 
@@ -47,7 +46,6 @@ export default function RasterVectorizerPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [mobileIndex, setMobileIndex] = useState(0);
-  const [showAdPlaceholder, setShowAdPlaceholder] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -55,13 +53,6 @@ export default function RasterVectorizerPage() {
       setMobileIndex(Math.max(0, items.length - 1));
     }
   }, [items.length, mobileIndex]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const host = window.location.hostname;
-      setShowAdPlaceholder(host === "localhost" || host === "127.0.0.1");
-    }
-  }, []);
 
   const applyFiles = useCallback((files: FileList | File[]) => {
     setGlobalError(null);
@@ -333,32 +324,6 @@ export default function RasterVectorizerPage() {
                 className="hidden"
                 id="r2v-upload"
               />
-              {items.length > 0 && (
-                <div className="flex items-center justify-between mb-2 flex-shrink-0">
-                  <p className="text-sm font-medium text-gray-700">
-                    Preview ({items.length})
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <label
-                      htmlFor="r2v-upload"
-                      className="inline-flex items-center gap-1 text-teal-600 hover:text-teal-700 font-medium text-sm cursor-pointer"
-                    >
-                      <Upload className="h-4 w-4" />
-                      Add images
-                    </label>
-                    {viewableItems.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={downloadAll}
-                        className="inline-flex items-center gap-1 text-teal-600 hover:text-teal-700 font-medium text-sm"
-                      >
-                        <Download className="h-4 w-4" />
-                        Download all
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
               <div
                 className={`min-h-0 flex flex-col relative ${
                   items.length === 0
@@ -665,11 +630,17 @@ export default function RasterVectorizerPage() {
               )}
             </div>
           </div>
+          {items.length > 0 && viewableItems.length > 0 && (
+            <button
+              type="button"
+              onClick={downloadAll}
+              className="w-full mt-4 py-3 px-4 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 inline-flex items-center justify-center gap-2"
+            >
+              <Download className="h-5 w-5" />
+              Download
+            </button>
+          )}
         </div>
-
-        {showAdPlaceholder && (
-          <AdPlaceholder onHide={() => setShowAdPlaceholder(false)} />
-        )}
 
         <div className="order-3">
           <HelpContent />
