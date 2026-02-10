@@ -1,0 +1,42 @@
+---
+description: Enforce structured, conventional commit messages with semantic titles and explicit What/Why/Testing sections.
+alwaysApply: true
+---
+
+# Commit Message Convention
+
+When generating git commit messages for this repository, always follow this exact structure:
+
+1. **Semantic title line** using Conventional Commits style (no trailing period), e.g.:
+   - `feat: add raster vectorizer tool`
+   - `fix: correct bundle builder export bug`
+   - `chore: update dependencies`
+2. **Blank line**
+3. **What** section
+4. **Blank line**
+5. **Why** section
+6. **Blank line**
+7. **Testing** section
+
+The full commit message format should look like this:
+
+```text
+<type>[optional scope]: short, imperative summary
+
+What:
+- Bullet points summarizing the concrete code changes.
+
+Why:
+- Brief explanation of the motivation, intent, or bug being fixed.
+
+Testing:
+- List of tests run (e.g. npm test, npm run lint, manual flows), or "Testing: not tested".
+```
+
+## Additional guidelines
+
+- Keep the **title line** under ~72 characters when possible.
+- Wrap body lines naturally instead of creating very long lines (assume word wrap is enabled in the editor).
+- Use clear, concise language that focuses on **why** the change is needed, not just what changed.
+- Prefer present tense and imperative mood in the title (e.g. "add", "fix", "update").
+
