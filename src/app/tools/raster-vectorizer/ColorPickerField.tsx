@@ -71,7 +71,7 @@ export default function ColorPickerField({
   return (
     <div className="space-y-1">
       {label ? (
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700">
+        <label htmlFor={id} className="block text-sm font-medium text-brand-white">
           {label}
         </label>
       ) : null}
@@ -95,7 +95,7 @@ export default function ColorPickerField({
               onClick={handlePick}
               disabled={disabled || isPicking}
               title="Pick color from screen"
-              className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50"
+              className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-grey text-brand-white hover:bg-brand-charcoal disabled:opacity-50"
             >
               <Pipette className="h-3 w-3" />
             </button>
@@ -108,10 +108,10 @@ export default function ColorPickerField({
           onBlur={handleHexBlur}
           placeholder="#000000"
           disabled={disabled}
-          className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
+          className="flex-1 min-w-0 px-3 py-2 border border-brand-grey rounded-lg text-sm text-brand-white bg-brand-charcoal focus:ring-2 focus:ring-brand-orange focus:border-transparent disabled:opacity-50 placeholder:text-brand-white/50"
         />
       </div>
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-brand-white/70">
         Optional: apply one color to the whole SVG (e.g. for icons).
       </p>
     </div>

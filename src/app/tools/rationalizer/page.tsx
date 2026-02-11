@@ -52,7 +52,7 @@ export default function RationalizerPage() {
     <button
       onClick={handleRationalize}
       disabled={files.length === 0 || isProcessing}
-      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+      className="w-full bg-brand-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
     >
       {isProcessing ? "Rationalizing…" : "Rationalize"}
     </button>
@@ -75,16 +75,16 @@ export default function RationalizerPage() {
       </div>
 
       {processedFiles.length > 0 && (
-        <div className="mb-8 bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Previews</h2>
-          <p className="text-sm text-gray-600 mb-4">
+        <div className="mb-8 bg-brand-grey rounded-xl border border-brand-charcoal p-6">
+          <h2 className="text-xl font-semibold text-brand-white mb-4">Previews</h2>
+          <p className="text-sm text-brand-white/90 mb-4">
             Each image is now a 1:1 square with transparent padding. Review below before downloading.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {processedFiles.map((file, index) => (
               <div
                 key={index}
-                className="flex flex-col rounded-lg border border-gray-200 bg-gray-50 overflow-hidden"
+                className="flex flex-col rounded-lg border border-brand-grey bg-brand-charcoal overflow-hidden"
               >
                 <div className="aspect-square flex items-center justify-center p-2 bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] bg-[length:12px_12px] min-h-[120px]">
                   <img
@@ -94,7 +94,7 @@ export default function RationalizerPage() {
                   />
                 </div>
                 <div className="p-2 flex items-center justify-between gap-2 min-w-0">
-                  <span className="text-xs font-medium text-gray-700 truncate" title={file.name}>
+                  <span className="text-xs font-medium text-brand-white truncate" title={file.name}>
                     {file.name}
                   </span>
                   <a

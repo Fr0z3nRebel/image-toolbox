@@ -121,12 +121,12 @@ export default function FileUploadZone({
       ? "w-full"
       : variant === "subtleWhite"
         ? "w-full"
-        : "bg-white rounded-xl border border-gray-200 p-6";
+        : "bg-brand-grey rounded-xl border border-brand-charcoal p-6";
 
   const titleClassName =
     variant === "subtle" || variant === "subtleWhite"
-      ? "text-sm font-semibold text-gray-900 mb-3"
-      : "text-xl font-semibold text-gray-900 mb-4";
+      ? "text-sm font-semibold text-brand-white mb-3"
+      : "text-xl font-semibold text-brand-white mb-4";
 
   const dropZonePadding = compactDropZone ? "p-4" : "p-8";
   const dropZoneIconClass = compactDropZone ? "h-8 w-8" : "h-12 w-12";
@@ -145,7 +145,7 @@ export default function FileUploadZone({
         <div className={children ? "lg:col-span-2" : "lg:col-span-3"}>
           <div className="space-y-4">
             <div
-              className={`border-2 border-dashed border-gray-300 rounded-lg ${dropZonePadding} text-center hover:border-gray-400 transition-colors cursor-pointer ${dropZoneHeightClass} flex flex-col justify-center ${
+              className={`border-2 border-dashed border-brand-charcoal rounded-lg ${dropZonePadding} text-center hover:border-brand-grey transition-colors cursor-pointer ${dropZoneHeightClass} flex flex-col justify-center ${
                 disabled ? "opacity-50 cursor-not-allowed" : ""
               }`}
               onDragOver={handleDragOver}
@@ -156,12 +156,12 @@ export default function FileUploadZone({
                 }
               }}
             >
-              <Upload className={`${dropZoneIconClass} text-gray-400 mx-auto mb-3`} />
-              <p className={`${dropZoneTextClass} text-gray-600 mb-1`}>
+              <Upload className={`${dropZoneIconClass} text-brand-white/80 mx-auto mb-3`} />
+              <p className={`${dropZoneTextClass} text-brand-white mb-1`}>
                 {dropPromptText}
               </p>
               {supportedFormatsText ? (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-brand-white/90">
                   {supportedFormatsText}
                 </p>
               ) : null}
@@ -185,11 +185,11 @@ export default function FileUploadZone({
       {files.length > 0 && (
         <div className="mt-6">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="text-sm font-medium text-gray-700">
+            <h3 className="text-sm font-medium text-brand-white">
               Selected Files ({files.length})
             </h3>
             {showFileSize && (
-              <div className="text-sm text-blue-800 bg-blue-50 px-3 py-1 rounded-lg">
+              <div className="text-sm text-brand-white bg-brand-charcoal px-3 py-1 rounded-lg border border-brand-grey">
                 Total size: {formatFileSize(totalSize)}
               </div>
             )}
@@ -211,7 +211,7 @@ export default function FileUploadZone({
               return (
                 <div
                   key={file.id}
-                  className={`flex items-center gap-2 p-2 bg-gray-50 rounded-lg transition-opacity ${
+                  className={`flex items-center gap-2 p-2 bg-brand-charcoal rounded-lg border border-brand-grey transition-opacity ${
                     shouldFade ? "opacity-50" : ""
                   }`}
                 >
@@ -220,24 +220,24 @@ export default function FileUploadZone({
                     <img
                       src={file.preview}
                       alt=""
-                      className="h-14 w-14 flex-shrink-0 rounded object-cover bg-gray-200"
+                      className="h-14 w-14 flex-shrink-0 rounded object-cover bg-brand-grey"
                     />
                   ) : (
-                    <ImageIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                    <ImageIcon className="h-5 w-5 text-brand-white/70 flex-shrink-0" />
                   )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-sm font-medium text-brand-white truncate">
                     {file.name}
                   </p>
                   {showFileSize && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-brand-white/90">
                       {formatFileSize(file.originalSize || file.size)}
                     </p>
                   )}
                 </div>
                 <button
                   onClick={() => removeFile(file.id)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                  className="text-brand-white/70 hover:text-brand-white transition-colors flex-shrink-0"
                   disabled={disabled}
                 >
                   <X className="h-4 w-4" />

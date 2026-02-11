@@ -24,19 +24,19 @@ export default function BackgroundSelector({
 }: BackgroundSelectorProps) {
   return (
     <div>
-      <label className="block text-sm font-bold text-gray-700 mb-2">Background</label>
+      <label className="block text-sm font-bold text-brand-white mb-2">Background</label>
       <div className="flex gap-2 items-center flex-wrap">
         <button
           type="button"
           onClick={() => onBackgroundModeChange("transparent")}
-          className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${backgroundMode === "transparent" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
+          className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${backgroundMode === "transparent" ? "border-brand-orange bg-brand-orange/20 text-brand-orange" : "border-brand-grey bg-brand-charcoal text-brand-white hover:border-brand-500/50"}`}
         >
           Transparent
         </button>
         <button
           type="button"
           onClick={() => onBackgroundModeChange("backgroundImage")}
-          className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${backgroundMode === "backgroundImage" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
+          className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${backgroundMode === "backgroundImage" ? "border-brand-orange bg-brand-orange/20 text-brand-orange" : "border-brand-grey bg-brand-charcoal text-brand-white hover:border-brand-500/50"}`}
         >
           Background image
         </button>
@@ -46,7 +46,7 @@ export default function BackgroundSelector({
             onBackgroundModeChange("color");
             onShowColorPicker();
           }}
-          className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm font-medium border transition-colors flex items-center justify-center gap-2 ${backgroundMode === "color" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
+          className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm font-medium border transition-colors flex items-center justify-center gap-2 ${backgroundMode === "color" ? "border-brand-orange bg-brand-orange/20 text-brand-orange" : "border-brand-grey bg-brand-charcoal text-brand-white hover:border-brand-500/50"}`}
         >
           <span className="inline-block h-4 w-4 rounded border border-gray-300" style={{ backgroundColor }} aria-hidden="true" />
           Color

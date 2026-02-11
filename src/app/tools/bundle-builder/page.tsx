@@ -696,7 +696,7 @@ export default function BundleBuilderTool() {
     <button
       onClick={handleReset}
       disabled={isExporting}
-      className="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm"
+      className="w-full bg-brand-orange text-white py-2 px-4 rounded-lg font-medium hover:bg-brand-600 disabled:bg-brand-charcoal disabled:text-brand-white/50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm"
       type="button"
     >
       <RotateCcw className="h-4 w-4" />
@@ -826,15 +826,15 @@ export default function BundleBuilderTool() {
       showBackButton={true}
     >
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
+      <div className="mb-6 border-b border-brand-grey">
         <nav className="flex gap-1" aria-label="Bundle builder tabs">
           <button
             type="button"
             onClick={() => setActiveTab("primary")}
             className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${
               activeTab === "primary"
-                ? "bg-white border-gray-200 text-blue-600 -mb-px"
-                : "bg-transparent border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                ? "bg-brand-grey border-brand-grey text-brand-orange -mb-px"
+                : "bg-transparent border-transparent text-brand-white/80 hover:text-brand-white hover:bg-brand-charcoal"
             }`}
             aria-current={activeTab === "primary" ? "page" : undefined}
           >
@@ -845,8 +845,8 @@ export default function BundleBuilderTool() {
             onClick={() => setActiveTab("secondary")}
             className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${
               activeTab === "secondary"
-                ? "bg-white border-gray-200 text-blue-600 -mb-px"
-                : "bg-transparent border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                ? "bg-brand-grey border-brand-grey text-brand-orange -mb-px"
+                : "bg-transparent border-transparent text-brand-white/80 hover:text-brand-white hover:bg-brand-charcoal"
             }`}
             aria-current={activeTab === "secondary" ? "page" : undefined}
           >
@@ -860,16 +860,16 @@ export default function BundleBuilderTool() {
       ) : (
       <>
       {/* Wizard + preview */}
-      <div className="mb-8 bg-white rounded-xl border border-gray-200 p-6">
+      <div className="mb-8 bg-brand-grey rounded-xl border border-brand-charcoal p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
           {/* Stepper + step content */}
           <div className="flex flex-col min-h-0">
-            <nav aria-label="Steps" className="flex flex-wrap items-center gap-x-1.5 gap-y-1 mb-4 pb-4 border-b border-gray-200">
+            <nav aria-label="Steps" className="flex flex-wrap items-center gap-x-1.5 gap-y-1 mb-4 pb-4 border-b border-brand-charcoal">
               {WIZARD_STEPS.map((s, i) => (
                 <span key={s.num} className="flex items-center gap-x-1.5">
-                  {i > 0 && <span className="text-gray-300 select-none" aria-hidden>•</span>}
+                  {i > 0 && <span className="text-brand-white/40 select-none" aria-hidden>•</span>}
                   <span
-                    className={`text-sm font-medium ${step === s.num ? "text-blue-600" : "text-gray-500"}`}
+                    className={`text-sm font-medium ${step === s.num ? "text-brand-orange" : "text-brand-white/70"}`}
                     aria-current={step === s.num ? "step" : undefined}
                   >
                     {s.num}. {s.label}
@@ -880,12 +880,12 @@ export default function BundleBuilderTool() {
             <div className="space-y-4 flex-1 min-h-0 overflow-y-auto lg:pr-1">
               {stepContent}
             </div>
-            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 shrink-0">
+            <div className="flex gap-2 mt-4 pt-4 border-t border-brand-charcoal shrink-0">
               {!isFirstStep ? (
                 <button
                   type="button"
                   onClick={previousStep}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors text-sm"
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-brand-grey bg-brand-charcoal text-brand-white font-medium hover:bg-brand-grey transition-colors text-sm"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Back
@@ -895,7 +895,7 @@ export default function BundleBuilderTool() {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors text-sm flex-1"
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-brand-orange text-white font-medium hover:bg-brand-600 transition-colors text-sm flex-1"
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
@@ -909,7 +909,7 @@ export default function BundleBuilderTool() {
             <div className="relative w-full min-h-0 flex justify-center items-start max-h-[90vh]">
               <div
                 ref={previewContainerRef}
-                className="relative rounded-xl border border-gray-200 bg-white overflow-visible shadow-sm shrink-0"
+                className="relative rounded-xl border border-brand-grey bg-brand-charcoal overflow-visible shadow-sm shrink-0"
                 style={{
                   ...aspectRatioStyle,
                   userSelect: "none",
@@ -995,7 +995,7 @@ export default function BundleBuilderTool() {
                     />
                   </>
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-400" style={{ minHeight: 200 }}>
+                  <div className="absolute inset-0 flex items-center justify-center text-sm text-brand-white/80" style={{ minHeight: 200 }}>
                     Add at least 2 bundle images to see a live preview
                   </div>
                 )}

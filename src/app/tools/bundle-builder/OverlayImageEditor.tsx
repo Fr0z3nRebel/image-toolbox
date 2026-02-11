@@ -96,8 +96,8 @@ export default function OverlayImageEditor({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Overlay Images</label>
-        <p className="text-xs text-gray-500 mb-2">Add images to overlay on top of your bundle. Click and drag to position, use handles to resize and rotate.</p>
+        <label className="block text-sm font-bold text-brand-white mb-2">Overlay Images</label>
+        <p className="text-xs text-brand-white/90 mb-2">Add images to overlay on top of your bundle. Click and drag to position, use handles to resize and rotate.</p>
         <FileUploadZone
           title=""
           variant="subtle"
@@ -115,20 +115,20 @@ export default function OverlayImageEditor({
 
       {overlayImages.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-gray-700">Overlay Images ({overlayImages.length}):</p>
+          <p className="text-xs font-medium text-brand-white">Overlay Images ({overlayImages.length}):</p>
           {overlayImages.map((overlay) => (
             <div
               key={overlay.id}
               className="relative border-2 rounded-lg p-2 border-gray-200"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-600 truncate flex-1">
+                <span className="text-xs text-brand-white/90 truncate flex-1">
                   {overlay.file.name}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleDeleteOverlay(overlay.id)}
-                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                  className="p-1 text-brand-white/70 hover:text-red-400 transition-colors"
                   aria-label="Delete overlay"
                 >
                   <X className="h-4 w-4" />
@@ -136,15 +136,15 @@ export default function OverlayImageEditor({
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-gray-500">Position:</span>{" "}
+                  <span className="text-brand-white/90">Position:</span>{" "}
                   <span className="font-mono">{overlay.x.toFixed(1)}%, {overlay.y.toFixed(1)}%</span>
                 </div>
                 <div>
-                  <span className="text-gray-500">Size:</span>{" "}
+                  <span className="text-brand-white/90">Size:</span>{" "}
                   <span className="font-mono">{overlay.width.toFixed(1)}% × {overlay.height.toFixed(1)}%</span>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-gray-500">Rotation:</span>{" "}
+                  <span className="text-brand-white/90">Rotation:</span>{" "}
                   <span className="font-mono">{overlay.rotation.toFixed(1)}°</span>
                 </div>
               </div>

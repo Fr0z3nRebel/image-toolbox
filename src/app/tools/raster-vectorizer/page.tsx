@@ -314,7 +314,7 @@ export default function RasterVectorizerPage() {
     >
       <div className="max-w-6xl mx-auto h-full flex flex-col gap-6">
         <div
-          className="order-2 lg:order-1 flex flex-col bg-white rounded-xl border border-gray-200 p-6 overflow-visible lg:overflow-hidden lg:h-[50vh]"
+          className="order-2 lg:order-1 flex flex-col bg-brand-grey rounded-xl border border-brand-charcoal p-6 overflow-visible lg:overflow-hidden lg:h-[50vh]"
         >
           <div
             role="tablist"
@@ -328,8 +328,8 @@ export default function RasterVectorizerPage() {
               onClick={() => setMode("single")}
               className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
                 mode === "single"
-                  ? "bg-brand-600 text-white border-brand-600"
-                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                  ? "bg-brand-orange text-white border-brand-orange"
+                  : "bg-brand-charcoal text-brand-white/80 border-brand-grey hover:bg-brand-grey"
               }`}
             >
               Single image
@@ -341,8 +341,8 @@ export default function RasterVectorizerPage() {
               onClick={() => setMode("bulk")}
               className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
                 mode === "bulk"
-                  ? "bg-brand-600 text-white border-brand-600"
-                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                  ? "bg-brand-orange text-white border-brand-orange"
+                  : "bg-brand-charcoal text-brand-white/80 border-brand-grey hover:bg-brand-grey"
               }`}
             >
               Multiple images
@@ -394,21 +394,21 @@ export default function RasterVectorizerPage() {
                     className={`cursor-pointer flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors flex-1 min-h-[200px] ${
                       isDragging
                         ? "border-brand-500 bg-brand-50"
-                        : "border-gray-200 bg-gray-50 hover:border-gray-300"
+                        : "border-brand-grey bg-brand-charcoal hover:border-brand-500/50"
                     }`}
                   >
-                    <Upload className="h-10 w-10 text-gray-400" />
-                    <span className="text-sm text-gray-600">
+                    <Upload className="h-10 w-10 text-brand-white/60" />
+                    <span className="text-sm text-brand-white">
                       {mode === "single"
                         ? "Drop an image or click to select"
                         : "Drop images or click to select"}
                     </span>
                     {mode === "bulk" ? (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-brand-white/70">
                         JPG, PNG, GIF, WebP — max 4 MB each, up to {MAX_FILES} files
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-brand-white/70">
                         JPG, PNG, GIF, WebP — max 4 MB, one file at a time
                       </span>
                     )}
@@ -420,7 +420,7 @@ export default function RasterVectorizerPage() {
                   >
                     {isDragging && (
                       <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-brand-500/10 border-2 border-dashed border-brand-500 pointer-events-none">
-                        <span className="text-sm font-medium text-brand-700 bg-white/90 px-4 py-2 rounded-lg shadow">
+                        <span className="text-sm font-medium text-brand-white bg-brand-grey px-4 py-2 rounded-lg shadow border border-brand-charcoal">
                           {mode === "single"
                             ? "Drop an image to replace"
                             : "Drop to add more images"}
@@ -439,11 +439,11 @@ export default function RasterVectorizerPage() {
                                 if (e.key === "Enter" && item.svgPreviewUrl && item.status === "done")
                                   openPreview(item.id);
                               }}
-                              className="relative w-full h-full max-w-full max-h-full rounded-lg border border-gray-200 overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 flex items-center justify-center"
+                              className="relative w-full h-full max-w-full max-h-full rounded-lg border border-brand-grey overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 flex items-center justify-center"
                             >
                               {item.status === "converting" && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 z-10">
-                                  <span className="text-xs text-gray-600">Converting…</span>
+                                  <span className="text-xs text-brand-white/90">Converting…</span>
                                 </div>
                               )}
                               {item.status === "error" && (
@@ -460,7 +460,7 @@ export default function RasterVectorizerPage() {
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center min-h-[100px]">
-                                  <span className="text-xs text-gray-400">—</span>
+                                  <span className="text-xs text-brand-white/60">—</span>
                                 </div>
                               )}
                               <button
@@ -483,7 +483,7 @@ export default function RasterVectorizerPage() {
                           type="button"
                           onClick={() => setMobileIndex((i) => Math.max(0, i - 1))}
                           disabled={mobileIndex === 0}
-                          className="flex-shrink-0 w-10 h-10 rounded-full bg-white/90 shadow border border-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-40 disabled:pointer-events-none"
+                          className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-grey shadow border border-brand-grey flex items-center justify-center text-brand-white disabled:opacity-40 disabled:pointer-events-none"
                           aria-label="Previous image"
                         >
                           <ChevronLeft className="w-6 h-6" />
@@ -500,11 +500,11 @@ export default function RasterVectorizerPage() {
                                   if (e.key === "Enter" && item.svgPreviewUrl && item.status === "done")
                                     openPreview(item.id);
                                 }}
-                                className="relative w-full h-full max-w-full max-h-full rounded-lg border border-gray-200 overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 flex items-center justify-center"
+                                className="relative w-full h-full max-w-full max-h-full rounded-lg border border-brand-grey overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 flex items-center justify-center"
                               >
                                 {item.status === "converting" && (
                                   <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 z-10">
-                                    <span className="text-xs text-gray-600">Converting…</span>
+                                    <span className="text-xs text-brand-white/90">Converting…</span>
                                   </div>
                                 )}
                                 {item.status === "error" && (
@@ -521,7 +521,7 @@ export default function RasterVectorizerPage() {
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center min-h-[100px]">
-                                    <span className="text-xs text-gray-400">—</span>
+                                    <span className="text-xs text-brand-white/60">—</span>
                                   </div>
                                 )}
                                 <button
@@ -540,13 +540,13 @@ export default function RasterVectorizerPage() {
                           type="button"
                           onClick={() => setMobileIndex((i) => Math.min(items.length - 1, i + 1))}
                           disabled={mobileIndex >= items.length - 1}
-                          className="flex-shrink-0 w-10 h-10 rounded-full bg-white/90 shadow border border-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-40 disabled:pointer-events-none"
+                          className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-grey shadow border border-brand-grey flex items-center justify-center text-brand-white disabled:opacity-40 disabled:pointer-events-none"
                           aria-label="Next image"
                         >
                           <ChevronRight className="w-6 h-6" />
                         </button>
                       </div>
-                      <div className="flex-shrink-0 py-2 text-center text-sm text-gray-500">
+                      <div className="flex-shrink-0 py-2 text-center text-sm text-brand-white/90">
                         {mobileIndex + 1} of {items.length}
                       </div>
                     </div>
@@ -573,12 +573,12 @@ export default function RasterVectorizerPage() {
                               if (e.key === "Enter" && item.svgPreviewUrl && item.status === "done")
                                 openPreview(item.id);
                             }}
-                            className="relative w-full rounded-lg border border-gray-200 overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                            className="relative w-full rounded-lg border border-brand-grey overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2"
                             style={{ aspectRatio: "1" }}
                           >
                             {item.status === "converting" && (
                               <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 z-10">
-                                <span className="text-xs text-gray-600">Converting…</span>
+                                <span className="text-xs text-brand-white/90">Converting…</span>
                               </div>
                             )}
                             {item.status === "error" && (
@@ -595,7 +595,7 @@ export default function RasterVectorizerPage() {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center min-h-[100px]">
-                                <span className="text-xs text-gray-400">—</span>
+                                <span className="text-xs text-brand-white/60">—</span>
                               </div>
                             )}
                             <button
@@ -624,11 +624,11 @@ export default function RasterVectorizerPage() {
                   onClick={closePreview}
                 >
                   <div
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,36rem)] max-h-[85vh] flex flex-col rounded-xl border border-gray-200 bg-white shadow-xl overflow-hidden"
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,36rem)] max-h-[85vh] flex flex-col rounded-xl border border-brand-grey bg-brand-grey shadow-xl overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50 flex-shrink-0">
-                      <span className="text-sm font-medium text-gray-700 truncate">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-brand-charcoal bg-brand-charcoal flex-shrink-0">
+                      <span className="text-sm font-medium text-brand-white truncate">
                         {previewItem.file.name}
                       </span>
                       <div className="flex items-center gap-2">
@@ -636,7 +636,7 @@ export default function RasterVectorizerPage() {
                           <button
                             type="button"
                             onClick={() => downloadOne(previewItem!)}
-                            className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-700 font-medium text-sm"
+                            className="inline-flex items-center gap-1 text-brand-orange hover:text-brand-600 font-medium text-sm"
                           >
                             <Download className="h-4 w-4" />
                             Download
@@ -645,7 +645,7 @@ export default function RasterVectorizerPage() {
                         <button
                           type="button"
                           onClick={closePreview}
-                          className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                          className="p-1.5 rounded-lg text-brand-white/80 hover:bg-brand-charcoal hover:text-brand-white"
                           aria-label="Close preview"
                         >
                           <X className="h-5 w-5" />
@@ -659,7 +659,7 @@ export default function RasterVectorizerPage() {
                             type="button"
                             onClick={goPrev}
                             disabled={previewIndex <= 0}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 shadow border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:pointer-events-none"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-grey shadow border border-brand-grey text-brand-white hover:bg-brand-charcoal disabled:opacity-40 disabled:pointer-events-none"
                             aria-label="Previous"
                           >
                             <ChevronLeft className="h-5 w-5" />
@@ -668,7 +668,7 @@ export default function RasterVectorizerPage() {
                             type="button"
                             onClick={goNext}
                             disabled={previewIndex >= viewableItems.length - 1}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 shadow border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:pointer-events-none"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-grey shadow border border-brand-grey text-brand-white hover:bg-brand-charcoal disabled:opacity-40 disabled:pointer-events-none"
                             aria-label="Next"
                           >
                             <ChevronRight className="h-5 w-5" />
@@ -683,7 +683,7 @@ export default function RasterVectorizerPage() {
                       />
                     </div>
                     {viewableItems.length > 1 && (
-                      <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 text-center">
+                      <div className="px-3 py-1.5 border-t border-brand-charcoal bg-brand-charcoal text-xs text-brand-white/70 text-center">
                         {previewIndex + 1} of {viewableItems.length} — use arrow keys or buttons
                       </div>
                     )}
@@ -696,7 +696,7 @@ export default function RasterVectorizerPage() {
             <button
               type="button"
               onClick={downloadAll}
-              className="w-full mt-4 py-3 px-4 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 inline-flex items-center justify-center gap-2"
+              className="w-full mt-4 py-3 px-4 rounded-lg bg-brand-orange text-white font-medium hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 inline-flex items-center justify-center gap-2"
             >
               <Download className="h-5 w-5" />
               Download

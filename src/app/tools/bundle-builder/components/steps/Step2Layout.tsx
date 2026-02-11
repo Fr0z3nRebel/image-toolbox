@@ -43,14 +43,14 @@ export default function Step2Layout({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Layout style</label>
+        <label className="block text-sm font-bold text-brand-white mb-2">Layout style</label>
         <select
           value={layoutStyle}
           onChange={(e) => {
             onLayoutStyleChange(e.target.value);
           }}
           disabled={layoutStyle === "custom"}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm disabled:bg-brand-grey disabled:cursor-not-allowed accent-brand-orange"
         >
           {LAYOUT_STYLES.map((layout) => (
             <option key={layout.value} value={layout.value}>
@@ -60,12 +60,12 @@ export default function Step2Layout({
           <option value="custom">Custom</option>
         </select>
         {layoutStyle === "custom" && (
-          <p className="text-xs text-gray-500 mt-1">Drag images in the preview to reposition them.</p>
+          <p className="text-xs text-brand-white/90 mt-1">Drag images in the preview to reposition them.</p>
         )}
       </div>
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Images per row</label>
-        <p className="text-xs text-gray-500 mb-2">Leave empty for automatic layout.</p>
+        <label className="block text-sm font-bold text-brand-white mb-2">Images per row</label>
+        <p className="text-xs text-brand-white/90 mb-2">Leave empty for automatic layout.</p>
         <input
           type="number"
           min={1}
@@ -77,11 +77,11 @@ export default function Step2Layout({
           }}
           placeholder="Auto"
           disabled={layoutStyle === "custom"}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm disabled:bg-brand-grey disabled:cursor-not-allowed"
         />
       </div>
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Image padding: {imageSpacingPercent}%</label>
+        <label className="block text-sm font-bold text-brand-white mb-2">Image padding: {imageSpacingPercent}%</label>
         <input
           type="range"
           min={0}
@@ -90,7 +90,7 @@ export default function Step2Layout({
           value={imageSpacingPercent}
           onChange={(e) => onImageSpacingPercentChange(Number(e.target.value))}
           disabled={layoutStyle === "custom"}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-orange disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
       <BackgroundSelector

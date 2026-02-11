@@ -237,16 +237,16 @@ export default function EtsyPdfGeneratorPage() {
       title="Clipart License Generator"
       description="Create a PDF with download link and license terms for digital products"
     >
-      <div className="mb-8 bg-white rounded-xl border border-gray-200 p-6">
+      <div className="mb-8 bg-brand-grey rounded-xl border border-brand-charcoal p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
           {/* Left: Form */}
           <div className="flex flex-col space-y-4">
             <div>
               <div className="flex items-center justify-between gap-2 mb-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium text-brand-white">
                   Shop Name
                 </label>
-                <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer">
+                <label className="flex items-center gap-1.5 text-sm text-brand-white/80 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={showShopName}
@@ -261,25 +261,25 @@ export default function EtsyPdfGeneratorPage() {
                 value={shopName}
                 onChange={(e) => setShopName(e.target.value)}
                 placeholder="My Etsy Shop"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-brand-white mb-2">
                 Logo (above hero image)
               </label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleLogoFileChange}
-                className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="w-full text-sm text-brand-white/80 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-charcoal file:text-brand-orange hover:file:bg-brand-grey file:border file:border-brand-grey"
               />
               {logoDataUrl ? (
                 <button
                   type="button"
                   onClick={() => setLogoDataUrl(null)}
-                  className="mt-2 text-sm text-gray-600 hover:text-gray-900 underline"
+                  className="mt-2 text-sm text-brand-white/80 hover:text-brand-white underline"
                 >
                   Remove logo
                 </button>
@@ -287,7 +287,7 @@ export default function EtsyPdfGeneratorPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-brand-white mb-2">
                 Thank you message
               </label>
               <input
@@ -295,25 +295,25 @@ export default function EtsyPdfGeneratorPage() {
                 value={thankYouMessage}
                 onChange={(e) => setThankYouMessage(e.target.value)}
                 placeholder={DEFAULT_THANK_YOU_MESSAGE}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-brand-white mb-2">
                 Hero Image (bundle mockup)
               </label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleHeroFileChange}
-                className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="w-full text-sm text-brand-white/80 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-charcoal file:text-brand-orange hover:file:bg-brand-grey file:border file:border-brand-grey"
               />
               {heroImageDataUrl ? (
                 <button
                   type="button"
                   onClick={() => setHeroImageDataUrl(null)}
-                  className="mt-2 text-sm text-gray-600 hover:text-gray-900 underline"
+                  className="mt-2 text-sm text-brand-white/80 hover:text-brand-white underline"
                 >
                   Remove hero image
                 </button>
@@ -322,7 +322,7 @@ export default function EtsyPdfGeneratorPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-brand-white mb-2">
                   Product Title (under hero image)
                 </label>
                 <input
@@ -330,11 +330,11 @@ export default function EtsyPdfGeneratorPage() {
                   value={productTitle}
                   onChange={(e) => setProductTitle(e.target.value)}
                   placeholder="e.g. 50 PNG Clipart Bundle"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-brand-white mb-2">
                   Download URL
                 </label>
                 <input
@@ -342,15 +342,15 @@ export default function EtsyPdfGeneratorPage() {
                   value={downloadUrl}
                   onChange={(e) => setDownloadUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <Store className="h-4 w-4 text-gray-500" />
+                <label className="flex items-center gap-2 text-sm font-medium text-brand-white mb-2">
+                  <Store className="h-4 w-4 text-brand-white/60" />
                   Etsy Shop URL
                 </label>
                 <input
@@ -358,12 +358,12 @@ export default function EtsyPdfGeneratorPage() {
                   value={etsyShopUrl}
                   onChange={(e) => setEtsyShopUrl(e.target.value)}
                   placeholder="https://www.etsy.com/shop/..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal"
                 />
               </div>
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <Globe className="h-4 w-4 text-gray-500" />
+                <label className="flex items-center gap-2 text-sm font-medium text-brand-white mb-2">
+                  <Globe className="h-4 w-4 text-brand-white/60" />
                   Website URL
                 </label>
                 <input
@@ -371,14 +371,14 @@ export default function EtsyPdfGeneratorPage() {
                   value={websiteUrl}
                   onChange={(e) => setWebsiteUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-brand-white mb-2">
                   <Facebook className="h-4 w-4 text-blue-600" />
                   Facebook URL
                 </label>
@@ -387,11 +387,11 @@ export default function EtsyPdfGeneratorPage() {
                   value={facebookUrl}
                   onChange={(e) => setFacebookUrl(e.target.value)}
                   placeholder="https://www.facebook.com/..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal"
                 />
               </div>
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-brand-white mb-2">
                   <Youtube className="h-4 w-4 text-red-600" />
                   YouTube URL
                 </label>
@@ -400,32 +400,32 @@ export default function EtsyPdfGeneratorPage() {
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   placeholder="https://www.youtube.com/..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-brand-white mb-2">
                 You Can (editable)
               </label>
               <textarea
                 value={canTerms}
                 onChange={(e) => setCanTerms(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-brand-white mb-2">
                 You Cannot (editable)
               </label>
               <textarea
                 value={cannotTerms}
                 onChange={(e) => setCannotTerms(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm"
               />
             </div>
 
@@ -433,7 +433,7 @@ export default function EtsyPdfGeneratorPage() {
               type="button"
               onClick={handleDownloadPdf}
               disabled={isDownloading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-brand-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               {isDownloading ? "Generating PDF..." : "Download PDF"}
             </button>

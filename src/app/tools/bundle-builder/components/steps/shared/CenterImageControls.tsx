@@ -39,7 +39,7 @@ export default function CenterImageControls({
         compactDropZone={true}
       />
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-1">Center scale: {Math.round(centerWidthScale * 100)}%</label>
+        <label className="block text-sm font-bold text-brand-white mb-1">Center scale: {Math.round(centerWidthScale * 100)}%</label>
         <input
           type="range"
           min={50}

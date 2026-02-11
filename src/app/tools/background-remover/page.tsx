@@ -53,7 +53,7 @@ export default function BackgroundRemoverPage() {
       type="button"
       onClick={handleRemoveBackgrounds}
       disabled={files.length === 0 || isProcessing}
-      className="w-full bg-violet-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-violet-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+      className="w-full bg-brand-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
     >
       {isProcessing
         ? progress
@@ -79,7 +79,7 @@ export default function BackgroundRemoverPage() {
           supportedFormatsText="Supports JPEG, PNG, GIF, and WebP. Max 20 files."
           maxFiles={20}
         />
-        <p className="text-sm text-gray-500 text-center -mt-4">
+        <p className="text-sm text-brand-white/90 text-center -mt-4">
           Processing runs entirely in your browser. No images are uploaded to any server.
         </p>
 

@@ -52,11 +52,11 @@ export default function ImageComparison({
   };
 
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 p-6 ${className}`}>
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+    <div className={`bg-brand-grey rounded-xl border border-brand-charcoal p-6 ${className}`}>
+      <h2 className="text-xl font-semibold text-brand-white mb-4">
         Before / After Comparison
       </h2>
-      <p className="text-gray-600 mb-4">
+      <p className="text-brand-white/90 mb-4">
         Comparing: {fileName}
       </p>
 
@@ -107,14 +107,14 @@ export default function ImageComparison({
             className="absolute top-0 bottom-0 w-0.5 sm:w-1 bg-white shadow-lg cursor-col-resize flex items-center justify-center pointer-events-none"
             style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
           >
-            <div className="w-4 h-4 sm:w-6 sm:h-6 bg-white rounded-full shadow-lg border-2 border-gray-300 flex items-center justify-center">
+            <div className="w-4 h-4 sm:w-6 sm:h-6 bg-white rounded-full shadow-lg border-2 border-brand-grey flex items-center justify-center">
               <div className="w-1 h-1 sm:w-2 sm:h-2 bg-gray-400 rounded-full"></div>
             </div>
           </div>
         </div>
 
         {/* Slider Instructions */}
-        <div className="mt-4 text-center text-sm text-gray-600">
+        <div className="mt-4 text-center text-sm text-brand-white/90">
           <p>Click and drag the slider or click anywhere on the image to compare original vs processed</p>
           <div className="flex justify-center gap-8 mt-2">
             <span className="flex items-center gap-2">

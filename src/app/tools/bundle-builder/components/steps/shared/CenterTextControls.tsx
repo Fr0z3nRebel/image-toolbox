@@ -64,25 +64,25 @@ export default function CenterTextControls({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Title</label>
+        <label className="block text-sm font-bold text-brand-white mb-2">Title</label>
         <input
           type="text"
           value={titleText}
           onChange={(e) => onTitleTextChange(e.target.value)}
           placeholder="Title"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+          className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm"
         />
         <div className="flex gap-2 mt-2">
           <select
             value={titleFont}
             onChange={(e) => onTitleFontChange(e.target.value)}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+            className="flex-1 px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm accent-brand-orange"
           >
             {CENTER_TEXT_FONTS.map((f) => (
               <option key={f.id} value={f.id}>{f.label}</option>
             ))}
           </select>
-          <div className="flex items-center gap-1.5 px-2 py-2 border border-gray-300 rounded-lg bg-white">
+          <div className="flex items-center gap-1.5 px-2 py-2 border border-gray-300 rounded-lg bg-brand-charcoal">
             <input
               id="bundle-builder-title-bold"
               type="checkbox"
@@ -90,7 +90,7 @@ export default function CenterTextControls({
               onChange={(e) => onTitleBoldChange(e.target.checked)}
               className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <label htmlFor="bundle-builder-title-bold" className="text-sm text-gray-700 cursor-pointer">
+            <label htmlFor="bundle-builder-title-bold" className="text-sm text-brand-white cursor-pointer">
               Bold
             </label>
           </div>
@@ -112,7 +112,7 @@ export default function CenterTextControls({
                 onTitleFontSizeChange(clamped);
               }
             }}
-            className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white"
+            className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-sm text-brand-white bg-brand-charcoal focus:ring-2 focus:ring-brand-orange focus:border-transparent accent-brand-orange"
             aria-label="Title font size"
           >
             <option value="auto">Auto</option>
@@ -124,32 +124,32 @@ export default function CenterTextControls({
         <button
           type="button"
           onClick={onTitleColorClick}
-          className="mt-1 flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          className="mt-1 flex items-center gap-2 text-sm text-brand-white/80 hover:text-brand-white"
         >
           <span className="inline-block h-4 w-4 rounded border border-gray-300" style={{ backgroundColor: titleColor }} aria-hidden />
           Title color
         </button>
       </div>
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Subtitle</label>
+        <label className="block text-sm font-bold text-brand-white mb-2">Subtitle</label>
         <input
           type="text"
           value={subtitleText}
           onChange={(e) => onSubtitleTextChange(e.target.value)}
           placeholder="Subtitle"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+          className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm"
         />
         <div className="flex gap-2 mt-2">
           <select
             value={subtitleFont}
             onChange={(e) => onSubtitleFontChange(e.target.value)}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+            className="flex-1 px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm accent-brand-orange"
           >
             {CENTER_TEXT_FONTS.map((f) => (
               <option key={f.id} value={f.id}>{f.label}</option>
             ))}
           </select>
-          <div className="flex items-center gap-1.5 px-2 py-2 border border-gray-300 rounded-lg bg-white">
+          <div className="flex items-center gap-1.5 px-2 py-2 border border-gray-300 rounded-lg bg-brand-charcoal">
             <input
               id="bundle-builder-subtitle-bold"
               type="checkbox"
@@ -157,7 +157,7 @@ export default function CenterTextControls({
               onChange={(e) => onSubtitleBoldChange(e.target.checked)}
               className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <label htmlFor="bundle-builder-subtitle-bold" className="text-sm text-gray-700 cursor-pointer">
+            <label htmlFor="bundle-builder-subtitle-bold" className="text-sm text-brand-white cursor-pointer">
               Bold
             </label>
           </div>
@@ -179,7 +179,7 @@ export default function CenterTextControls({
                 onSubtitleFontSizeChange(clamped);
               }
             }}
-            className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white"
+            className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-sm text-brand-white bg-brand-charcoal focus:ring-2 focus:ring-brand-orange focus:border-transparent accent-brand-orange"
             aria-label="Subtitle font size"
           >
             <option value="auto">Auto</option>
@@ -191,7 +191,7 @@ export default function CenterTextControls({
         <button
           type="button"
           onClick={onSubtitleColorClick}
-          className="mt-1 flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          className="mt-1 flex items-center gap-2 text-sm text-brand-white/80 hover:text-brand-white"
         >
           <span className="inline-block h-4 w-4 rounded border border-gray-300" style={{ backgroundColor: subtitleColor }} aria-hidden />
           Subtitle color
@@ -205,7 +205,7 @@ export default function CenterTextControls({
           onChange={(e) => onWrapTextChange(e.target.checked)}
           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
         />
-        <label htmlFor="bundle-builder-wrap-text" className="text-sm text-gray-700">
+        <label htmlFor="bundle-builder-wrap-text" className="text-sm text-brand-white">
           Wrap text
         </label>
       </div>

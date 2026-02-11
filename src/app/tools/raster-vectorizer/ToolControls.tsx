@@ -36,13 +36,13 @@ export default function ToolControls({
   return (
     <div className="order-2 lg:order-1 space-y-5">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-brand-white mb-1">
           Style
         </label>
         <div
           role="group"
           aria-label="Style preset"
-          className="flex rounded-lg border border-gray-300 overflow-hidden bg-gray-100 p-0.5"
+          className="flex rounded-lg border border-brand-grey overflow-hidden bg-brand-charcoal p-0.5"
         >
           {POTRACE_PRESETS.map((p) => (
             <button
@@ -51,10 +51,10 @@ export default function ToolControls({
               onClick={() => onPresetIdChange(p.id)}
               disabled={isConverting}
               title={p.description}
-              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 focus:ring-offset-gray-100 disabled:opacity-50 ${
+              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-1 focus:ring-offset-brand-charcoal disabled:opacity-50 ${
                 presetId === p.id
-                  ? "bg-white text-brand-700 shadow-sm rounded-md"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-brand-orange text-white shadow-sm rounded-md"
+                  : "text-brand-white/80 hover:text-brand-white"
               }`}
             >
               {p.label}
@@ -64,7 +64,7 @@ export default function ToolControls({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-brand-white mb-1">
           Cut threshold: {threshold}
         </label>
         <input
@@ -74,9 +74,9 @@ export default function ToolControls({
           value={threshold}
           onChange={(e) => onThresholdChange(Number(e.target.value))}
           disabled={isConverting}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-600"
+          className="w-full h-2 bg-brand-charcoal rounded-lg appearance-none cursor-pointer accent-brand-orange"
         />
-        <p className="text-xs text-gray-500 mt-0.5">
+        <p className="text-xs text-brand-white/70 mt-0.5">
           Lower = more pixels as shape.
         </p>
       </div>
@@ -87,23 +87,23 @@ export default function ToolControls({
           checked={invert}
           onChange={(e) => onInvertChange(e.target.checked)}
           disabled={isConverting}
-          className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+          className="rounded border-gray-300 text-brand-orange focus:ring-brand-orange"
         />
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-brand-white">
           Invert (light = shape)
         </span>
       </label>
 
-      <div className="space-y-2 pt-2 border-t border-gray-200">
+      <div className="space-y-2 pt-2 border-t border-brand-grey">
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={useSingleColor}
             onChange={(e) => onUseSingleColorChange(e.target.checked)}
             disabled={isConverting}
-            className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+            className="rounded border-gray-300 text-brand-orange focus:ring-brand-orange"
           />
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-brand-white">
             Apply single color to SVG
           </span>
         </label>

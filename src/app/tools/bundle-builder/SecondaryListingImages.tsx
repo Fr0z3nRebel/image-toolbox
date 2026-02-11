@@ -213,7 +213,7 @@ export default function SecondaryListingImages() {
   }, [files, gridSize, pageCount, backgroundMode, backgroundFiles, getBackgroundOptions]);
 
   return (
-    <div className="mb-8 bg-white rounded-xl border border-gray-200 p-6">
+    <div className="mb-8 bg-brand-grey rounded-xl border border-brand-charcoal p-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
         {/* Left column: upload + controls (smaller, like Primary steps) */}
         <div className="flex flex-col min-h-0 space-y-4">
@@ -234,14 +234,14 @@ export default function SecondaryListingImages() {
           />
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Grid size (per page)</label>
-            <p className="text-xs text-gray-500 mb-2">
+            <label className="block text-sm font-bold text-brand-white mb-2">Grid size (per page)</label>
+            <p className="text-xs text-brand-white/90 mb-2">
               {gridSize}×{gridSize} = {cellsPerPage} cliparts per page. Images are 2048×2048 px (1:1).
             </p>
             <select
               value={gridSize}
               onChange={(e) => setGridSize(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+              className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm accent-brand-orange"
             >
               {Array.from({ length: MAX_GRID - MIN_GRID + 1 }, (_, i) => {
                 const n = MIN_GRID + i;
@@ -267,19 +267,19 @@ export default function SecondaryListingImages() {
 
         {/* Right column: export preview (fill and wrap) */}
         <div className="lg:col-span-2 flex flex-col min-h-0">
-          <label className="block text-sm font-bold text-gray-700 mb-2 shrink-0">Export preview</label>
-          <p className="text-xs text-gray-500 mb-3 shrink-0">
+          <label className="block text-sm font-bold text-brand-white mb-2 shrink-0">Export preview</label>
+          <p className="text-xs text-brand-white/90 mb-3 shrink-0">
             This is how each exported page will look (2048×2048 px in the ZIP).
           </p>
           {files.length === 0 ? (
             <div className="flex-1 rounded-lg border border-gray-200 border-dashed bg-gray-50 flex items-center justify-center min-h-[200px]">
-              <p className="text-sm text-gray-500">Add cliparts to see preview</p>
+              <p className="text-sm text-brand-white/90">Add cliparts to see preview</p>
             </div>
           ) : (
             <div className="flex flex-wrap gap-4 content-start overflow-y-auto min-h-0">
               {previewUrls.map((url, index) => (
                 <div key={index} className="flex flex-col items-start shrink-0">
-                  <span className="text-xs font-medium text-gray-600 mb-1.5">
+                  <span className="text-xs font-medium text-brand-white/90 mb-1.5">
                     Page {index + 1}
                   </span>
                   <div
@@ -305,7 +305,7 @@ export default function SecondaryListingImages() {
         type="button"
         onClick={handleExport}
         disabled={files.length === 0 || isExporting}
-        className="mt-6 w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm"
+        className="mt-6 w-full bg-brand-orange text-white py-2.5 px-4 rounded-lg font-medium hover:bg-brand-600 disabled:bg-brand-charcoal disabled:text-brand-white/50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm"
       >
         <Download className="h-4 w-4" />
         {isExporting ? "Exporting…" : "Export as ZIP"}

@@ -40,10 +40,10 @@ export default function Step5Export({
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-gray-700">
+      <div className="text-sm text-brand-white">
         <span className="font-medium">Current settings:</span> <span>{settingsSummary}</span>
       </div>
-      <div className="text-sm text-gray-500">
+      <div className="text-sm text-brand-white/90">
         Output size: <span className="font-medium">{previewWidth} × {previewHeight} px</span>
       </div>
       <OverlayImageEditor
@@ -70,8 +70,8 @@ export default function Step5Export({
           {isExporting ? "Preparing…" : "Download WebP"}
         </button>
       </div>
-      {files.length < 2 && <p className="text-xs text-gray-500">Add at least 2 bundle images to export</p>}
-      <p className="text-xs text-gray-400">Tip: Use this as your primary bundle image to showcase what&apos;s inside larger digital product bundles or printable sets.</p>
+      {files.length < 2 && <p className="text-xs text-brand-white/90">Add at least 2 bundle images to export</p>}
+      <p className="text-xs text-brand-white/80">Tip: Use this as your primary bundle image to showcase what&apos;s inside larger digital product bundles or printable sets.</p>
     </div>
   );
 }

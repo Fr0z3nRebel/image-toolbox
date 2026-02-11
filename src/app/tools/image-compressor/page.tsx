@@ -64,7 +64,7 @@ export default function ImageCompressor() {
 
   const qualityControl = (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-brand-white mb-2">
         Compression Quality: {quality}%
       </label>
       <input
@@ -74,9 +74,9 @@ export default function ImageCompressor() {
         step="5"
         value={quality}
         onChange={(e) => setQuality(Number(e.target.value))}
-        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+        className="w-full h-2 bg-brand-charcoal rounded-lg appearance-none cursor-pointer accent-brand-orange"
       />
-      <div className="flex justify-between text-xs text-gray-500 mt-1">
+      <div className="flex justify-between text-xs text-brand-white/90 mt-1">
         <span>Smaller file (10%)</span>
         <span>Better quality (100%)</span>
       </div>
@@ -87,7 +87,7 @@ export default function ImageCompressor() {
     <button
       onClick={handleCompressImages}
       disabled={files.length === 0 || isCompressing}
-      className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+      className="w-full bg-brand-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-600 disabled:bg-brand-charcoal disabled:text-brand-white/50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
     >
       <Minimize2 className="h-4 w-4" />
       {isCompressing ? "Compressing..." : "Compress Images"}

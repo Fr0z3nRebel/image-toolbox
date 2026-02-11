@@ -115,7 +115,7 @@ export default function Step3Center({
   if (layoutStyle === "grid") {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-gray-600">Center options are for divided layouts only. Use Back to change the layout style, or continue to the next step.</p>
+        <p className="text-sm text-brand-white/90">Center options are for divided layouts only. Use Back to change the layout style, or continue to the next step.</p>
       </div>
     );
   }
@@ -123,19 +123,19 @@ export default function Step3Center({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Center content</label>
+        <label className="block text-sm font-bold text-brand-white mb-2">Center content</label>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => onCenterModeChange("text")}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${centerMode === "text" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${centerMode === "text" ? "border-brand-orange bg-brand-orange/20 text-brand-orange" : "border-brand-grey bg-brand-charcoal text-brand-white hover:border-brand-500/50"}`}
           >
             Text
           </button>
           <button
             type="button"
             onClick={() => onCenterModeChange("image")}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${centerMode === "image" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"}`}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${centerMode === "image" ? "border-brand-orange bg-brand-orange/20 text-brand-orange" : "border-brand-grey bg-brand-charcoal text-brand-white hover:border-brand-500/50"}`}
           >
             Image
           </button>
@@ -153,12 +153,12 @@ export default function Step3Center({
       ) : (
         <>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Shape</label>
+            <label className="block text-sm font-bold text-brand-white mb-2">Shape</label>
             <div className="flex gap-3 items-center">
               <select
                 value={centerShape}
                 onChange={(e) => onCenterShapeChange(e.target.value as CenterShapeId)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                className="flex-1 px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm accent-brand-orange"
               >
                 {CENTER_SHAPES.map((s) => (
                   <option key={s.id} value={s.id}>{s.label}</option>
@@ -167,7 +167,7 @@ export default function Step3Center({
               <button
                 type="button"
                 onClick={onShapeColorClick}
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+                className="flex items-center gap-2 text-sm text-brand-white/90 hover:text-brand-white"
               >
                 <span
                   className="inline-block h-4 w-4 rounded border border-gray-300"

@@ -114,15 +114,15 @@ export default function ColorPickerModal({
       aria-label={title}
     >
       <div
-        className="bg-white rounded-xl shadow-xl p-5 max-w-sm w-full space-y-4"
+        className="bg-brand-grey rounded-xl shadow-xl p-5 max-w-sm w-full space-y-4 border border-brand-charcoal"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <h3 className="text-lg font-semibold text-brand-white">{title}</h3>
           <button
             type="button"
             onClick={() => { syncFromValue(); onClose(); }}
-            className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            className="p-1.5 rounded-lg text-brand-white/70 hover:bg-brand-charcoal hover:text-brand-white transition-colors"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -146,7 +146,7 @@ export default function ColorPickerModal({
             onChange={(e) => handleHexChange(e.target.value)}
             onBlur={handleHexBlur}
             placeholder="#ffffff"
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg font-mono text-gray-900"
+            className="flex-1 px-3 py-2 text-sm border border-brand-grey rounded-lg font-mono text-brand-white bg-brand-charcoal placeholder:text-brand-white/50"
             aria-label="Hex color"
           />
         </div>
@@ -157,14 +157,14 @@ export default function ColorPickerModal({
                 type="button"
                 onClick={handleAutoPick}
                 disabled={isAutoPicking}
-                className="w-full py-2 px-4 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 text-sm"
+                className="w-full py-2 px-4 rounded-lg border border-brand-orange bg-brand-orange/20 text-brand-orange font-medium hover:bg-brand-orange/30 transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 <Sparkles className="h-4 w-4" />
                 {isAutoPicking ? "Analyzing preview…" : "Suggest colors from preview"}
               </button>
               {suggestions && suggestions.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-700">Suggested colors:</p>
+                  <p className="text-xs font-medium text-brand-white">Suggested colors:</p>
                   <div className="grid grid-cols-3 gap-2">
                     {suggestions.map((suggestion, idx) => (
                       <button
@@ -181,7 +181,7 @@ export default function ColorPickerModal({
                           className="w-full h-10 rounded border border-gray-300"
                           style={{ backgroundColor: suggestion.color }}
                         />
-                        <span className="text-xs font-medium text-gray-700">{suggestion.label}</span>
+                        <span className="text-xs font-medium text-brand-white">{suggestion.label}</span>
                       </button>
                     ))}
                   </div>
@@ -196,13 +196,13 @@ export default function ColorPickerModal({
                   type="button"
                   onClick={handlePickFromPreview}
                   disabled={isPicking}
-                  className="w-full py-2 px-4 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-2 px-4 rounded-lg border border-brand-grey bg-brand-charcoal text-brand-white font-medium hover:bg-brand-grey transition-colors flex items-center justify-center gap-2 text-sm"
                 >
                   <Pipette className="h-4 w-4" />
                   {isPicking ? "Pick a color on screen…" : "Pick from preview"}
                 </button>
               ) : (
-                <p className="text-xs text-gray-500">Pick from preview is supported in Chrome and Edge.</p>
+                <p className="text-xs text-brand-white/60">Pick from preview is supported in Chrome and Edge.</p>
               )}
             </div>
           )}
@@ -210,7 +210,7 @@ export default function ColorPickerModal({
         <button
           type="button"
           onClick={() => { syncFromValue(); onClose(); }}
-          className="w-full py-2.5 px-4 rounded-lg bg-gray-100 text-gray-800 font-medium hover:bg-gray-200 transition-colors"
+          className="w-full py-2.5 px-4 rounded-lg bg-brand-orange text-white font-medium hover:bg-brand-600 transition-colors"
         >
           Done
         </button>

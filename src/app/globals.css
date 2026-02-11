@@ -38,3 +38,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Orange highlight for dropdown options (where supported) */
+select option:checked,
+select option:hover {
+  background: var(--brand-orange);
+  color: white;
+}

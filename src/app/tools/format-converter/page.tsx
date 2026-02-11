@@ -76,7 +76,7 @@ export default function FormatConverter() {
   const formatSelectionControl = (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-brand-white mb-2">
           Convert to:
         </label>
         <select
@@ -84,7 +84,7 @@ export default function FormatConverter() {
           onChange={(e) =>
             setTargetFormat(e.target.value as "avif" | "jpeg" | "png" | "webp")
           }
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+          className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal accent-brand-orange"
         >
           <option value="avif">AVIF</option>
           <option value="jpeg">JPEG</option>
@@ -95,7 +95,7 @@ export default function FormatConverter() {
       {isSvgOnly && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-brand-white mb-2">
               Output size (longest side): {svgLongestSide}px
             </label>
             <input
@@ -113,9 +113,9 @@ export default function FormatConverter() {
                   (SVG_SIZE_PRESETS[Number(e.target.value)] ?? SVG_SIZE_DEFAULT) as SvgSizePreset
                 )
               }
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-orange"
             />
-            <div className="relative w-full text-xs text-gray-500 mt-1 h-4">
+            <div className="relative w-full text-xs text-brand-white/90 mt-1 h-4">
               <span className="absolute left-0" style={{ transform: "translateX(0)" }}>
                 1024
               </span>
@@ -144,9 +144,9 @@ export default function FormatConverter() {
               type="checkbox"
               checked={svgSquare}
               onChange={(e) => setSvgSquare(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-gray-300 text-brand-orange focus:ring-brand-orange"
             />
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-brand-white">
               1:1 square (add white padding to shortest sides)
             </span>
           </label>
@@ -159,7 +159,7 @@ export default function FormatConverter() {
     <button
       onClick={handleConvertImages}
       disabled={files.length === 0 || isConverting}
-      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+      className="w-full bg-brand-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
     >
       {isConverting ? "Converting..." : "Convert Images"}
     </button>

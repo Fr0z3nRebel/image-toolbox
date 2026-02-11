@@ -64,14 +64,14 @@ export default function AutoCropperPage() {
           type="checkbox"
           checked={treatWhiteAsEmpty}
           onChange={(e) => setTreatWhiteAsEmpty(e.target.checked)}
-          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          className="rounded border-gray-300 text-brand-orange focus:ring-brand-orange"
         />
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-brand-white">
           Treat white as empty (crop white margins)
         </span>
       </label>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-brand-white mb-2">
           SVG output
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
@@ -80,9 +80,9 @@ export default function AutoCropperPage() {
             name="svgOutput"
             checked={svgOutputAsSvg}
             onChange={() => setSvgOutputAsSvg(true)}
-            className="border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="border-gray-300 text-brand-orange focus:ring-brand-orange"
           />
-          <span className="text-sm text-gray-700">Keep as SVG (vector)</span>
+          <span className="text-sm text-brand-white">Keep as SVG (vector)</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer mt-1">
           <input
@@ -90,9 +90,9 @@ export default function AutoCropperPage() {
             name="svgOutput"
             checked={!svgOutputAsSvg}
             onChange={() => setSvgOutputAsSvg(false)}
-            className="border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="border-gray-300 text-brand-orange focus:ring-brand-orange"
           />
-          <span className="text-sm text-gray-700">Export as PNG (raster)</span>
+          <span className="text-sm text-brand-white">Export as PNG (raster)</span>
         </label>
       </div>
     </div>
@@ -102,7 +102,7 @@ export default function AutoCropperPage() {
     <button
       onClick={handleAutoCrop}
       disabled={files.length === 0 || isProcessing}
-      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+      className="w-full bg-brand-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
     >
       {isProcessing ? "Cropping…" : "Auto-crop"}
     </button>
@@ -127,18 +127,18 @@ export default function AutoCropperPage() {
       </div>
 
       {processedFiles.length > 0 && (
-        <div className="mb-8 bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Previews</h2>
-          <p className="text-sm text-gray-600 mb-4">
+        <div className="mb-8 bg-brand-grey rounded-xl border border-brand-charcoal p-6">
+          <h2 className="text-xl font-semibold text-brand-white mb-4">Previews</h2>
+          <p className="text-sm text-brand-white/90 mb-4">
             Review your cropped images below before downloading.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {processedFiles.map((file, index) => (
               <div
                 key={index}
-                className="flex flex-col rounded-lg border border-gray-200 bg-gray-50 overflow-hidden"
+                className="flex flex-col rounded-lg border border-brand-grey bg-brand-charcoal overflow-hidden"
               >
-                <div className="aspect-square flex items-center justify-center p-2 bg-white min-h-[120px]">
+                <div className="aspect-square flex items-center justify-center p-2 bg-brand-grey min-h-[120px]">
                   <img
                     src={file.url}
                     alt={file.name}
@@ -146,7 +146,7 @@ export default function AutoCropperPage() {
                   />
                 </div>
                 <div className="p-2 flex items-center justify-between gap-2 min-w-0">
-                  <span className="text-xs font-medium text-gray-700 truncate" title={file.name}>
+                  <span className="text-xs font-medium text-brand-white truncate" title={file.name}>
                     {file.name}
                   </span>
                   <a

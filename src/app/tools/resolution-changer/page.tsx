@@ -57,7 +57,7 @@ export default function ResolutionChanger() {
     <button
       onClick={handleChangeResolution}
       disabled={files.length === 0 || isProcessing}
-      className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+      className="w-full bg-brand-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
     >
       <Ruler className="h-4 w-4" />
       {isProcessing ? "Processing..." : "Set to 300 DPI"}
