@@ -24,19 +24,27 @@ The full commit message format should look like this:
 <type>[optional scope]: short, imperative summary
 
 What:
-- Bullet points summarizing the concrete code changes.
+- Bullet points summarizing the concrete code changes. Wrap long lines
+  at 72 characters; indent continuations by two spaces.
 
 Why:
-- Brief explanation of the motivation, intent, or bug being fixed.
+- Brief explanation of the motivation, intent, or bug being fixed. Wrap
+  at 72 characters.
 
 Testing:
-- List of tests run (e.g. npm test, npm run lint, manual flows), or "Testing: not tested".
+- List of tests run (e.g. npm test, npm run lint, manual flows), or
+  "Testing: not tested".
 ```
 
 ## Additional guidelines
 
 - Keep the **title line** under ~72 characters when possible.
-- Wrap body lines naturally instead of creating very long lines (assume word wrap is enabled in the editor).
-- Use clear, concise language that focuses on **why** the change is needed, not just what changed.
-- Prefer present tense and imperative mood in the title (e.g. "add", "fix", "update").
+- **Word wrap the body:** wrap all body lines at 72 characters. Do not leave
+  long unwrapped lines in the What, Why, or Testing sections. When a bullet
+  or paragraph continues onto the next line, indent continuation lines by
+  two spaces so the wrap is obvious in plain text.
+- Use clear, concise language that focuses on **why** the change is needed,
+  not just what changed.
+- Prefer present tense and imperative mood in the title (e.g. "add", "fix",
+  "update").
 
