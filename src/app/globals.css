@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* LeftyStudios theme - match leftystudios.com */
+  --background: #1a1a1a;
+  --foreground: #fafafa;
+  --brand-grey: #333333;
+  --brand-orange: #f3791b;
+  --brand-white: #fafafa;
+  --brand-black: #000000;
+  --brand-charcoal: #1a1a1a;
+  --brand-header-black: #0a0a0a;
 }
 
 @theme inline {
@@ -10,20 +17,20 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  /* Brand orange: rgb(243, 121, 27) */
+  /* LeftyStudios brand (named) */
+  --color-brand-grey: var(--brand-grey);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-white: var(--brand-white);
+  --color-brand-black: var(--brand-black);
+  --color-brand-charcoal: var(--brand-charcoal);
+  --color-brand-header-black: var(--brand-header-black);
+  /* Brand orange scale for buttons/accents */
   --color-brand-50: #fff4ec;
   --color-brand-100: #ffe4d0;
   --color-brand-200: #ffc7a1;
   --color-brand-500: #f3791b;
   --color-brand-600: #e06d18;
   --color-brand-700: #c15e14;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

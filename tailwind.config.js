@@ -28,12 +28,12 @@ module.exports = {
       pink: colors.pink,
       // Brand accent color: rgb(243, 121, 27)
       brand: {
-        50: "#FFF4EC",
-        100: "#FFE4D0",
-        200: "#FFC7A1",
-        500: "#F3791B",
-        600: "#E06D18",
-        700: "#C15E14",
+        50: "#fff4ec",
+        100: "#ffe4d0",
+        200: "#ffc7a1",
+        500: "#f3791b",
+        600: "#e06d18",
+        700: "#c15e14",
       },
     },
     spacing: {

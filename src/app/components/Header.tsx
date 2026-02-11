@@ -1,66 +1,35 @@
 import Link from "next/link";
-import { Facebook } from "lucide-react";
-
-/** X (Twitter) social media logo SVG — stylized X brand mark */
-function XLogo({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden
-    >
-      <path d="M2 2l8.5 8.5L2 19h3l6.5-6.5L18 19h3l-8.5-8.5L21 2h-3l-6.5 6.5L6 2H2z" />
-    </svg>
-  );
-}
 
 export function Header() {
   return (
-    <header className="bg-gray-900 text-gray-300 border-b border-gray-800">
+    <header className="bg-brand-header-black text-brand-white border-b border-brand-grey">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Brand/Logo Section */}
-          <Link href="/" className="flex items-center space-x-3 hover:text-white transition-colors">
-            <div className="flex items-center justify-center w-8 h-8 bg-blue-600 rounded-lg">
+          <Link href="/" className="flex items-center space-x-3 hover:text-brand-orange transition-colors">
+            <div className="flex items-center justify-center w-8 h-8 bg-brand-orange rounded-lg">
               <span className="text-white font-bold text-lg">IT</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Image Toolbox</h1>
-              <p className="text-xs text-gray-400">by Lefty Studios</p>
+              <h1 className="text-xl font-bold text-brand-white">Image Toolbox</h1>
+              <p className="text-xs text-brand-white/80">by Lefty Studios</p>
             </div>
           </Link>
 
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <a
-              href="https://www.facebook.com/groups/1619414616070949/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-300 hover:text-white transition-colors"
-              aria-label="Facebook"
-            >
-              <Facebook className="w-6 h-6" />
-            </a>
-            <a
-              href="https://x.com/LeftyStudios"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-300 hover:text-white transition-colors"
-              aria-label="X"
-            >
-              <XLogo className="w-5 h-5" />
-            </a>
-          </nav>
-
-          {/* Mobile Menu Button (for future mobile nav implementation) */}
-          <button className="md:hidden text-gray-300 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          {/* Buy Me a Coffee */}
+          <a
+            href="https://buymeacoffee.com/john.adams"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-brand-orange hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M18.5 3H6c-1.1 0-2 .9-2 2v5.71c0 3.83 2.95 7.18 6.78 7.29 3.96.12 7.22-3.06 7.22-7v-1h.5c1.38 0 2.5-1.12 2.5-2.5S19.88 3 18.5 3zM16 5v3H6V5h10zm2.5 3H18V5h.5c.28 0 .5.22.5.5s-.22.5-.5.5zM4 19h16v2H4v-2z"/>
             </svg>
-          </button>
+            <span>Buy Me a Coffee</span>
+          </a>
         </div>
       </div>
     </header>
   );
-} 
+}

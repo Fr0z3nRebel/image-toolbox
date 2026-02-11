@@ -19,24 +19,24 @@ export default function ToolPageLayout({
   className = ""
 }: ToolPageLayoutProps) {
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 ${className}`}>
+    <div className={`min-h-screen bg-brand-charcoal ${className}`}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           {showBackButton && (
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
+              className="inline-flex items-center gap-2 text-brand-white hover:text-brand-orange transition-colors mb-4"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Toolbox
             </Link>
           )}
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-brand-white mb-2">
               {title}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-brand-white">
               {description}
             </p>
           </div>

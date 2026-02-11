@@ -13,36 +13,36 @@ interface ToolCardProps {
 
 function ToolCard({ title, description, icon, href, color, badge, disabled = false }: ToolCardProps) {
   const cardContent = (
-    <div className={`group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 ${
+    <div className={`group relative overflow-hidden rounded-xl border border-brand-grey bg-brand-charcoal p-6 shadow-sm transition-all duration-200 ${
       disabled 
         ? 'opacity-60 cursor-not-allowed' 
-        : `hover:shadow-lg hover:scale-[1.02] cursor-pointer ${color}`
+        : 'hover:shadow-lg hover:scale-[1.02] cursor-pointer hover:border-brand-orange'
     }`}>
       {/* Badge */}
       {badge && (
         <div className={`absolute top-3 right-3 px-2 py-1 text-xs font-medium rounded-full ${
           badge === 'New' 
-            ? 'bg-blue-100 text-blue-800' 
-            : 'bg-orange-100 text-orange-800'
+            ? 'bg-brand-orange/20 text-brand-orange' 
+            : 'bg-brand-orange/20 text-brand-orange'
         }`}>
           {badge}
         </div>
       )}
       
       <div className="flex items-center gap-4">
-        <div className={`flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 transition-colors ${
-          !disabled && 'group-hover:bg-gray-200'
+        <div className={`flex h-12 w-12 items-center justify-center rounded-lg bg-brand-grey transition-colors ${
+          !disabled && 'group-hover:bg-brand-grey/80'
         }`}>
           {icon}
         </div>
         <div className="flex-1">
-          <h3 className={`font-semibold text-gray-900 transition-colors ${
-            !disabled && 'group-hover:text-gray-700'
+          <h3 className={`font-semibold text-brand-white transition-colors ${
+            !disabled && 'group-hover:text-brand-white'
           }`}>
             {title}
           </h3>
-          <p className={`text-sm text-gray-600 transition-colors ${
-            !disabled && 'group-hover:text-gray-500'
+          <p className={`text-sm text-brand-white transition-colors ${
+            !disabled && 'group-hover:text-brand-white'
           }`}>
             {description}
           </p>
@@ -132,14 +132,14 @@ export default function Home() {
   ];
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 flex-1">
+    <div className="bg-brand-charcoal flex-1">
       <div className="container mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="mb-12 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-brand-white mb-4">
             Professional Image Processing Tools
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-brand-white max-w-2xl mx-auto">
             Professional image tools. Convert formats, 
             compress images, and more. Most tools work client-side for 
             maximum privacy and speed.
@@ -155,10 +155,10 @@ export default function Home() {
 
         {/* Coming Soon Section */}
         <div className="mt-16 text-center">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+          <h2 className="text-2xl font-semibold text-brand-white mb-4">
             More Tools Coming Soon
           </h2>
-          <p className="text-gray-600">
+          <p className="text-brand-white">
             We&apos;re working on adding more powerful image processing tools.
           </p>
         </div>
