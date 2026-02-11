@@ -98,7 +98,7 @@ export default function Home() {
       badge: "Beta"
     },
     {
-      title: "Auto-Cropper",
+      title: "Auto Cropper",
       description: "Crop images and SVGs to remove unused transparent or white space",
       icon: <Crop className="h-6 w-6 text-indigo-600" />,
       href: "/tools/auto-cropper",
