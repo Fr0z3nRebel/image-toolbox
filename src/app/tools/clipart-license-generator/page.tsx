@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, memo } from "react";
 import dynamic from "next/dynamic";
 import { Store, Globe, Facebook, Youtube } from "lucide-react";
 import ToolPageLayout from "../../components/ToolPageLayout";
+import ThemedCheckbox from "../../components/ThemedCheckbox";
 import {
   DEFAULT_THANK_YOU_MESSAGE,
   DEFAULT_CAN_TERMS,
@@ -236,6 +237,7 @@ export default function EtsyPdfGeneratorPage() {
     <ToolPageLayout
       title="Clipart License Generator"
       description="Create a PDF with download link and license terms for digital products"
+      showBackButton
     >
       <div className="mb-8 bg-brand-grey rounded-xl border border-brand-charcoal p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
@@ -246,15 +248,12 @@ export default function EtsyPdfGeneratorPage() {
                 <label className="text-sm font-medium text-brand-white">
                   Shop Name
                 </label>
-                <label className="flex items-center gap-1.5 text-sm text-brand-white/80 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showShopName}
-                    onChange={(e) => setShowShopName(e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  Show in PDF
-                </label>
+                <ThemedCheckbox
+                  checked={showShopName}
+                  onChange={setShowShopName}
+                  label="Show in PDF"
+                  className="text-sm"
+                />
               </div>
               <input
                 type="text"

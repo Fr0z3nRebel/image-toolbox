@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Save, Trash2 } from "lucide-react";
+import ThemedSelect from "../../../../../components/ThemedSelect";
 import type { BundleBuilderPreset } from "../../../types/presets";
 
 interface PresetManagerProps {
@@ -16,27 +18,28 @@ export default function PresetManager({
   onDeletePreset,
   onShowSaveModal
 }: PresetManagerProps) {
+  const [selectedPreset, setSelectedPreset] = useState("");
+  const presetOptions = [
+    { value: "", label: "Load preset..." },
+    ...Object.keys(presets).map((name) => ({ value: name, label: presets[name].name })),
+  ];
   return (
-    <div className="space-y-2 pb-4 border-b border-gray-200">
+    <div className="space-y-2 pb-4 border-b border-brand-grey">
       <label className="block text-sm font-bold text-brand-white mb-2">Presets</label>
       <div className="flex gap-2">
-        <select
-          value=""
-          onChange={(e) => {
-            if (e.target.value) {
-              onLoadPreset(e.target.value);
-              e.target.value = "";
-            }
-          }}
-          className="flex-1 px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm accent-brand-orange"
-        >
-          <option value="">Load preset...</option>
-          {Object.keys(presets).map((name) => (
-            <option key={name} value={name}>
-              {presets[name].name}
-            </option>
-          ))}
-        </select>
+        <div className="flex-1">
+          <ThemedSelect
+            value={selectedPreset}
+            options={presetOptions}
+            onChange={(v) => {
+              if (v) {
+                onLoadPreset(v);
+                setSelectedPreset("");
+              }
+            }}
+            className="text-sm"
+          />
+        </div>
         <button
           type="button"
           onClick={onShowSaveModal}
@@ -50,7 +53,7 @@ export default function PresetManager({
       {Object.keys(presets).length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
           {Object.keys(presets).map((name) => (
-            <div key={name} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 rounded-lg text-sm">
+            <div key={name} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-brand-charcoal rounded-lg text-sm">
               <span className="text-brand-white">{name}</span>
               <button type="button" onClick={() => onDeletePreset(name)} className="text-brand-white/80 hover:text-red-400 transition-colors" title="Delete preset">
                 <Trash2 className="h-3.5 w-3.5" />

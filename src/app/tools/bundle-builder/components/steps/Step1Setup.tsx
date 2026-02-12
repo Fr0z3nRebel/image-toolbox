@@ -2,6 +2,7 @@
 
 import type { FileWithPreview } from "../../../../components/FileUploadZone";
 import FileUploadZone from "../../../../components/FileUploadZone";
+import ThemedSelect from "../../../../components/ThemedSelect";
 import type { AspectRatio } from "../../types";
 import { ASPECT_RATIOS } from "../../constants/aspectRatios";
 import PresetManager from "./shared/PresetManager";
@@ -94,20 +95,13 @@ export default function Step1Setup({
           </div>
         </div>
       )}
-      <div>
-        <label className="block text-sm font-bold text-brand-white mb-2">Aspect ratio</label>
-        <select
-          value={aspectRatio}
-          onChange={(e) => onAspectRatioChange(e.target.value as AspectRatio)}
-          className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm accent-brand-orange"
-        >
-          {ASPECT_RATIOS.map((ratio) => (
-            <option key={ratio.value} value={ratio.value}>
-              {ratio.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <ThemedSelect
+        label="Aspect ratio"
+        value={aspectRatio}
+        options={ASPECT_RATIOS.map((r) => ({ value: r.value, label: r.label }))}
+        onChange={(v) => onAspectRatioChange(v as AspectRatio)}
+        className="text-sm"
+      />
     </div>
   );
 }

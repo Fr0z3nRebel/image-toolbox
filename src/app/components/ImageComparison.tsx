@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatFileSize } from "./utils/browserUtils";
+import { formatFileSize } from "../utils/imageProcessingUtils";
 
 interface ImageComparisonProps {
   originalImageUrl: string;

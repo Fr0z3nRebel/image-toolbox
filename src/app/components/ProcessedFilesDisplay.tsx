@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, ImageIcon } from "lucide-react";
+import { formatFileSize as defaultFormatFileSize } from "../utils/imageProcessingUtils";
 
 export interface ProcessedFile {
   name: string;
@@ -25,14 +26,6 @@ interface ProcessedFilesDisplayProps {
   formatFileSize?: (bytes: number) => string;
   children?: React.ReactNode; // For additional content like comparison view
 }
-
-const defaultFormatFileSize = (bytes: number) => {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
 
 export default function ProcessedFilesDisplay({
   title,

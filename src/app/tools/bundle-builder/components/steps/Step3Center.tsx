@@ -6,6 +6,7 @@ import CenterTextControls from "./shared/CenterTextControls";
 import CenterImageControls from "./shared/CenterImageControls";
 import CenterTransformControls from "./shared/CenterTransformControls";
 import type { FileWithPreview } from "../../../../components/FileUploadZone";
+import ThemedSelect from "../../../../components/ThemedSelect";
 
 interface Step3CenterProps {
   layoutStyle: string;
@@ -153,17 +154,16 @@ export default function Step3Center({
       ) : (
         <>
           <div>
-            <label className="block text-sm font-bold text-brand-white mb-2">Shape</label>
             <div className="flex gap-3 items-center">
-              <select
-                value={centerShape}
-                onChange={(e) => onCenterShapeChange(e.target.value as CenterShapeId)}
-                className="flex-1 px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm accent-brand-orange"
-              >
-                {CENTER_SHAPES.map((s) => (
-                  <option key={s.id} value={s.id}>{s.label}</option>
-                ))}
-              </select>
+              <div className="flex-1">
+                <ThemedSelect
+                  label="Shape"
+                  value={centerShape}
+                  options={CENTER_SHAPES.map((s) => ({ value: s.id, label: s.label }))}
+                  onChange={(v) => onCenterShapeChange(v as CenterShapeId)}
+                  className="text-sm"
+                />
+              </div>
               <button
                 type="button"
                 onClick={onShapeColorClick}

@@ -826,15 +826,21 @@ export default function BundleBuilderTool() {
       showBackButton={true}
     >
       {/* Tabs */}
-      <div className="mb-6 border-b border-brand-grey">
-        <nav className="flex gap-1" aria-label="Bundle builder tabs">
+      <div className="mb-6">
+        <nav
+          role="tablist"
+          aria-label="Bundle builder tabs"
+          className="flex gap-1 mb-4"
+        >
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "primary"}
             onClick={() => setActiveTab("primary")}
-            className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${
+            className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
               activeTab === "primary"
-                ? "bg-brand-grey border-brand-grey text-brand-orange -mb-px"
-                : "bg-transparent border-transparent text-brand-white/80 hover:text-brand-white hover:bg-brand-charcoal"
+                ? "bg-brand-orange text-white border-brand-orange"
+                : "bg-brand-charcoal text-brand-white/80 border-brand-grey hover:bg-brand-grey"
             }`}
             aria-current={activeTab === "primary" ? "page" : undefined}
           >
@@ -842,11 +848,13 @@ export default function BundleBuilderTool() {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "secondary"}
             onClick={() => setActiveTab("secondary")}
-            className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${
+            className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
               activeTab === "secondary"
-                ? "bg-brand-grey border-brand-grey text-brand-orange -mb-px"
-                : "bg-transparent border-transparent text-brand-white/80 hover:text-brand-white hover:bg-brand-charcoal"
+                ? "bg-brand-orange text-white border-brand-orange"
+                : "bg-brand-charcoal text-brand-white/80 border-brand-grey hover:bg-brand-grey"
             }`}
             aria-current={activeTab === "secondary" ? "page" : undefined}
           >

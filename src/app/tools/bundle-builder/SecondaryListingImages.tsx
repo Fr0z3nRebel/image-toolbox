@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Download } from "lucide-react";
 import FileUploadZone, { type FileWithPreview } from "../../components/FileUploadZone";
+import ThemedSelect from "../../components/ThemedSelect";
 import { createAndDownloadZip } from "../../components/utils/zipUtils";
 import ColorPickerModal from "./ColorPickerModal";
 import BackgroundSelector from "./components/steps/shared/BackgroundSelector";
@@ -234,24 +235,19 @@ export default function SecondaryListingImages() {
           />
 
           <div>
-            <label className="block text-sm font-bold text-brand-white mb-2">Grid size (per page)</label>
             <p className="text-xs text-brand-white/90 mb-2">
               {gridSize}×{gridSize} = {cellsPerPage} cliparts per page. Images are 2048×2048 px (1:1).
             </p>
-            <select
-              value={gridSize}
-              onChange={(e) => setGridSize(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm accent-brand-orange"
-            >
-              {Array.from({ length: MAX_GRID - MIN_GRID + 1 }, (_, i) => {
+            <ThemedSelect
+              label="Grid size (per page)"
+              value={String(gridSize)}
+              options={Array.from({ length: MAX_GRID - MIN_GRID + 1 }, (_, i) => {
                 const n = MIN_GRID + i;
-                return (
-                  <option key={n} value={n}>
-                    {n}×{n}
-                  </option>
-                );
+                return { value: String(n), label: `${n}×${n}` };
               })}
-            </select>
+              onChange={(v) => setGridSize(Number(v))}
+              className="text-sm"
+            />
           </div>
 
           <BackgroundSelector

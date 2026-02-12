@@ -2,9 +2,11 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import ToolPageLayout from "../../components/ToolPageLayout";
+import SingleMultipleToggle from "../../components/SingleMultipleToggle";
+import ImageDropZone from "../../components/ImageDropZone";
 import { imageToSvg } from "./functions";
 import type { PotracePresetId } from "./types";
-import { Upload, Download, ChevronLeft, ChevronRight, X, Trash2 } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, X, Trash2 } from "lucide-react";
 import { ACCEPTED_TYPES, MAX_FILE_SIZE_BYTES, MAX_FILES } from "./constants";
 import JSZip from "jszip";
 import ToolControls from "./ToolControls";
@@ -36,7 +38,7 @@ function makeId(file: File, index: number): string {
 }
 
 export default function RasterVectorizerPage() {
-  const [mode, setMode] = useState<"single" | "bulk">("bulk");
+  const [mode, setMode] = useState<"single" | "bulk">("single");
   const [items, setItems] = useState<VectorItem[]>([]);
   const [presetId, setPresetId] = useState<PotracePresetId>("clean");
   const [threshold, setThreshold] = useState(128);
@@ -44,7 +46,6 @@ export default function RasterVectorizerPage() {
   const [colorOverride, setColorOverride] = useState<string | null>(null);
   const [useSingleColor, setUseSingleColor] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [mobileIndex, setMobileIndex] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -103,17 +104,6 @@ export default function RasterVectorizerPage() {
       }
     }
   }, [mode]);
-
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files?.length) {
-        applyFiles(files);
-      }
-      e.target.value = "";
-    },
-    [applyFiles]
-  );
 
   const removeItem = useCallback((id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -213,28 +203,6 @@ export default function RasterVectorizerPage() {
     };
   }, [items, presetId, threshold, invert, useSingleColor, colorOverride, runConversions]);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-      if (e.dataTransfer.files?.length) applyFiles(e.dataTransfer.files);
-    },
-    [applyFiles]
-  );
-
   const viewableItems = items.filter((i) => i.svgPreviewUrl && i.status === "done");
   const previewIndex = previewId ? viewableItems.findIndex((i) => i.id === previewId) : -1;
   const previewItem = previewId ? items.find((i) => i.id === previewId) : null;
@@ -311,43 +279,17 @@ export default function RasterVectorizerPage() {
     <ToolPageLayout
       title="Raster Vectorizer"
       description="Free, fast raster to SVG converter. Convert images to clean vector outlines, privately in your browser."
+      showBackButton
     >
       <div className="max-w-6xl mx-auto h-full flex flex-col gap-6">
         <div
           className="order-2 lg:order-1 flex flex-col bg-brand-grey rounded-xl border border-brand-charcoal p-6 overflow-visible lg:overflow-hidden lg:h-[50vh]"
         >
-          <div
-            role="tablist"
-            aria-label="Vectorization mode"
-            className="flex mb-4 flex-shrink-0"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === "single"}
-              onClick={() => setMode("single")}
-              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                mode === "single"
-                  ? "bg-brand-orange text-white border-brand-orange"
-                  : "bg-brand-charcoal text-brand-white/80 border-brand-grey hover:bg-brand-grey"
-              }`}
-            >
-              Single image
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === "bulk"}
-              onClick={() => setMode("bulk")}
-              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                mode === "bulk"
-                  ? "bg-brand-orange text-white border-brand-orange"
-                  : "bg-brand-charcoal text-brand-white/80 border-brand-grey hover:bg-brand-grey"
-              }`}
-            >
-              Multiple images
-            </button>
-          </div>
+          <SingleMultipleToggle
+            mode={mode}
+            onModeChange={setMode}
+            ariaLabel="Vectorization mode"
+          />
           <div className="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-1 gap-8 lg:flex-1 lg:min-h-0 lg:items-stretch">
             <ToolControls
               presetId={presetId}
@@ -368,66 +310,22 @@ export default function RasterVectorizerPage() {
             <div
               className={`order-1 lg:order-2 lg:col-span-2 flex flex-col min-h-0 overflow-hidden max-h-[calc(100vh-8rem)] lg:max-h-[50vh] ${items.length > 0 ? "lg:min-h-0" : ""}`}
             >
-              <input
-                type="file"
+              <ImageDropZone
+                inputId="r2v-upload"
                 accept={ACCEPTED_TYPES}
                 multiple={mode === "bulk"}
-                onChange={handleFileChange}
-                className="hidden"
-                id="r2v-upload"
-              />
-              <div
-                className={`min-h-0 flex flex-col relative ${
-                  items.length === 0
-                    ? "flex-1 min-h-[200px]"
-                    : items.length === 1
-                      ? "flex-initial lg:flex-1 lg:min-h-0 overflow-hidden"
-                      : "flex-1 overflow-auto"
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
+                isSingleMode={mode === "single"}
+                supportedFormatsText={
+                  mode === "bulk"
+                    ? `JPG, PNG, GIF, WebP — max 4 MB each, up to ${MAX_FILES} files`
+                    : "JPG, PNG, GIF, WebP — max 4 MB, one file at a time"
+                }
+                onDrop={applyFiles}
+                isEmpty={items.length === 0}
+                isSingleItem={items.length === 1}
+                wrapperClassName="flex-1 flex flex-col min-h-0 overflow-hidden"
               >
-                {items.length === 0 ? (
-                  <label
-                    htmlFor="r2v-upload"
-                    className={`cursor-pointer flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors flex-1 min-h-[200px] ${
-                      isDragging
-                        ? "border-brand-500 bg-brand-50"
-                        : "border-brand-grey bg-brand-charcoal hover:border-brand-500/50"
-                    }`}
-                  >
-                    <Upload className="h-10 w-10 text-brand-white/60" />
-                    <span className="text-sm text-brand-white">
-                      {mode === "single"
-                        ? "Drop an image or click to select"
-                        : "Drop images or click to select"}
-                    </span>
-                    {mode === "bulk" ? (
-                      <span className="text-xs text-brand-white/70">
-                        JPG, PNG, GIF, WebP — max 4 MB each, up to {MAX_FILES} files
-                      </span>
-                    ) : (
-                      <span className="text-xs text-brand-white/70">
-                        JPG, PNG, GIF, WebP — max 4 MB, one file at a time
-                      </span>
-                    )}
-                  </label>
-                ) : (
-                  <>
-                  <div
-                    className={`relative min-h-0 w-full ${items.length === 1 ? "flex-1 min-h-0 overflow-hidden lg:absolute lg:inset-0 lg:flex-none" : "flex-1 min-h-0 flex flex-col lg:flex-initial lg:flex-shrink-0"}`}
-                  >
-                    {isDragging && (
-                      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-brand-500/10 border-2 border-dashed border-brand-500 pointer-events-none">
-                        <span className="text-sm font-medium text-brand-white bg-brand-grey px-4 py-2 rounded-lg shadow border border-brand-charcoal">
-                          {mode === "single"
-                            ? "Drop an image to replace"
-                            : "Drop to add more images"}
-                        </span>
-                      </div>
-                    )}
-                    {items.length === 1 ? (
+                {items.length === 1 ? (
                       <div className="w-full aspect-square lg:absolute lg:inset-0 lg:aspect-auto flex items-center justify-center">
                           {items.map((item) => (
                             <div
@@ -442,7 +340,7 @@ export default function RasterVectorizerPage() {
                               className="relative w-full h-full max-w-full max-h-full rounded-lg border border-brand-grey overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 flex items-center justify-center"
                             >
                               {item.status === "converting" && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 z-10">
+                                <div className="absolute inset-0 flex items-center justify-center bg-brand-charcoal/90 z-10">
                                   <span className="text-xs text-brand-white/90">Converting…</span>
                                 </div>
                               )}
@@ -503,7 +401,7 @@ export default function RasterVectorizerPage() {
                                 className="relative w-full h-full max-w-full max-h-full rounded-lg border border-brand-grey overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 flex items-center justify-center"
                               >
                                 {item.status === "converting" && (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 z-10">
+                                  <div className="absolute inset-0 flex items-center justify-center bg-brand-charcoal/90 z-10">
                                     <span className="text-xs text-brand-white/90">Converting…</span>
                                   </div>
                                 )}
@@ -577,7 +475,7 @@ export default function RasterVectorizerPage() {
                             style={{ aspectRatio: "1" }}
                           >
                             {item.status === "converting" && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 z-10">
+                              <div className="absolute inset-0 flex items-center justify-center bg-brand-charcoal/90 z-10">
                                 <span className="text-xs text-brand-white/90">Converting…</span>
                               </div>
                             )}
@@ -612,10 +510,7 @@ export default function RasterVectorizerPage() {
                     </div>
                   </>
                     )}
-                  </div>
-                  </>
-                )}
-              </div>
+              </ImageDropZone>
 
               {/* Preview lightbox: click to open, arrows + close */}
               {previewItem && previewItem.svgPreviewUrl && (

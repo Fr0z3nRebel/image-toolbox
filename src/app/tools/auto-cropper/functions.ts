@@ -1,13 +1,12 @@
 import type { ProcessedFile } from "../../components/ProcessedFilesDisplay";
+import { isSvgFile } from "../../utils/imageProcessingUtils";
 
 /** Treat pixel as empty if alpha below this (0–255). Slightly above 0 so near-transparent export artifacts are trimmed. */
 const ALPHA_THRESHOLD = 8;
 /** Treat pixel as empty if all RGB components are at least this (0–255). Below 255 so off‑white / light gray padding is cropped. */
 const WHITE_THRESHOLD = 240;
 
-export function isSvgFile(file: File): boolean {
-  return file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
-}
+export { isSvgFile };
 
 /**
  * Find bounding box of non-empty pixels (non-transparent, non-white).

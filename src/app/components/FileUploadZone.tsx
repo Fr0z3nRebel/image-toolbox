@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { Upload, ImageIcon, X } from "lucide-react";
+import { formatFileSize } from "../utils/imageProcessingUtils";
 
 export interface FileWithPreview extends File {
   preview?: string;
@@ -104,14 +105,6 @@ export default function FileUploadZone({
     if (disabled) return;
     const droppedFiles = Array.from(event.dataTransfer.files);
     onDrop(droppedFiles);
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const totalSize = files.reduce((sum, file) => sum + (file.originalSize || file.size), 0);

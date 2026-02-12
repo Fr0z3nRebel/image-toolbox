@@ -63,7 +63,7 @@ import ProcessedFilesDisplay, { ProcessedFile } from './components/ProcessedFile
   files={processedFiles}
   onDownloadAll={downloadAll}
   isCreatingZip={isCreatingZip}
-  downloadAllButtonText="Download All"
+  downloadAllButtonText="Download"
   showStats={true}
   onFileSelect={setSelectedIndex}
   selectedIndex={selectedIndex}
@@ -110,7 +110,55 @@ import ToolPageLayout from './components/ToolPageLayout';
 </ToolPageLayout>
 ```
 
-### 5. ImageComparison
+### 5. SingleMultipleToggle
+A toggle for switching between single-image and multiple-images mode.
+
+**Features:**
+- Accessible tab-style buttons with aria-label
+- Active/inactive states with brand colors
+- Hover border on inactive options for visibility
+
+**Usage:**
+```tsx
+import SingleMultipleToggle from './components/SingleMultipleToggle';
+
+<SingleMultipleToggle
+  mode={mode}
+  onModeChange={setMode}
+  ariaLabel="Compression mode"
+/>
+```
+
+### 6. ImageDropZone
+A drag-and-drop file upload zone with empty state, drag overlay, and configurable preview content.
+
+**Features:**
+- Empty state with upload prompt and format hints
+- Drag-over styling (light grey background, orange dashed border)
+- Overlay when dragging over existing files
+- Configurable single/multiple mode text
+- Accepts custom children for file preview content
+
+**Usage:**
+```tsx
+import ImageDropZone from './components/ImageDropZone';
+
+<ImageDropZone
+  inputId="my-tool-upload"
+  accept="image/*,.svg"
+  multiple={mode === "bulk"}
+  isSingleMode={mode === "single"}
+  supportedFormatsText="PNG, JPEG, WebP, SVG"
+  onDrop={applyFiles}
+  isEmpty={!showPreviews}
+  isSingleItem={displayItems.length === 1}
+  wrapperClassName="order-1 lg:order-2 lg:col-span-2 flex flex-col ..."
+>
+  {/* Custom preview content when files exist */}
+</ImageDropZone>
+```
+
+### 7. ImageComparison
 A component for side-by-side image comparison with interactive slider.
 
 **Features:**

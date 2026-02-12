@@ -159,7 +159,7 @@ import ProcessedFilesDisplay, { ProcessedFile } from './components/ProcessedFile
   files={processedFiles}
   onDownloadAll={downloadAll}
   isCreatingZip={isCreatingZip}
-  downloadAllButtonText="Download All"
+  downloadAllButtonText="Download"
   showStats={true}
   onFileSelect={setSelectedIndex}
   shouldDisableIndividualDownload={shouldDisableDownload}

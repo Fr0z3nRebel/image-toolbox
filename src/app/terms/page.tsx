@@ -1,21 +1,32 @@
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function TermsOfUse() {
   return (
     <div className="min-h-screen bg-brand-charcoal flex-1">
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <Link
-          href="/"
-          className="text-brand-orange hover:text-brand-200 mb-8 inline-block transition-colors"
-        >
-          ← Back to Home
-        </Link>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <div className="w-36 flex-shrink-0 pt-1">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-brand-white hover:text-brand-orange transition-colors whitespace-nowrap"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Toolbox
+            </Link>
+          </div>
+          <div className="flex-1 text-center min-w-0">
+            <h1 className="text-3xl font-bold text-brand-white mb-2">
+              Terms of Use
+            </h1>
+            <p className="text-brand-white/80">
+              The rules and guidelines for using our image processing tools.
+            </p>
+          </div>
+          <div className="w-36 flex-shrink-0" aria-hidden />
+        </div>
 
-        <h1 className="text-4xl md:text-5xl font-bold text-brand-white mb-8">
-          Terms of Use
-        </h1>
-
-        <div className="prose prose-invert max-w-none text-brand-white space-y-6">
+        <div className="prose prose-invert max-w-4xl mx-auto text-brand-white space-y-6">
           <p className="text-sm text-brand-white/70 mb-8">
             Last Updated:{" "}
             {new Date().toLocaleDateString("en-US", {

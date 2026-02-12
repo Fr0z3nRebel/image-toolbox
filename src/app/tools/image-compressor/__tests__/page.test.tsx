@@ -15,24 +15,6 @@ jest.mock("../../../components/ToolPageLayout", () => ({
   ),
 }));
 
-jest.mock("../../../components/FileUploadZone", () => ({
-  __esModule: true,
-  default: ({ children }: React.PropsWithChildren<Record<string, unknown>>) => (
-    <div data-testid="file-upload-zone">
-      {children}
-    </div>
-  ),
-}));
-
-jest.mock("../../../components/ProcessedFilesDisplay", () => ({
-  __esModule: true,
-  default: ({ title }: { title?: string }) => (
-    <div data-testid="processed-files-display">
-      <h2>{title}</h2>
-    </div>
-  ),
-}));
-
 jest.mock("../../../components/FirefoxWarning", () => ({
   __esModule: true,
   default: () => <div data-testid="firefox-warning" />,
@@ -44,11 +26,17 @@ jest.mock("../../../components/ImageComparison", () => ({
 }));
 
 // Mock lucide-react icons
-jest.mock("lucide-react", () => ({
-  Minimize2: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="minimize-icon" />
-  ),
-}));
+jest.mock("lucide-react", () => {
+  const MockIcon = ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="mock-icon" />
+  );
+  return {
+    Minimize2: MockIcon,
+    Download: MockIcon,
+    Upload: MockIcon,
+    Trash2: MockIcon,
+  };
+});
 
 describe("ImageCompressor", () => {
   it("renders the tool page layout with correct title and description", () => {
@@ -58,17 +46,10 @@ describe("ImageCompressor", () => {
     expect(screen.getByText("Reduce file sizes while maintaining image quality")).toBeInTheDocument();
   });
 
-  it("renders the file upload zone", () => {
+  it("renders the drop zone when empty", () => {
     render(<ImageCompressor />);
-    
-    expect(screen.getByTestId("file-upload-zone")).toBeInTheDocument();
-  });
 
-  it("renders the processed files display", () => {
-    render(<ImageCompressor />);
-    
-    expect(screen.getByTestId("processed-files-display")).toBeInTheDocument();
-    expect(screen.getByText("Compressed Images")).toBeInTheDocument();
+    expect(screen.getByText(/Drop .* or click to select/)).toBeInTheDocument();
   });
 
   it("renders the compression quality control", () => {

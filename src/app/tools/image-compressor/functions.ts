@@ -1,4 +1,8 @@
 import { ProcessedFile } from "../../components/ProcessedFilesDisplay";
+import {
+  getOriginalFileForComparison,
+  shouldDisableIndividualDownloadAvif as shouldDisableIndividualDownload,
+} from "../../utils/imageProcessingUtils";
 
 // Client-side image compression function
 export const compressImage = (file: File, quality: number): Promise<ProcessedFile> => {
@@ -97,22 +101,4 @@ export const compressImages = async (
   return compressed;
 };
 
-// Check if individual downloads should be disabled for Firefox AVIF
-export const shouldDisableIndividualDownload = (
-  fileName: string, 
-  isFirefox: boolean
-): boolean => {
-  return isFirefox && fileName.toLowerCase().includes('.avif');
-};
-
-// Get original file for comparison
-export const getOriginalFileForComparison = <T extends File>(
-  index: number, 
-  originalFiles: T[], 
-  compressedFiles: ProcessedFile[]
-): T | null => {
-  if (index >= 0 && index < originalFiles.length && index < compressedFiles.length) {
-    return originalFiles[index];
-  }
-  return null;
-}; 
+export { getOriginalFileForComparison, shouldDisableIndividualDownload }; 

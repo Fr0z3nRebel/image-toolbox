@@ -1,4 +1,5 @@
 import { ProcessedFile } from "../../components/ProcessedFilesDisplay";
+import { isSvgFile } from "../../utils/imageProcessingUtils";
 
 export const SVG_SIZE_PRESETS = [1024, 2048, 4096, 8192] as const;
 export type SvgSizePreset = (typeof SVG_SIZE_PRESETS)[number];
@@ -9,10 +10,6 @@ export interface SvgExportOptions {
   svgLongestSide: number;
   /** If true, output 1:1 square with padding on shortest sides. */
   svgSquare: boolean;
-}
-
-function isSvgFile(file: File): boolean {
-  return file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
 }
 
 // Client-side image conversion function
@@ -146,10 +143,4 @@ export const convertImages = async (
   return converted;
 };
 
-// Check if individual downloads should be disabled for Firefox AVIF
-export const shouldDisableIndividualDownload = (
-  targetFormat: string,
-  isFirefox: boolean
-): boolean => {
-  return isFirefox && targetFormat === 'avif';
-};
+export { shouldDisableIndividualDownloadAvif as shouldDisableIndividualDownload } from "../../utils/imageProcessingUtils";

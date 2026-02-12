@@ -2,6 +2,7 @@
 
 import type { LayoutStyle } from "../../types";
 import { LAYOUT_STYLES } from "../../constants/layoutStyles";
+import ThemedSelect from "../../../../components/ThemedSelect";
 import BackgroundSelector from "./shared/BackgroundSelector";
 import type { FileWithPreview } from "../../../../components/FileUploadZone";
 
@@ -43,22 +44,17 @@ export default function Step2Layout({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-bold text-brand-white mb-2">Layout style</label>
-        <select
+        <ThemedSelect
+          label="Layout style"
           value={layoutStyle}
-          onChange={(e) => {
-            onLayoutStyleChange(e.target.value);
-          }}
+          options={[
+            ...LAYOUT_STYLES.map((l) => ({ value: l.value, label: l.label })),
+            { value: "custom" as LayoutStyle, label: "Custom" },
+          ]}
+          onChange={(v) => onLayoutStyleChange(v)}
           disabled={layoutStyle === "custom"}
-          className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm disabled:bg-brand-grey disabled:cursor-not-allowed accent-brand-orange"
-        >
-          {LAYOUT_STYLES.map((layout) => (
-            <option key={layout.value} value={layout.value}>
-              {layout.label}
-            </option>
-          ))}
-          <option value="custom">Custom</option>
-        </select>
+          className="text-sm"
+        />
         {layoutStyle === "custom" && (
           <p className="text-xs text-brand-white/90 mt-1">Drag images in the preview to reposition them.</p>
         )}

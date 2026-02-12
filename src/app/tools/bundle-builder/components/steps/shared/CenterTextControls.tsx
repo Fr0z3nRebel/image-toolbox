@@ -3,6 +3,7 @@
 import { CENTER_TEXT_FONTS } from "../../../fonts";
 import { CENTER_TEXT_FONT_SIZE_MIN, CENTER_TEXT_FONT_SIZE_MAX } from "../../../types";
 import { FONT_SIZE_PRESETS } from "../../../constants/fontSizePresets";
+import ThemedSelect from "../../../../../components/ThemedSelect";
 
 interface CenterTextControlsProps {
   titleText: string;
@@ -73,15 +74,14 @@ export default function CenterTextControls({
           className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm"
         />
         <div className="flex gap-2 mt-2">
-          <select
-            value={titleFont}
-            onChange={(e) => onTitleFontChange(e.target.value)}
-            className="flex-1 px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm accent-brand-orange"
-          >
-            {CENTER_TEXT_FONTS.map((f) => (
-              <option key={f.id} value={f.id}>{f.label}</option>
-            ))}
-          </select>
+          <div className="flex-1">
+            <ThemedSelect
+              value={titleFont}
+              options={CENTER_TEXT_FONTS.map((f) => ({ value: f.id, label: f.label }))}
+              onChange={(v) => onTitleFontChange(v)}
+              className="text-sm"
+            />
+          </div>
           <div className="flex items-center gap-1.5 px-2 py-2 border border-gray-300 rounded-lg bg-brand-charcoal">
             <input
               id="bundle-builder-title-bold"
@@ -94,32 +94,31 @@ export default function CenterTextControls({
               Bold
             </label>
           </div>
-          <select
-            value={titleFontSizeAuto ? "auto" : String(titleFontSize)}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === "auto") {
-                onTitleFontSizeAutoChange(true);
-                return;
-              }
-              onTitleFontSizeAutoChange(false);
-              const size = Number(v);
-              if (!Number.isNaN(size)) {
-                const clamped = Math.min(
-                  CENTER_TEXT_FONT_SIZE_MAX,
-                  Math.max(CENTER_TEXT_FONT_SIZE_MIN, size)
-                );
-                onTitleFontSizeChange(clamped);
-              }
-            }}
-            className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-sm text-brand-white bg-brand-charcoal focus:ring-2 focus:ring-brand-orange focus:border-transparent accent-brand-orange"
-            aria-label="Title font size"
-          >
-            <option value="auto">Auto</option>
-            {FONT_SIZE_PRESETS.map((size) => (
-              <option key={size} value={size}>{size}px</option>
-            ))}
-          </select>
+          <div className="w-28">
+            <ThemedSelect
+              value={titleFontSizeAuto ? "auto" : String(titleFontSize)}
+              options={[
+                { value: "auto", label: "Auto" },
+                ...FONT_SIZE_PRESETS.map((size) => ({ value: String(size), label: `${size}px` })),
+              ]}
+              onChange={(v) => {
+                if (v === "auto") {
+                  onTitleFontSizeAutoChange(true);
+                  return;
+                }
+                onTitleFontSizeAutoChange(false);
+                const size = Number(v);
+                if (!Number.isNaN(size)) {
+                  const clamped = Math.min(
+                    CENTER_TEXT_FONT_SIZE_MAX,
+                    Math.max(CENTER_TEXT_FONT_SIZE_MIN, size)
+                  );
+                  onTitleFontSizeChange(clamped);
+                }
+              }}
+              className="text-sm"
+            />
+          </div>
         </div>
         <button
           type="button"
@@ -140,15 +139,14 @@ export default function CenterTextControls({
           className="w-full px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm"
         />
         <div className="flex gap-2 mt-2">
-          <select
-            value={subtitleFont}
-            onChange={(e) => onSubtitleFontChange(e.target.value)}
-            className="flex-1 px-3 py-2 border border-brand-grey rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent text-brand-white bg-brand-charcoal text-sm accent-brand-orange"
-          >
-            {CENTER_TEXT_FONTS.map((f) => (
-              <option key={f.id} value={f.id}>{f.label}</option>
-            ))}
-          </select>
+          <div className="flex-1">
+            <ThemedSelect
+              value={subtitleFont}
+              options={CENTER_TEXT_FONTS.map((f) => ({ value: f.id, label: f.label }))}
+              onChange={(v) => onSubtitleFontChange(v)}
+              className="text-sm"
+            />
+          </div>
           <div className="flex items-center gap-1.5 px-2 py-2 border border-gray-300 rounded-lg bg-brand-charcoal">
             <input
               id="bundle-builder-subtitle-bold"
@@ -161,32 +159,31 @@ export default function CenterTextControls({
               Bold
             </label>
           </div>
-          <select
-            value={subtitleFontSizeAuto ? "auto" : String(subtitleFontSize)}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === "auto") {
-                onSubtitleFontSizeAutoChange(true);
-                return;
-              }
-              onSubtitleFontSizeAutoChange(false);
-              const size = Number(v);
-              if (!Number.isNaN(size)) {
-                const clamped = Math.min(
-                  CENTER_TEXT_FONT_SIZE_MAX,
-                  Math.max(CENTER_TEXT_FONT_SIZE_MIN, size)
-                );
-                onSubtitleFontSizeChange(clamped);
-              }
-            }}
-            className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-sm text-brand-white bg-brand-charcoal focus:ring-2 focus:ring-brand-orange focus:border-transparent accent-brand-orange"
-            aria-label="Subtitle font size"
-          >
-            <option value="auto">Auto</option>
-            {FONT_SIZE_PRESETS.map((size) => (
-              <option key={size} value={size}>{size}px</option>
-            ))}
-          </select>
+          <div className="w-28">
+            <ThemedSelect
+              value={subtitleFontSizeAuto ? "auto" : String(subtitleFontSize)}
+              options={[
+                { value: "auto", label: "Auto" },
+                ...FONT_SIZE_PRESETS.map((size) => ({ value: String(size), label: `${size}px` })),
+              ]}
+              onChange={(v) => {
+                if (v === "auto") {
+                  onSubtitleFontSizeAutoChange(true);
+                  return;
+                }
+                onSubtitleFontSizeAutoChange(false);
+                const size = Number(v);
+                if (!Number.isNaN(size)) {
+                  const clamped = Math.min(
+                    CENTER_TEXT_FONT_SIZE_MAX,
+                    Math.max(CENTER_TEXT_FONT_SIZE_MIN, size)
+                  );
+                  onSubtitleFontSizeChange(clamped);
+                }
+              }}
+              className="text-sm"
+            />
+          </div>
         </div>
         <button
           type="button"

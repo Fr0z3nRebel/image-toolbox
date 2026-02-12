@@ -1,4 +1,5 @@
 import { ProcessedFile } from "../../components/ProcessedFilesDisplay";
+import { getOriginalFileForComparison } from "../../utils/imageProcessingUtils";
 
 // Client-side image resolution change function (sets to 300 DPI equivalent)
 export const changeImageResolution = (file: File): Promise<ProcessedFile> => {
@@ -101,15 +102,5 @@ export const changeImagesResolution = async (
   return processed;
 };
 
-// Get original file for comparison
-export const getOriginalFileForComparison = <T extends File>(
-  index: number, 
-  originalFiles: T[], 
-  processedFiles: ProcessedFile[]
-): T | null => {
-  if (index >= 0 && index < originalFiles.length && index < processedFiles.length) {
-    return originalFiles[index];
-  }
-  return null;
-};
+export { getOriginalFileForComparison };
 

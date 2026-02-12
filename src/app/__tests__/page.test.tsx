@@ -11,20 +11,21 @@ jest.mock("next/link", () => ({
 }));
 
 // Mock lucide-react icons
-jest.mock("lucide-react", () => ({
-  ImageIcon: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="image-icon" />
-  ),
-  Download: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="download-icon" />
-  ),
-  Upload: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="upload-icon" />
-  ),
-  Ruler: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="ruler-icon" />
-  ),
-}));
+jest.mock("lucide-react", () => {
+  const MockIcon = ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="mock-icon" />
+  );
+  return {
+    ImageIcon: MockIcon,
+    Ruler: MockIcon,
+    LayoutGrid: MockIcon,
+    FileText: MockIcon,
+    ScanLine: MockIcon,
+    Eraser: MockIcon,
+    Crop: MockIcon,
+    Square: MockIcon,
+  };
+});
 
 describe("Home", () => {
   it("renders the Professional Image Processing Tools title", () => {
@@ -90,15 +91,14 @@ describe("Home", () => {
   it('does not show "New" badge on format converter tool', () => {
     render(<Home />);
     const formatConverterCard = screen.getByText("Format Converter").closest('div');
-    const newBadge = formatConverterCard?.querySelector('[class*="bg-blue-100"]');
+    const newBadge = formatConverterCard?.querySelector('[class*="bg-brand-orange"]');
     expect(newBadge).not.toBeInTheDocument();
   });
 
-  it('shows "New" badge on image compressor tool', () => {
+  it('shows "New" badge on bundle builder and clipart license generator tools', () => {
     render(<Home />);
-    const newBadge = screen.getByText('New');
-    expect(newBadge).toBeInTheDocument();
-    expect(newBadge).toHaveClass('bg-blue-100');
+    const newBadges = screen.getAllByText('New');
+    expect(newBadges.length).toBeGreaterThanOrEqual(2);
   });
 
   it('image compressor tool is not disabled', () => {
